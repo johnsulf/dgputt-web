@@ -22,16 +22,16 @@
 					imgSrc="/images/man_1.png"
 				/>
 				<UserReview
-					userName="Ken Bare"
-					date="Jan 9, 2022"
-					review="Great App! Tracks my putts and much more. Exactly what I was looking for!"
-					imgSrc="/images/man_2.png"
-				/>
-				<UserReview
 					userName="duke78 gaming"
 					date="20 January 2023"
 					review="this is the best app to improve your putting game"
 					imgSrc="/images/woman_1.png"
+				/>
+				<UserReview
+					userName="Ken Bare"
+					date="Jan 9, 2022"
+					review="Great App! Tracks my putts and much more. Exactly what I was looking for!"
+					imgSrc="/images/man_2.png"
 				/>
 			</div>
 		</section>
