@@ -8,6 +8,7 @@
             <img src="/images/fb.png" alt="facebook" />
         </a>
     </div>
+    <p class="small-text">Psst... This site is made with Svelte❤️</p>
 </footer>
 
 <style>
@@ -17,4 +18,12 @@
 	.social-media-links img {
 		width: 2rem;
 	}
+    
+    p {
+        font-size: 1.25rem;
+    }
+
+    .small-text {
+        font-size: 0.75rem;
+    }
 </style>
