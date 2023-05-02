@@ -1,6 +1,7 @@
 <script>
 	import UserReview from "./components/UserReview.svelte";
 	import Showcase from "./components/Showcase.svelte";
+    import Footer from "./components/Footer.svelte";
 </script>
 
 <body>
@@ -36,17 +37,7 @@
 			</div>
 		</section>
 	</main>
-	<footer>
-		<p>©dgputt</p>
-		<div class="social-media-links">
-			<a href="https://www.instagram.com/dgputt/" target="_blank">
-				<img src="/images/ig.png" alt="instagram" />
-			</a>
-			<a href="https://www.facebook.com/dgputt/" target="_blank">
-				<img src="/images/fb.png" alt="facebook" />
-			</a>
-		</div>
-	</footer>
+	<Footer />
 </body>
 
 <style>
@@ -61,10 +52,6 @@
 		grid-template-columns: 1fr 1fr;
 		align-items: center;
 	}
-	footer {
-		padding: 1rem;
-	}
-
 	header img {
 		width: 5rem;
 	}
@@ -85,10 +72,6 @@
 		grid-gap: 1rem;
 		margin-right: -150%; /* Hides the extra review to the right */
 		padding-right: 1rem; /* Adds a bit of spacing between the reviews */
-	}
-
-	.social-media-links img {
-		width: 2rem;
 	}
 
 	@media (min-width: 640px) {

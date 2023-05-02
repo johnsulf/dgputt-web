@@ -42,6 +42,6 @@
 
     .store-button {
         margin-block: 1rem;
-        width: 40%;
+        width: 12rem;
     }
 </style>
