@@ -19,13 +19,13 @@
 					userName="lolpopli"
 					date="Dec 15, 2022"
 					review="I love this app it really challenges you mentally to get better at putting. You will realize right away how addicting and fun it becomes!!!!"
-					imgSrc="/images/man_1.png"
+					imgSrc="/images/woman_1.png"
 				/>
 				<UserReview
-					userName="duke78 gaming"
-					date="20 January 2023"
-					review="this is the best app to improve your putting game"
-					imgSrc="/images/woman_1.png"
+					userName="TheMightyCfresh"
+					date="Sep 3, 2022"
+					review="Just an all around amazing tool for improving your putting. Can’t recommend enough."
+					imgSrc="/images/man_1.png"
 				/>
 				<UserReview
 					userName="Ken Bare"
