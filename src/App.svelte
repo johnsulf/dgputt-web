@@ -1,6 +1,7 @@
 <script>
 	import UserReview from "./components/UserReview.svelte";
 	import Showcase from "./components/Showcase.svelte";
+    import Footer from "./components/Footer.svelte";
 </script>
 
 <body>
@@ -19,6 +20,12 @@
 					userName="lolpopli"
 					date="Dec 15, 2022"
 					review="I love this app it really challenges you mentally to get better at putting. You will realize right away how addicting and fun it becomes!!!!"
+					imgSrc="/images/woman_1.png"
+				/>
+				<UserReview
+					userName="TheMightyCfresh"
+					date="Sep 3, 2022"
+					review="Just an all around amazing tool for improving your putting. Can’t recommend enough."
 					imgSrc="/images/man_1.png"
 				/>
 				<UserReview
@@ -27,26 +34,17 @@
 					review="Great App! Tracks my putts and much more. Exactly what I was looking for!"
 					imgSrc="/images/man_2.png"
 				/>
-				<UserReview
-					userName="duke78 gaming"
-					date="20 January 2023"
-					review="this is the best app to improve your putting game"
-					imgSrc="/images/woman_1.png"
-				/>
 			</div>
 		</section>
 	</main>
-	<footer>
-		<p>©dgputt</p>
-		<div class="social-media-links">
-			<a href="https://www.instagram.com/dgputt/" target="_blank">
-				<img src="/images/ig.png" alt="instagram" />
-			</a>
-			<a href="https://www.facebook.com/dgputt/" target="_blank">
-				<img src="/images/fb.png" alt="facebook" />
-			</a>
-		</div>
-	</footer>
+	<Footer />
+	<script>
+		window.fwSettings={
+		'widget_id':151000004393
+		};
+		!function(){if("function"!=typeof window.FreshworksWidget){var n=function(){n.q.push(arguments)};n.q=[],window.FreshworksWidget=n}}() 
+	</script>
+	<script type='text/javascript' src='https://widget.freshworks.com/widgets/151000004393.js' async defer></script>
 </body>
 
 <style>
@@ -61,10 +59,6 @@
 		grid-template-columns: 1fr 1fr;
 		align-items: center;
 	}
-	footer {
-		padding: 1rem;
-	}
-
 	header img {
 		width: 5rem;
 	}
@@ -85,10 +79,6 @@
 		grid-gap: 1rem;
 		margin-right: -150%; /* Hides the extra review to the right */
 		padding-right: 1rem; /* Adds a bit of spacing between the reviews */
-	}
-
-	.social-media-links img {
-		width: 2rem;
 	}
 
 	@media (min-width: 640px) {
