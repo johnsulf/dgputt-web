@@ -18,7 +18,7 @@
 		</a>
 	</header>
 	<main>
-		<Router {routes}></Router>
+		<Router {routes} />
 	</main>
 	<Footer />
 	<script>

@@ -9,7 +9,7 @@
         </a>
     </div>
     <p>Testing</p>
-    <a href="/privacy-policy">
+    <a href="#/privacy-policy">
         Privacy Policy
     </a>    
 </footer>
