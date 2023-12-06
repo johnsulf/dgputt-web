@@ -8,7 +8,6 @@
             <img src="/images/fb.png" alt="facebook" />
         </a>
     </div>
-    <p>Testing</p>
     <a href="#/privacy-policy">
         Privacy Policy
     </a>    
