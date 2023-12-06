@@ -8,7 +8,9 @@
             <img src="/images/fb.png" alt="facebook" />
         </a>
     </div>
-    <p class="small-text">Psst... This site is made with Svelte❤️</p>
+    <a href="/privacy-policy">
+        Privacy Policy
+    </a>    
 </footer>
 
 <style>
@@ -21,9 +23,5 @@
     
     p {
         font-size: 1.25rem;
-    }
-
-    .small-text {
-        font-size: 0.75rem;
     }
 </style>
