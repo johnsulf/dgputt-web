@@ -10,17 +10,36 @@
   };
 </script>
 
-<header>
-  <a href="/">
-    <img src="/images/logo_plain.png" alt="dgputt logo" />
-  </a>
-</header>
-
-<main>
-  <Router {routes} />
-</main>
-
-<Footer />
+<body>
+  <header>
+    <a href="/">
+      <img src="/images/logo_plain.png" alt="dgputt logo" />
+    </a>
+  </header>
+  <main>
+    <Router {routes} />
+  </main>
+  <Footer />
+  <script>
+    window.fwSettings = {
+      widget_id: 151000004393,
+    };
+    !(function () {
+      if ("function" != typeof window.FreshworksWidget) {
+        var n = function () {
+          n.q.push(arguments);
+        };
+        (n.q = []), (window.FreshworksWidget = n);
+      }
+    })();
+  </script>
+  <script
+    type="text/javascript"
+    src="https://widget.freshworks.com/widgets/151000004393.js"
+    async
+    defer
+  ></script>
+</body>
 
 <style>
   header {
