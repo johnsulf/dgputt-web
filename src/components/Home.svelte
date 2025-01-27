@@ -1,79 +1,79 @@
 <script>
-	import Showcase from "./Showcase.svelte";
-	import UserReview from "./UserReview.svelte";
+  import Showcase from "./Showcase.svelte";
+  import UserReview from "./UserReview.svelte";
 </script>
 
 <section class="showcase">
-    <Showcase />
+  <Showcase />
 </section>
 <hr />
 <h2>User Reviews</h2>
 <section class="user-reviews">
-    <div class="user-reviews_reviews">
-        <UserReview
-            userName="lolpopli"
-            date="Dec 15, 2022"
-            review="I love this app it really challenges you mentally to get better at putting. You will realize right away how addicting and fun it becomes!!!!"
-            imgSrc="/images/woman_1.png"
-        />
-        <UserReview
-            userName="TheMightyCfresh"
-            date="Sep 3, 2022"
-            review="Just an all around amazing tool for improving your putting. Can't recommend enough."
-            imgSrc="/images/man_1.png"
-        />
-        <UserReview
-            userName="Ken Bare"
-            date="Jan 9, 2022"
-            review="Great App! Tracks my putts and much more. Exactly what I was looking for!"
-            imgSrc="/images/man_2.png"
-        />
-    </div>
+  <div class="user-reviews_reviews">
+    <UserReview
+      userName="Nicolai"
+      date="Nov 29, 2024"
+      review="Fantastic tool for consistent training! Well thought-out exercises, that are both challenging and rewarding!"
+      imgSrc="/images/man_1.png"
+    />
+    <UserReview
+      userName="Ashley"
+      date="Jun 2, 2024"
+      review="Great app with a variety of games to track your putting practice and keep it interesting! Definitely worth the premium."
+      imgSrc="/images/woman_1.png"
+    />
+    <UserReview
+      userName="Jimmy"
+      date="Feb 20, 2024"
+      review="This app definitely keeps me pushing to do better. I currently stink at putting, simply because of losing interest while practicing. This is going to be a game changer."
+      imgSrc="/images/man_2.png"
+    />
+  </div>
 </section>
 
 <style>
-    .showcase {
-        display: grid;
-        gap: 2rem;
-        padding: 1rem 2rem;
-	}
+  .showcase {
+    display: grid;
+    gap: 2rem;
+    padding: 1rem 2rem;
+  }
 
-    hr {
-        margin: 1rem 2rem;
+  hr {
+    margin: 1rem 2rem;
+  }
+
+  .user-reviews {
+    padding: 1rem;
+    text-align: center;
+    overflow: scroll;
+  }
+
+  .user-reviews_reviews {
+    display: grid;
+    grid-auto-flow: column;
+    grid-gap: 1rem;
+    margin-right: -150%; /* Hides the extra review to the right */
+    padding-right: 1rem; /* Adds a bit of spacing between the reviews */
+  }
+
+  @media (min-width: 640px) {
+    .showcase {
+      grid-template-columns: 1fr 1fr;
+      padding: 2rem 4rem;
+      flex-wrap: nowrap;
+      align-items: center;
     }
 
     .user-reviews {
-        padding: 1rem;
-        text-align: center;
-        overflow: scroll;
+      padding: 1rem;
+      text-align: center;
     }
 
     .user-reviews_reviews {
-        display: grid;
-        grid-auto-flow: column;
-        grid-gap: 1rem;
-        margin-right: -150%; /* Hides the extra review to the right */
-        padding-right: 1rem; /* Adds a bit of spacing between the reviews */
+      display: flex;
+      grid-gap: 1rem;
+      margin-right: 0;
+      padding-right: 0;
     }
-
-    @media (min-width: 640px) {
-        .showcase {
-            grid-template-columns: 1fr 1fr;
-            padding: 2rem 4rem;
-            flex-wrap: nowrap;
-            align-items: center;
-        }
-
-        .user-reviews {
-            padding: 1rem;
-            text-align: center;
-        }
-
-        .user-reviews_reviews {
-            display: flex;
-            grid-gap: 1rem;
-            margin-right: 0;
-            padding-right: 0;
-        }
-    }
+  }
 </style>
