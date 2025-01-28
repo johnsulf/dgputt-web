@@ -1,13 +1,7 @@
 <script>
-  import Home from "./components/Home.svelte";
   import Footer from "./components/Footer.svelte";
   import Router from "svelte-spa-router";
-  import PrivacyPolicy from "./components/PrivacyPolicy.svelte";
-
-  const routes = {
-    "/": Home,
-    "/privacy-policy": PrivacyPolicy,
-  };
+  import routes from "./routes/routes.js";
 </script>
 
 <header>
