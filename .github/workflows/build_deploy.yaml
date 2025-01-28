@@ -32,7 +32,7 @@ jobs:
           password: ${{ secrets.PROISP_SFTP_PASSWORD }}
           port: 22 # default SSH port
           source: "public/*" # everything from 'public'
-          target: "/c4sbr7xzy_dgputyyx/webroots/r1164085"
+          target: "/customers/4/a/0/c4sbr7xzy/webroots/r1164085"
           overwrite: true # overwrite existing files
           rm: false # do NOT remove extra files/folders
 
