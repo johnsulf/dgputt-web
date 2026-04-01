@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import Link from "next/link";
+import { HashRedirect } from "@/components/hash-redirect";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${bricolage.variable} ${inter.variable}`}>
       <body className="min-h-full flex flex-col bg-bg text-text-primary">
+        <HashRedirect />
         <header className="bg-brand-yellow px-8 py-4">
           <Link href="/">
             <img
