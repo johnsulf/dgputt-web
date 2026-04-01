@@ -25,5 +25,9 @@
       "pattern": "dgputt.app",
       "custom_domain": true,
     },
+    {
+      "pattern": "www.dgputt.app",
+      "custom_domain": true,
+    },
   ],
 }
