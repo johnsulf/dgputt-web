@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: "export",
+  // Produces /privacy-policy.html etc. — works with your current SCP deploy
 };
 
 export default nextConfig;
