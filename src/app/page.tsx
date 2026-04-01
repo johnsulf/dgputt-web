@@ -30,7 +30,7 @@ export default function Home() {
       <section className="grid gap-8 px-4 py-8 sm:grid-cols-2 sm:px-16 sm:items-center">
         <div className="space-y-4">
           <h1>dgputt</h1>
-          <h2>Putt in the effortand become a better putter with dgputt</h2>
+          <h2>Putt in the effort and become a better putter with dgputt</h2>
           <p>
             dgputt is an app that delivers structured putting practice using
             diverse drills and distances. Enjoy dgputt for free with five drills
