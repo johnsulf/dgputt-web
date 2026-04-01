@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-yellow: #ffd700;
+  --color-brand-yellow-muted: #fbd73920;
+  --color-text-primary: #212121;
+  --color-text-muted: #8b8b8b;
+  --color-bg: #f8f8f8;
+  --color-surface: #ffffff;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-inter);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-bricolage);
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+
+h2 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
