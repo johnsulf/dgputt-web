@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-yellow: #FBD839;
+  --color-brand-yellow-muted: #fbd73920;
+  --color-text-primary: #212121;
+  --color-text-muted: #8B8B8B;
+  --color-bg: #F8F8F8;
+  --color-surface: #FFFFFF;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
