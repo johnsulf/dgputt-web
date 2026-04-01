@@ -40,9 +40,7 @@ export default function RootLayout({
           </Link>
         </header>
 
-        <main className="flex-1 grid text-center max-w-[1100px] mx-auto w-full">
-          {children}
-        </main>
+        <main className="flex-1 max-w-275 mx-auto w-full">{children}</main>
 
         <footer className="bg-brand-yellow grid place-items-center gap-2 py-6 mt-4">
           <p className="text-xl">&copy;dgputt</p>
@@ -64,17 +62,10 @@ export default function RootLayout({
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img
-                src="/images/fb.png"
-                alt="facebook"
-                width={32}
-                height={32}
-              />
+              <img src="/images/fb.png" alt="facebook" width={32} height={32} />
             </a>
           </div>
-          <Link href="/privacy-policy" className="text-2xl">
-            Privacy Policy
-          </Link>
+          <Link href="/privacy-policy">Privacy Policy</Link>
         </footer>
       </body>
     </html>

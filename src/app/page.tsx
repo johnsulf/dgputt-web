@@ -1,4 +1,6 @@
-const reviews = [
+import { Review } from "./interfaces/review";
+
+const reviews: Review[] = [
   {
     userName: "Nicolai",
     date: "Nov 29, 2024",
@@ -26,20 +28,16 @@ export default function Home() {
   return (
     <>
       <section className="grid gap-8 px-4 py-8 sm:grid-cols-2 sm:px-16 sm:items-center">
-        <div className="text-left">
-          <h1 className="text-5xl font-bold">
-            Putt in the effort
-          </h1>
-          <h2 className="text-2xl font-bold mt-2">
-            and become a better putter with dgputt
-          </h2>
-          <p className="my-4">
+        <div className="space-y-4">
+          <h1>dgputt</h1>
+          <h2>Putt in the effortand become a better putter with dgputt</h2>
+          <p>
             dgputt is an app that delivers structured putting practice using
             diverse drills and distances. Enjoy dgputt for free with five drills
             and basic stats, or upgrade for full access, enhanced progress
             statistics, and putting league creation and hosting.
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             <a
               href="https://apps.apple.com/us/app/dgputt/id1536711552"
               target="_blank"
@@ -68,7 +66,7 @@ export default function Home() {
           <img
             src="/images/home.png"
             alt="dgputt app screenshot"
-            className="h-[30rem] w-auto"
+            className="h-120 w-auto"
           />
         </div>
       </section>
@@ -76,19 +74,15 @@ export default function Home() {
       <hr className="mx-8 border-gray-200" />
 
       <section className="py-8 px-4">
-        <h2 className="text-2xl font-bold mb-4">
-          User Reviews
-        </h2>
+        <h2 className="text-2xl font-bold mb-4">User Reviews</h2>
         <div className="flex gap-4 overflow-x-auto pb-4 sm:overflow-visible">
           {reviews.map((review) => (
             <div
               key={review.userName}
-              className="grid gap-2 p-6 bg-brand-yellow-muted rounded-2xl min-w-[280px] sm:min-w-0 sm:flex-1"
+              className="grid gap-2 p-6 bg-brand-yellow-muted rounded-2xl min-w-70 sm:min-w-0 sm:flex-1"
             >
               <div>
-                <h3 className="text-lg">
-                  by: {review.userName}
-                </h3>
+                <h3 className="text-lg">by: {review.userName}</h3>
                 <p className="text-xs text-text-muted">{review.date}</p>
               </div>
               <p className="italic">&ldquo;{review.review}&rdquo;</p>
