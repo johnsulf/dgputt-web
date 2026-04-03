@@ -19,10 +19,10 @@ function LeaguesContent() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <LeagueSearch />
-      <LeagueFilters />
       <FeaturedLeagues />
       <FavouriteLeagues />
+      <LeagueSearch />
+      <LeagueFilters />
       <AllLeagues />
       <ArchivedLeagues />
     </div>
@@ -34,8 +34,8 @@ export default function LeaguesPage() {
 
   if (loading) {
     return (
-      <div className="py-4">
-        <h1>Leagues</h1>
+      <div className="p-4">
+        <h1 className="px-4">Leagues</h1>
         <LeaguesSkeleton />
       </div>
     );
@@ -57,8 +57,8 @@ export default function LeaguesPage() {
 
   return (
     <LeaguesProvider>
-      <div className="py-4">
-        <h1>Leagues</h1>
+      <div className="p-4">
+        <h1 className="px-4">Leagues</h1>
         <LeaguesContent />
       </div>
     </LeaguesProvider>

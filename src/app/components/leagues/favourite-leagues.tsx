@@ -5,26 +5,16 @@ import { useLeagues } from "@/lib/leagues-context";
 import { LeagueTile } from "./league-tile";
 
 export function FavouriteLeagues() {
-  const { leagues, archivedLeagues, favouriteLeagueIds, searchTerm } =
-    useLeagues();
+  const { leagues, archivedLeagues, favouriteLeagueIds } = useLeagues();
 
   const favourites = useMemo(() => {
-    const term = searchTerm.toLowerCase();
     const all = [...leagues, ...archivedLeagues];
-
     return all
-      .filter(
-        (l) =>
-          favouriteLeagueIds.includes(l.id) &&
-          l.title.toLowerCase().includes(term),
-      )
+      .filter((l) => favouriteLeagueIds.includes(l.id))
       .sort((a, b) =>
         a.title.toLowerCase().localeCompare(b.title.toLowerCase()),
       );
-  }, [leagues, archivedLeagues, favouriteLeagueIds, searchTerm]);
-
-  // Hide entirely when searching and no matches
-  if (searchTerm && favourites.length === 0) return null;
+  }, [leagues, archivedLeagues, favouriteLeagueIds]);
 
   return (
     <section className="rounded-2xl bg-primary/20 p-4">

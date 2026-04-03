@@ -5,16 +5,15 @@ import { useLeagues } from "@/lib/leagues-context";
 import { LeagueTile } from "./league-tile";
 
 export function FeaturedLeagues() {
-  const { leagues, searchTerm } = useLeagues();
+  const { leagues } = useLeagues();
 
   const featured = useMemo(() => {
-    const term = searchTerm.toLowerCase();
     return leagues
-      .filter((l) => l.isFeatured && l.title.toLowerCase().includes(term))
+      .filter((l) => l.isFeatured)
       .sort((a, b) =>
         a.title.toLowerCase().localeCompare(b.title.toLowerCase()),
       );
-  }, [leagues, searchTerm]);
+  }, [leagues]);
 
   if (featured.length === 0) return null;
 
