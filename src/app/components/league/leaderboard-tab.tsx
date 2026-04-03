@@ -3,6 +3,18 @@
 import { useMemo, useState } from "react";
 import type { LeagueInstance, LeagueEvent } from "@/app/interfaces/league";
 import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnDef,
+  type SortingState,
+} from "@tanstack/react-table";
+import { ArrowDataTransferVerticalIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@/components/ui/button";
+import {
   Table,
   TableBody,
   TableCell,
@@ -18,7 +30,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { formatLabel } from "@/lib/event-utils";
 
 interface LeaderboardTabProps {
   league: LeagueInstance;
@@ -114,11 +125,136 @@ interface PlayerStanding {
   pos: number;
 }
 
+const columns: ColumnDef<PlayerStanding>[] = [
+  {
+    accessorKey: "pos",
+    header: "#",
+    enableSorting: false,
+    cell: ({ row }) => <div className="font-medium">{row.getValue("pos")}</div>,
+  },
+  {
+    accessorKey: "displayName",
+    header: "Player",
+    enableSorting: false,
+    cell: ({ row }) => (
+      <div className="font-medium">{row.getValue("displayName")}</div>
+    ),
+  },
+  {
+    accessorKey: "eventsPlayed",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        className="w-full justify-end -mr-3"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Events
+        <HugeiconsIcon
+          icon={ArrowDataTransferVerticalIcon}
+          className="ml-1 size-3.5"
+        />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="text-right">{row.getValue("eventsPlayed")}</div>
+    ),
+  },
+  {
+    accessorKey: "eventWins",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        className="w-full justify-end -mr-3 max-sm:hidden"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Wins
+        <HugeiconsIcon
+          icon={ArrowDataTransferVerticalIcon}
+          className="ml-1 size-3.5"
+        />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="text-right max-sm:hidden">
+        {row.getValue("eventWins")}
+      </div>
+    ),
+    meta: { className: "max-sm:hidden" },
+  },
+  {
+    accessorKey: "totalPutts",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        className="w-full justify-end -mr-3 max-sm:hidden"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Putts
+        <HugeiconsIcon
+          icon={ArrowDataTransferVerticalIcon}
+          className="ml-1 size-3.5"
+        />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="text-right max-sm:hidden">
+        {row.getValue("totalPutts")}
+      </div>
+    ),
+    meta: { className: "max-sm:hidden" },
+  },
+  {
+    accessorKey: "hitPercent",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        className="w-full justify-end -mr-3"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Hit%
+        <HugeiconsIcon
+          icon={ArrowDataTransferVerticalIcon}
+          className="ml-1 size-3.5"
+        />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="text-right">{row.getValue<number>("hitPercent")}%</div>
+    ),
+  },
+  {
+    accessorKey: "points",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        className="w-full justify-end -mr-3"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Points
+        <HugeiconsIcon
+          icon={ArrowDataTransferVerticalIcon}
+          className="ml-1 size-3.5"
+        />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="text-right font-bold">{row.getValue("points")}</div>
+    ),
+  },
+];
+
 export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
   const events = league.events ?? [];
   const [formatFilter, setFormatFilter] = useState("all");
   const [divisionFilter, setDivisionFilter] = useState("all");
-  const [search, setSearch] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "points", desc: true },
+  ]);
+  const [globalFilter, setGlobalFilter] = useState("");
+
+  const formatFilterLabel =
+    FORMAT_OPTIONS.find((o) => o.value === formatFilter)?.label ??
+    "All Formats";
 
   // Collect available divisions across all events
   const availableDivisions = useMemo(() => {
@@ -179,7 +315,6 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
     for (const event of finishedEvents) {
       if (!event.players) continue;
 
-      // Compute per-player totals for this event
       const eventScores: {
         uid: string;
         hits: number;
@@ -275,7 +410,7 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
       pos: 0,
     }));
 
-    // Sort by points desc, then hit% desc
+    // Sort by points desc, then hit% desc for position assignment
     standings.sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
       return b.hitPercent - a.hitPercent;
@@ -298,20 +433,28 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
     return standings;
   }, [events, seasonFilter, formatFilter, divisionFilter]);
 
-  // Apply search filter
-  const filtered = useMemo(() => {
-    if (!search.trim()) return players;
-    const q = search.trim().toLowerCase();
-    return players.filter((p) => p.displayName.toLowerCase().includes(q));
-  }, [players, search]);
+  const table = useReactTable({
+    data: players,
+    columns,
+    state: { sorting, globalFilter },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: (row, _columnId, filterValue: string) =>
+      row.original.displayName
+        .toLowerCase()
+        .includes(filterValue.toLowerCase()),
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <Input
           placeholder="Search player..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
           className="w-48"
         />
 
@@ -321,7 +464,7 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
             onValueChange={(v) => setFormatFilter(v ?? "all")}
           >
             <SelectTrigger size="sm">
-              <SelectValue />
+              <SelectValue>{formatFilterLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {availableFormats.map((o) => (
@@ -353,52 +496,65 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
         )}
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="flex items-center justify-center py-12">
-          <p className="text-muted-foreground">
-            {players.length === 0
-              ? "No finished events with results yet."
-              : "No players match your search."}
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-2xl border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">#</TableHead>
-                <TableHead>Player</TableHead>
-                <TableHead className="text-right">Events</TableHead>
-                <TableHead className="text-right max-sm:hidden">Wins</TableHead>
-                <TableHead className="text-right max-sm:hidden">
-                  Putts
-                </TableHead>
-                <TableHead className="text-right">Hit%</TableHead>
-                <TableHead className="text-right">Points</TableHead>
+      <div className="overflow-x-auto rounded-2xl border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className={
+                      (header.column.columnDef.meta as { className?: string })
+                        ?.className ?? ""
+                    }
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((p) => (
-                <TableRow key={p.uid}>
-                  <TableCell className="font-medium">{p.pos}</TableCell>
-                  <TableCell className="font-medium">{p.displayName}</TableCell>
-                  <TableCell className="text-right">{p.eventsPlayed}</TableCell>
-                  <TableCell className="text-right max-sm:hidden">
-                    {p.eventWins}
-                  </TableCell>
-                  <TableCell className="text-right max-sm:hidden">
-                    {p.totalPutts}
-                  </TableCell>
-                  <TableCell className="text-right">{p.hitPercent}%</TableCell>
-                  <TableCell className="text-right font-bold">
-                    {p.points}
-                  </TableCell>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      className={
+                        (cell.column.columnDef.meta as { className?: string })
+                          ?.className ?? ""
+                      }
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  {players.length === 0
+                    ? "No finished events with results yet."
+                    : "No players match your search."}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
