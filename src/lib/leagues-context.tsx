@@ -52,6 +52,8 @@ export function LeaguesProvider({ children }: { children: ReactNode }) {
     if (!user) {
       setAllLeagues([]);
       setFavouriteLeagueIds([]);
+      setHasError(false);
+      setErrorMessage(null);
       setIsLoading(false);
       return;
     }
