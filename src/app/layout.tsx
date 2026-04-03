@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Inter } from "next/font/google";
 import "./globals.css";
 import Footer from "./components/layout/footer";
 import Header from "./components/layout/header";
+import { AuthProvider } from "@/lib/auth-context";
 
 const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -55,11 +56,13 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <Header />
+        <AuthProvider>
+          <Header />
 
-        <main className="flex-1 max-w-275 mx-auto w-full">{children}</main>
+          <main className="flex-1 max-w-275 mx-auto w-full">{children}</main>
 
-        <Footer />
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
