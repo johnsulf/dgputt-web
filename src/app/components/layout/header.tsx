@@ -34,15 +34,16 @@ export default function Header() {
           (user ? (
             <DropdownMenu>
               <DropdownMenuTrigger
-                className={buttonVariants({ variant: "default" })}
-              >
-                Menu
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+                render={<Button variant="default">Menu</Button>}
+              />
+              <DropdownMenuContent className="w-40" align="start">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>
                     {user.displayName || user.email}
                   </DropdownMenuLabel>
+                  <DropdownMenuItem>
+                    <Link href="/leagues">Leagues</Link>
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
