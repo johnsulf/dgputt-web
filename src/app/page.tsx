@@ -1,4 +1,4 @@
-import Reviews from "./pages/home/components/reviews";
+import Reviews from "./components/home/reviews";
 
 export default function Home() {
   return (
