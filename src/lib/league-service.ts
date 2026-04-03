@@ -72,24 +72,18 @@ export async function fetchLeagueDetails(
     contactEmail:
       typeof data.contactEmail === "string" ? data.contactEmail : "",
     archived: typeof data.archived === "boolean" ? data.archived : false,
-    isFeatured:
-      typeof data.isFeatured === "boolean" ? data.isFeatured : false,
+    isFeatured: typeof data.isFeatured === "boolean" ? data.isFeatured : false,
     seasonsEnabled:
       typeof data.seasonsEnabled === "boolean" ? data.seasonsEnabled : false,
     activeSeasonId:
-      typeof data.activeSeasonId === "string"
-        ? data.activeSeasonId
-        : undefined,
+      typeof data.activeSeasonId === "string" ? data.activeSeasonId : undefined,
     competitionType:
       typeof data.competitionType === "string"
         ? data.competitionType
         : undefined,
     format: typeof data.format === "string" ? data.format : undefined,
-    validRounds:
-      typeof data.validRounds === "number" ? data.validRounds : 10,
-    admins: Array.isArray(data.admins)
-      ? (data.admins as string[])
-      : undefined,
+    validRounds: typeof data.validRounds === "number" ? data.validRounds : 10,
+    admins: Array.isArray(data.admins) ? (data.admins as string[]) : undefined,
     divisions:
       Array.isArray(data.divisions) &&
       data.divisions.every((d) => typeof d === "string")
@@ -122,28 +116,24 @@ function parseEvents(raw: unknown): LeagueEvent[] {
         typeof v.currentRound === "number" ? v.currentRound : undefined,
       rounds: typeof v.rounds === "number" ? v.rounds : undefined,
       competitionType:
-        typeof v.competitionType === "string"
-          ? v.competitionType
-          : undefined,
+        typeof v.competitionType === "string" ? v.competitionType : undefined,
       format: typeof v.format === "string" ? v.format : undefined,
-      playerMode:
-        typeof v.playerMode === "string" ? v.playerMode : undefined,
+      playerMode: typeof v.playerMode === "string" ? v.playerMode : undefined,
       limit: typeof v.limit === "number" ? v.limit : undefined,
-      seasonId:
-        typeof v.seasonId === "string" ? v.seasonId : undefined,
+      seasonId: typeof v.seasonId === "string" ? v.seasonId : undefined,
       divisionsEnabled:
         typeof v.divisionsEnabled === "boolean"
           ? v.divisionsEnabled
           : undefined,
-      divisions:
-        Array.isArray(v.divisions) ? (v.divisions as string[]) : undefined,
-      players: parsePlayers(v.players),
+      divisions: Array.isArray(v.divisions)
+        ? (v.divisions as string[])
+        : undefined,
+      players: parsePlayers(v._players ?? v.players),
       formatConfig:
         v.formatConfig && typeof v.formatConfig === "object"
           ? (v.formatConfig as Record<string, unknown>)
           : undefined,
-      dstIndex:
-        typeof v.dstIndex === "number" ? v.dstIndex : undefined,
+      dstIndex: typeof v.dstIndex === "number" ? v.dstIndex : undefined,
     });
   }
 
@@ -167,8 +157,7 @@ function parsePlayers(
         typeof v.displayName === "string" ? v.displayName : undefined,
       name: typeof v.name === "string" ? v.name : undefined,
       isDummy: !!v.isDummy,
-      division:
-        typeof v.division === "string" ? v.division : undefined,
+      division: typeof v.division === "string" ? v.division : undefined,
       pairId: typeof v.pairId === "string" ? v.pairId : undefined,
       rounds: parseRounds(v.rounds),
     };
@@ -228,9 +217,7 @@ function parseSeasons(raw: unknown): LeagueSeason[] | undefined {
 /**
  * Fetches the current user's favourite league IDs from _users/{uid}/favouriteLeagues.
  */
-export async function fetchFavouriteLeagueIds(
-  uid: string,
-): Promise<string[]> {
+export async function fetchFavouriteLeagueIds(uid: string): Promise<string[]> {
   const db = getFirebaseDb();
   const snapshot = await get(ref(db, `_users/${uid}/favouriteLeagues`));
 
