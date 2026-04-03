@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { HashRedirect } from "@/components/hash-redirect";
 import "./globals.css";
 
@@ -54,9 +55,9 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-bg text-text-primary">
+      <body className="min-h-full flex flex-col bg-background text-foreground">
         <HashRedirect />
-        <header className="bg-brand-yellow px-8 py-4">
+        <header className="bg-secondary px-8 py-4 flex justify-between items-center">
           <Link href="/">
             <img
               src="/images/logo_plain.png"
@@ -65,11 +66,12 @@ export default function RootLayout({
               height={60}
             />
           </Link>
+          <Button>Sign In</Button>
         </header>
 
         <main className="flex-1 max-w-275 mx-auto w-full">{children}</main>
 
-        <footer className="bg-brand-yellow grid place-items-center gap-2 py-6 mt-4">
+        <footer className="bg-secondary grid place-items-center gap-2 py-6 mt-4">
           <p className="text-xl">&copy;dgputt</p>
           <div className="flex gap-3">
             <a
