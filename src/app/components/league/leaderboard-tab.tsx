@@ -353,7 +353,8 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
           if (!uid || uid === "BYE" || !seq) return;
           let h = 0,
             a = 0;
-          for (const v of seq) {
+          for (const raw of seq) {
+            const v = typeof raw === "number" ? raw : 0;
             if (v < 0 || v > 2) continue;
             h += v;
             a += 2;
@@ -684,26 +685,29 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
     }
 
     // Build standings
-    const standings: PlayerStanding[] = Object.entries(acc).map(([uid, d]) => ({
-      uid,
-      displayName: d.name,
-      division: d.division,
-      eventsPlayed: d.eventsPlayed,
-      eventWins: d.eventWins,
-      totalHits: d.totalHits,
-      totalPutts: d.totalPutts,
-      hitPercent:
-        d.totalPutts > 0
-          ? Math.round((d.totalHits / d.totalPutts) * 1000) / 10
-          : 0,
-      points: d.points,
-      pos: 0,
-    }));
+    type StandingWithRaw = PlayerStanding & { _rawHitPct: number };
+    const standings: StandingWithRaw[] = Object.entries(acc).map(([uid, d]) => {
+      const rawHitPct =
+        d.totalPutts > 0 ? (d.totalHits / d.totalPutts) * 100 : -1;
+      return {
+        uid,
+        displayName: d.name,
+        division: d.division,
+        eventsPlayed: d.eventsPlayed,
+        eventWins: d.eventWins,
+        totalHits: d.totalHits,
+        totalPutts: d.totalPutts,
+        hitPercent: rawHitPct >= 0 ? Math.round(rawHitPct * 10) / 10 : 0,
+        _rawHitPct: rawHitPct,
+        points: d.points,
+        pos: 0,
+      };
+    });
 
     // Sort by points desc, then hit% desc for position assignment
     standings.sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
-      return b.hitPercent - a.hitPercent;
+      return b._rawHitPct - a._rawHitPct;
     });
 
     // Assign positions with ties
@@ -714,7 +718,7 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
         const prev = standings[i - 1];
         const curr = standings[i];
         standings[i].pos =
-          curr.points === prev.points && curr.hitPercent === prev.hitPercent
+          curr.points === prev.points && curr._rawHitPct === prev._rawHitPct
             ? prev.pos
             : i + 1;
       }

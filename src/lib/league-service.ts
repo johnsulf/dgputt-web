@@ -112,7 +112,7 @@ function parseEvents(raw: unknown): LeagueEvent[] {
       location: typeof v.location === "string" ? v.location : undefined,
       description:
         typeof v.description === "string" ? v.description : undefined,
-      finished: !!v.finished,
+      finished: v.finished === true,
       currentRound:
         typeof v.currentRound === "number" ? v.currentRound : undefined,
       rounds: typeof v.rounds === "number" ? v.rounds : undefined,
