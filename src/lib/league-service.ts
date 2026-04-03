@@ -11,27 +11,34 @@ export async function fetchLeagues(): Promise<LeagueInstance[]> {
 
   if (!snapshot.exists()) return [];
 
-  const data = snapshot.val() as Record<string, Record<string, unknown>>;
+  const data = snapshot.val() as Record<string, unknown>;
   const leagues: LeagueInstance[] = [];
 
   for (const [key, value] of Object.entries(data)) {
-    try {
-      leagues.push({
-        id: key,
-        title: (value.title as string) ?? "",
-        location: (value.location as string) ?? "",
-        contactEmail: (value.contactEmail as string) ?? "",
-        archived: (value.archived as boolean) ?? false,
-        isFeatured: (value.isFeatured as boolean) ?? false,
-        seasonsEnabled: (value.seasonsEnabled as boolean) ?? false,
-        activeSeasonId: (value.activeSeasonId as string) ?? undefined,
-        divisions: Array.isArray(value.divisions)
-          ? (value.divisions as string[])
-          : undefined,
-      });
-    } catch {
-      console.error(`Error parsing league ${key}`);
+    if (!value || typeof value !== "object") continue;
+    const v = value as Record<string, unknown>;
+
+    const title = typeof v.title === "string" ? v.title : "";
+    if (!title) {
+      console.warn(`Skipping league ${key}: missing title`);
+      continue;
     }
+
+    leagues.push({
+      id: key,
+      title,
+      location: typeof v.location === "string" ? v.location : "",
+      contactEmail: typeof v.contactEmail === "string" ? v.contactEmail : "",
+      archived: typeof v.archived === "boolean" ? v.archived : false,
+      isFeatured: typeof v.isFeatured === "boolean" ? v.isFeatured : false,
+      seasonsEnabled: typeof v.seasonsEnabled === "boolean" ? v.seasonsEnabled : false,
+      activeSeasonId: typeof v.activeSeasonId === "string" ? v.activeSeasonId : undefined,
+      divisions:
+        Array.isArray(v.divisions) &&
+        v.divisions.every((d) => typeof d === "string")
+          ? (v.divisions as string[])
+          : undefined,
+    });
   }
 
   return leagues;
