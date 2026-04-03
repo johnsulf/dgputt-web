@@ -102,15 +102,12 @@ export default function LeagueDetailPage({
 
   return (
     <div className="p-4">
-      <Link
-        href="/leagues"
-        className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        ← Back to Leagues
+      <Link href="/leagues">
+        <Button variant="outline">Back to Leagues</Button>
       </Link>
 
       {/* Hero */}
-      <div className="rounded-3xl bg-secondary/10 p-8 sm:p-12">
+      <div className="rounded-3xl mt-4 bg-secondary/10 p-8 sm:p-12">
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
           <div className="flex size-20 shrink-0 items-center justify-center rounded-full bg-secondary/30 text-4xl sm:size-24 sm:text-5xl">
             {flag || league.title.charAt(0).toUpperCase()}
@@ -144,42 +141,8 @@ export default function LeagueDetailPage({
         </div>
       </div>
 
-      {/* Details */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {league.contactEmail && (
-          <Card size="sm">
-            <CardHeader>
-              <p className="text-xs font-medium text-muted-foreground">
-                Contact
-              </p>
-            </CardHeader>
-            <CardContent>
-              <a
-                href={`mailto:${league.contactEmail}`}
-                className="text-sm font-medium text-primary underline-offset-2 hover:underline"
-              >
-                {league.contactEmail}
-              </a>
-            </CardContent>
-          </Card>
-        )}
-
-        {league.activeSeasonId && (
-          <Card size="sm">
-            <CardHeader>
-              <p className="text-xs font-medium text-muted-foreground">
-                Active Season
-              </p>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm font-medium">{league.activeSeasonId}</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
       {/* Coming soon */}
-      <div className="mt-6">
+      <div className="mt-6 max-w-lg mx-auto">
         <Alert>
           <AlertTitle>League details and events coming soon</AlertTitle>
           <AlertDescription>
