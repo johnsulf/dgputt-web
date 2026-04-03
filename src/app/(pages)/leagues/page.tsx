@@ -1,16 +1,21 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { LeaguesProvider } from "@/lib/leagues-context";
+import { LeaguesProvider, useLeagues } from "@/lib/leagues-context";
 import { LeagueSearch } from "@/app/components/leagues/league-search";
 import { FeaturedLeagues } from "@/app/components/leagues/featured-leagues";
 import { FavouriteLeagues } from "@/app/components/leagues/favourite-leagues";
 import { AllLeagues } from "@/app/components/leagues/all-leagues";
 import { ArchivedLeagues } from "@/app/components/leagues/archived-leagues";
+import { LeaguesSkeleton } from "@/app/components/leagues/leagues-skeleton";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 function LeaguesContent() {
+  const { isLoading } = useLeagues();
+
+  if (isLoading) return <LeaguesSkeleton />;
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <LeagueSearch />
@@ -27,8 +32,9 @@ export default function LeaguesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="py-4">
+        <h2 className="px-4">Leagues</h2>
+        <LeaguesSkeleton />
       </div>
     );
   }
