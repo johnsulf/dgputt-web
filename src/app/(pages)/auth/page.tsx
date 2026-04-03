@@ -40,7 +40,7 @@ export default function Auth() {
       } else if (message.includes("too-many-requests")) {
         setError("Too many attempts. Please try again later.");
       } else {
-        setError(message);
+        setError("Login failed. Please try again.");
       }
     } finally {
       setLoading(false);
