@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { LeagueInstance } from "@/app/interfaces/league";
 import { EventsTab } from "@/app/components/league/events-tab";
 import { LeaderboardTab } from "@/app/components/league/leaderboard-tab";
@@ -165,7 +164,6 @@ export default function LeagueDetailPage({
           <TabsList>
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-            <TabsTrigger value="info">Info</TabsTrigger>
           </TabsList>
 
           <TabsContent value="events" className="mt-4">
@@ -175,90 +173,8 @@ export default function LeagueDetailPage({
           <TabsContent value="leaderboard" className="mt-4">
             <LeaderboardTab league={league} seasonFilter={seasonFilter} />
           </TabsContent>
-
-          <TabsContent value="info" className="mt-4">
-            <LeagueInfoTab league={league} />
-          </TabsContent>
         </Tabs>
       </div>
-    </div>
-  );
-}
-
-function LeagueInfoTab({ league }: { league: LeagueInstance }) {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      {league.contactEmail && (
-        <div className="rounded-2xl border p-4">
-          <p className="text-xs font-medium text-muted-foreground">Contact</p>
-          <a
-            href={`mailto:${league.contactEmail}`}
-            className="text-sm font-medium text-primary underline-offset-2 hover:underline"
-          >
-            {league.contactEmail}
-          </a>
-        </div>
-      )}
-
-      {league.validRounds && (
-        <div className="rounded-2xl border p-4">
-          <p className="text-xs font-medium text-muted-foreground">
-            Valid Rounds
-          </p>
-          <p className="text-sm font-medium">{league.validRounds}</p>
-        </div>
-      )}
-
-      {league.admins && league.admins.length > 0 && (
-        <div className="rounded-2xl border p-4">
-          <p className="text-xs font-medium text-muted-foreground">Admins</p>
-          <p className="text-sm font-medium">{league.admins.length}</p>
-        </div>
-      )}
-
-      {league.divisions && league.divisions.length > 0 && (
-        <div className="rounded-2xl border p-4">
-          <p className="mb-1 text-xs font-medium text-muted-foreground">
-            Divisions
-          </p>
-          <div className="flex flex-wrap gap-1">
-            {league.divisions.map((div) => (
-              <Badge key={div} variant="outline">
-                {div}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {league.seasons && league.seasons.length > 0 && (
-        <div className="rounded-2xl border p-4 sm:col-span-2">
-          <p className="mb-1 text-xs font-medium text-muted-foreground">
-            Seasons
-          </p>
-          <div className="flex flex-wrap gap-1">
-            {league.seasons.map((season) => (
-              <Badge
-                key={season.id}
-                variant={
-                  season.id === league.activeSeasonId ? "default" : "outline"
-                }
-              >
-                {season.title}
-                {season.id === league.activeSeasonId ? " (active)" : ""}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <Alert className="sm:col-span-2">
-        <AlertTitle>More details coming soon</AlertTitle>
-        <AlertDescription>
-          Full stats, player profiles, and league management features are on the
-          way.
-        </AlertDescription>
-      </Alert>
     </div>
   );
 }
@@ -266,27 +182,30 @@ function LeagueInfoTab({ league }: { league: LeagueInstance }) {
 function LeagueDetailSkeleton() {
   return (
     <div className="p-4">
-      <Skeleton className="h-9 w-36 rounded-3xl" />
+      {/* Back button */}
+      <Skeleton className="h-9 w-32" />
 
-      <div className="mt-4 rounded-3xl bg-secondary/10 p-6 sm:p-10">
+      {/* Hero */}
+      <div className="mt-4 rounded-3xl border bg-card p-6 sm:p-10">
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
-          <Skeleton className="size-20 rounded-full sm:size-24" />
-          <div className="flex flex-col items-center gap-2 sm:items-start">
-            <Skeleton className="h-9 w-56" />
+          <Skeleton className="size-20 shrink-0 rounded-full sm:size-24" />
+          <div className="flex w-full flex-col items-center gap-3 sm:items-start">
+            <Skeleton className="h-8 w-48 sm:w-64" />
             <Skeleton className="h-4 w-32" />
             <div className="flex gap-2">
-              <Skeleton className="h-6 w-20 rounded-full" />
-              <Skeleton className="h-6 w-16 rounded-full" />
+              <Skeleton className="h-5 w-20 rounded-full" />
+              <Skeleton className="h-5 w-16 rounded-full" />
             </div>
           </div>
         </div>
       </div>
 
+      {/* Tabs */}
       <div className="mt-6">
-        <Skeleton className="h-9 w-72 rounded-full" />
+        <Skeleton className="h-9 w-52 rounded-full" />
         <div className="mt-4 flex flex-col gap-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-2xl" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 w-full rounded-2xl" />
           ))}
         </div>
       </div>

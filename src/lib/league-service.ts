@@ -177,10 +177,19 @@ function parsePlayers(
   return Object.keys(players).length > 0 ? players : undefined;
 }
 
-function parseRounds(raw: unknown): LeagueEventRound[] | undefined {
-  if (!Array.isArray(raw)) return undefined;
+// Firebase RTDB returns arrays as objects with numeric string keys, not JS arrays.
+// toArray handles both real arrays and Firebase's object-of-numeric-keys format.
+function toArray(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === "object")
+    return Object.values(raw as Record<string, unknown>);
+  return [];
+}
 
-  return raw
+function parseRounds(raw: unknown): LeagueEventRound[] | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+
+  return toArray(raw)
     .filter((r) => r && typeof r === "object")
     .map((r) => {
       const v = r as Record<string, unknown>;
@@ -189,20 +198,22 @@ function parseRounds(raw: unknown): LeagueEventRound[] | undefined {
         putts: typeof v.putts === "number" ? v.putts : undefined,
         dns: !!v.dns,
         dnf: !!v.dnf,
-        hitsPerSequence: Array.isArray(v.hitsPerSequence)
-          ? (v.hitsPerSequence as number[])
-          : undefined,
-        puttsPerSequence: Array.isArray(v.puttsPerSequence)
-          ? (v.puttsPerSequence as number[])
-          : undefined,
+        hitsPerSequence:
+          v.hitsPerSequence && typeof v.hitsPerSequence === "object"
+            ? (toArray(v.hitsPerSequence) as number[])
+            : undefined,
+        puttsPerSequence:
+          v.puttsPerSequence && typeof v.puttsPerSequence === "object"
+            ? (toArray(v.puttsPerSequence) as number[])
+            : undefined,
       };
     });
 }
 
 function parseSeasons(raw: unknown): LeagueSeason[] | undefined {
-  if (!Array.isArray(raw)) return undefined;
+  if (!raw || typeof raw !== "object") return undefined;
 
-  return raw
+  return toArray(raw)
     .filter((s) => s && typeof s === "object")
     .map((s) => {
       const v = s as Record<string, unknown>;
