@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { HashRedirect } from "@/components/hash-redirect";
+import { HashRedirect } from "@/app/utils/hash-redirect";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
