@@ -1,4 +1,4 @@
-import { Review } from "../../../interfaces/review";
+import { Review } from "@/app/interfaces/review";
 
 const reviews: Review[] = [
   {
