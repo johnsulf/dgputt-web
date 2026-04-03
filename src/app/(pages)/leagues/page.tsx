@@ -33,7 +33,7 @@ export default function LeaguesPage() {
   if (loading) {
     return (
       <div className="py-4">
-        <h2 className="px-4">Leagues</h2>
+        <h1>Leagues</h1>
         <LeaguesSkeleton />
       </div>
     );
@@ -42,7 +42,7 @@ export default function LeaguesPage() {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 p-12">
-        <h2>Leagues</h2>
+        <h1>Leagues</h1>
         <p className="text-muted-foreground">
           Log in to browse and manage your leagues.
         </p>
@@ -56,7 +56,7 @@ export default function LeaguesPage() {
   return (
     <LeaguesProvider>
       <div className="py-4">
-        <h2 className="px-4">Leagues</h2>
+        <h1>Leagues</h1>
         <LeaguesContent />
       </div>
     </LeaguesProvider>

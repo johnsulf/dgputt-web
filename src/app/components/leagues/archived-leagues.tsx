@@ -25,9 +25,7 @@ export function ArchivedLeagues() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between text-left"
       >
-        <h3 className="text-sm font-bold">
-          Archived Leagues ({filtered.length})
-        </h3>
+        <h2>Archived Leagues ({filtered.length})</h2>
         <span
           className="text-muted-foreground transition-transform"
           style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}

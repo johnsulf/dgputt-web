@@ -9,7 +9,7 @@ export function AllLeagues() {
   if (filteredLeagues.length === 0) {
     return (
       <section>
-        <h3 className="mb-2 text-sm font-bold">All Leagues</h3>
+        <h2>All Leagues</h2>
         <p className="text-sm text-muted-foreground">No leagues found.</p>
       </section>
     );
@@ -17,9 +17,7 @@ export function AllLeagues() {
 
   return (
     <section>
-      <h3 className="mb-2 text-sm font-bold">
-        All Leagues ({filteredLeagues.length})
-      </h3>
+      <h2>All Leagues ({filteredLeagues.length})</h2>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {filteredLeagues.map((league) => (
           <LeagueTile key={league.id} league={league} />

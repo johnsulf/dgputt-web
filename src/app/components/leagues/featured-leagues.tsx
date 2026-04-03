@@ -11,14 +11,16 @@ export function FeaturedLeagues() {
     const term = searchTerm.toLowerCase();
     return leagues
       .filter((l) => l.isFeatured && l.title.toLowerCase().includes(term))
-      .sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()));
+      .sort((a, b) =>
+        a.title.toLowerCase().localeCompare(b.title.toLowerCase()),
+      );
   }, [leagues, searchTerm]);
 
   if (featured.length === 0) return null;
 
   return (
     <section className="rounded-2xl bg-secondary/20 p-4">
-      <h3 className="mb-2 text-sm font-bold">Featured</h3>
+      <h2>Featured</h2>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {featured.map((league) => (
           <LeagueTile key={league.id} league={league} />

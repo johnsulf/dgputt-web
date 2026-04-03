@@ -28,9 +28,7 @@ export function FavouriteLeagues() {
 
   return (
     <section className="rounded-2xl bg-primary/20 p-4">
-      <h3 className="mb-2 text-sm font-bold">
-        Your Starred Leagues ({favourites.length})
-      </h3>
+      <h2>Your Starred Leagues ({favourites.length})</h2>
 
       {favourites.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground">

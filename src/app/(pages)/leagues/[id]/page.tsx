@@ -101,7 +101,7 @@ export default function LeagueDetailPage({
           </div>
 
           <div>
-            <h2>{league.title}</h2>
+            <h1>{league.title}</h1>
 
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               {league.location && <span>{league.location}</span>}
