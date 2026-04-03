@@ -16,7 +16,9 @@ export default function Header() {
             height={60}
           />
         </Link>
-        <Button>Sign In</Button>
+        <Link href="/auth">
+          <Button>Login</Button>
+        </Link>
       </header>
     </>
   );
