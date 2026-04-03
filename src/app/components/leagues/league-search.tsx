@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/input-group";
 
 export function LeagueSearch() {
-  const { searchTerm, setSearchTerm, refresh, isLoading } = useLeagues();
+  const { searchTerm, setSearchTerm } = useLeagues();
 
   return (
     <InputGroup>
@@ -47,20 +47,6 @@ export function LeagueSearch() {
           </InputGroupButton>
         </InputGroupAddon>
       )}
-      <InputGroupAddon align="inline-end">
-        <InputGroupButton
-          size="icon-xs"
-          variant="ghost"
-          onClick={() => refresh()}
-          disabled={isLoading}
-          aria-label="Refresh"
-          title="Refresh leagues"
-        >
-          <span className={isLoading ? "animate-spin inline-block" : "inline-block"}>
-            ↻
-          </span>
-        </InputGroupButton>
-      </InputGroupAddon>
     </InputGroup>
   );
 }
