@@ -22,9 +22,7 @@ export function EventCard({ event, variant = "default" }: EventCardProps) {
   }[variant];
 
   return (
-    <div
-      className={`rounded-2xl border p-4 ${bgClass}`}
-    >
+    <div className={`rounded-2xl border p-4 ${bgClass}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="font-semibold">{event.title || "Untitled Event"}</p>
@@ -51,9 +49,7 @@ export function EventCard({ event, variant = "default" }: EventCardProps) {
             <Badge variant="secondary">{formatLabel(event.format)}</Badge>
           )}
           {event.playerMode && event.playerMode !== "singles" && (
-            <Badge variant="outline">
-              {playerModeLabel(event.playerMode)}
-            </Badge>
+            <Badge variant="outline">{playerModeLabel(event.playerMode)}</Badge>
           )}
         </div>
       </div>
@@ -62,7 +58,6 @@ export function EventCard({ event, variant = "default" }: EventCardProps) {
         {playerCount > 0 && (
           <span>
             {playerCount} player{playerCount !== 1 ? "s" : ""}
-            {event.limit ? ` / ${event.limit}` : ""}
           </span>
         )}
 
@@ -80,9 +75,7 @@ export function EventCard({ event, variant = "default" }: EventCardProps) {
         )}
 
         {event.seasonId && (
-          <span className="rounded-full bg-muted px-2 py-0.5">
-            Season
-          </span>
+          <span className="rounded-full bg-muted px-2 py-0.5">Season</span>
         )}
       </div>
     </div>
