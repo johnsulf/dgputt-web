@@ -32,12 +32,17 @@ export default function Auth() {
       await signIn(email, password);
       router.push("/");
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Login failed. Please try again.";
+      const code =
+        typeof err === "object" &&
+        err !== null &&
+        "code" in err &&
+        typeof err.code === "string"
+          ? err.code
+          : undefined;
 
-      if (message.includes("invalid-credential")) {
+      if (code === "auth/invalid-credential") {
         setError("Invalid email or password.");
-      } else if (message.includes("too-many-requests")) {
+      } else if (code === "auth/too-many-requests") {
         setError("Too many attempts. Please try again later.");
       } else {
         setError("Login failed. Please try again.");
