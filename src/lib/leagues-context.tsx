@@ -13,7 +13,7 @@ import { useAuth } from "@/lib/auth-context";
 import { fetchLeagues, fetchFavouriteLeagueIds } from "@/lib/league-service";
 import type { LeagueInstance } from "@/app/interfaces/league";
 
-type SortOption =
+export type SortOption =
   | "titleA"
   | "titleZ"
   | "location"
@@ -29,9 +29,12 @@ interface LeaguesContextType {
   errorMessage: string | null;
   searchTerm: string;
   sortOption: SortOption;
+  selectedLocation: string | null;
+  availableLocations: string[];
   filteredLeagues: LeagueInstance[];
   setSearchTerm: (term: string) => void;
   setSortOption: (option: SortOption) => void;
+  setSelectedLocation: (location: string | null) => void;
   refresh: () => Promise<void>;
 }
 
@@ -47,6 +50,7 @@ export function LeaguesProvider({ children }: { children: ReactNode }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>("titleA");
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
   const loadLeagues = useCallback(async () => {
     if (!user) {
@@ -94,11 +98,21 @@ export function LeaguesProvider({ children }: { children: ReactNode }) {
     [allLeagues],
   );
 
+  const availableLocations = useMemo(() => {
+    const locations = new Set<string>();
+    for (const league of leagues) {
+      if (league.location) locations.add(league.location);
+    }
+    return Array.from(locations).sort((a, b) => a.localeCompare(b));
+  }, [leagues]);
+
   const filteredLeagues = useMemo(() => {
     const term = searchTerm.toLowerCase();
-    let filtered = leagues.filter((l) =>
-      l.title.toLowerCase().includes(term),
-    );
+    let filtered = leagues.filter((l) => l.title.toLowerCase().includes(term));
+
+    if (selectedLocation) {
+      filtered = filtered.filter((l) => l.location === selectedLocation);
+    }
 
     filtered.sort((a, b) => {
       switch (sortOption) {
@@ -119,7 +133,7 @@ export function LeaguesProvider({ children }: { children: ReactNode }) {
     });
 
     return filtered;
-  }, [leagues, searchTerm, sortOption]);
+  }, [leagues, searchTerm, sortOption, selectedLocation]);
 
   return (
     <LeaguesContext.Provider
@@ -132,9 +146,12 @@ export function LeaguesProvider({ children }: { children: ReactNode }) {
         errorMessage,
         searchTerm,
         sortOption,
+        selectedLocation,
+        availableLocations,
         filteredLeagues,
         setSearchTerm,
         setSortOption,
+        setSelectedLocation,
         refresh: loadLeagues,
       }}
     >

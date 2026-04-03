@@ -3,6 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { LeaguesProvider, useLeagues } from "@/lib/leagues-context";
 import { LeagueSearch } from "@/app/components/leagues/league-search";
+import { LeagueFilters } from "@/app/components/leagues/league-filters";
 import { FeaturedLeagues } from "@/app/components/leagues/featured-leagues";
 import { FavouriteLeagues } from "@/app/components/leagues/favourite-leagues";
 import { AllLeagues } from "@/app/components/leagues/all-leagues";
@@ -19,6 +20,7 @@ function LeaguesContent() {
   return (
     <div className="flex flex-col gap-4 p-4">
       <LeagueSearch />
+      <LeagueFilters />
       <FeaturedLeagues />
       <FavouriteLeagues />
       <AllLeagues />
