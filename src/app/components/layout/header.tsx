@@ -2,7 +2,16 @@
 
 import { HashRedirect } from "@/app/utils/hash-redirect";
 import { useAuth } from "@/lib/auth-context";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 
 export default function Header() {
@@ -20,16 +29,29 @@ export default function Header() {
             height={60}
           />
         </Link>
+
         {!loading &&
           (user ? (
-            <div className="flex items-center gap-4">
-              <span className="text-sm hidden sm:inline">
-                {user.displayName || user.email}
-              </span>
-              <Button variant="outline" onClick={() => signOut()}>
-                Logout
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className={buttonVariants({ variant: "default" })}
+              >
+                Menu
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>
+                    {user.displayName || user.email}
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Link href="/auth">
               <Button>Login</Button>
