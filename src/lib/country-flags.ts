@@ -1,0 +1,63 @@
+/**
+ * Maps a country name or code to its flag emoji.
+ * Matches the Flutter app's getCountryFlag function.
+ */
+const COUNTRY_FLAGS: Record<string, string> = {
+  norway: "\u{1F1F3}\u{1F1F4}",
+  no: "\u{1F1F3}\u{1F1F4}",
+  norge: "\u{1F1F3}\u{1F1F4}",
+  sweden: "\u{1F1F8}\u{1F1EA}",
+  se: "\u{1F1F8}\u{1F1EA}",
+  sverige: "\u{1F1F8}\u{1F1EA}",
+  denmark: "\u{1F1E9}\u{1F1F0}",
+  dk: "\u{1F1E9}\u{1F1F0}",
+  finland: "\u{1F1EB}\u{1F1EE}",
+  fi: "\u{1F1EB}\u{1F1EE}",
+  usa: "\u{1F1FA}\u{1F1F8}",
+  us: "\u{1F1FA}\u{1F1F8}",
+  "united states": "\u{1F1FA}\u{1F1F8}",
+  uk: "\u{1F1EC}\u{1F1E7}",
+  gb: "\u{1F1EC}\u{1F1E7}",
+  "united kingdom": "\u{1F1EC}\u{1F1E7}",
+  germany: "\u{1F1E9}\u{1F1EA}",
+  de: "\u{1F1E9}\u{1F1EA}",
+  france: "\u{1F1EB}\u{1F1F7}",
+  fr: "\u{1F1EB}\u{1F1F7}",
+  spain: "\u{1F1EA}\u{1F1F8}",
+  es: "\u{1F1EA}\u{1F1F8}",
+  italy: "\u{1F1EE}\u{1F1F9}",
+  it: "\u{1F1EE}\u{1F1F9}",
+  netherlands: "\u{1F1F3}\u{1F1F1}",
+  nl: "\u{1F1F3}\u{1F1F1}",
+  belgium: "\u{1F1E7}\u{1F1EA}",
+  be: "\u{1F1E7}\u{1F1EA}",
+  switzerland: "\u{1F1E8}\u{1F1ED}",
+  ch: "\u{1F1E8}\u{1F1ED}",
+  austria: "\u{1F1E6}\u{1F1F9}",
+  at: "\u{1F1E6}\u{1F1F9}",
+  canada: "\u{1F1E8}\u{1F1E6}",
+  ca: "\u{1F1E8}\u{1F1E6}",
+  australia: "\u{1F1E6}\u{1F1FA}",
+  au: "\u{1F1E6}\u{1F1FA}",
+  japan: "\u{1F1EF}\u{1F1F5}",
+  jp: "\u{1F1EF}\u{1F1F5}",
+  poland: "\u{1F1F5}\u{1F1F1}",
+  pl: "\u{1F1F5}\u{1F1F1}",
+  czech: "\u{1F1E8}\u{1F1FF}",
+  cz: "\u{1F1E8}\u{1F1FF}",
+  estonia: "\u{1F1EA}\u{1F1EA}",
+  ee: "\u{1F1EA}\u{1F1EA}",
+  latvia: "\u{1F1F1}\u{1F1FB}",
+  lv: "\u{1F1F1}\u{1F1FB}",
+  lithuania: "\u{1F1F1}\u{1F1F9}",
+  lt: "\u{1F1F1}\u{1F1F9}",
+  iceland: "\u{1F1EE}\u{1F1F8}",
+  is: "\u{1F1EE}\u{1F1F8}",
+  portugal: "\u{1F1F5}\u{1F1F9}",
+  pt: "\u{1F1F5}\u{1F1F9}",
+};
+
+export function getCountryFlag(location: string): string | null {
+  const key = location.toLowerCase().trim();
+  return COUNTRY_FLAGS[key] ?? null;
+}
