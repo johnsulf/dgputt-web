@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { HashRedirect } from "@/app/utils/hash-redirect";
 import "./globals.css";
+import Footer from "./components/layout/footer";
+import Header from "./components/layout/header";
 
 const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -56,46 +55,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <HashRedirect />
-        <header className="bg-secondary px-8 py-4 flex justify-between items-center">
-          <Link href="/">
-            <img
-              src="/images/logo_plain.png"
-              alt="dgputt logo"
-              width={60}
-              height={60}
-            />
-          </Link>
-          <Button>Sign In</Button>
-        </header>
+        <Header />
 
         <main className="flex-1 max-w-275 mx-auto w-full">{children}</main>
 
-        <footer className="bg-secondary grid place-items-center gap-2 py-6 mt-4">
-          <p className="text-xl">&copy;dgputt</p>
-          <div className="flex gap-3">
-            <a
-              href="https://www.instagram.com/dgputt/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img
-                src="/images/ig.png"
-                alt="instagram"
-                width={32}
-                height={32}
-              />
-            </a>
-            <a
-              href="https://www.facebook.com/dgputt/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img src="/images/fb.png" alt="facebook" width={32} height={32} />
-            </a>
-          </div>
-          <Link href="/privacy-policy">Privacy Policy</Link>
-        </footer>
+        <Footer />
       </body>
     </html>
   );
