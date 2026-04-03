@@ -33,11 +33,11 @@ export default function Reviews() {
           {reviews.map((review) => (
             <div
               key={review.userName}
-              className="grid gap-2 p-6 bg-brand-yellow-muted rounded-2xl min-w-70 sm:min-w-0 sm:flex-1"
+              className="grid gap-2 p-6 bg-secondary rounded-2xl min-w-70 sm:min-w-0 sm:flex-1"
             >
               <div>
                 <h3 className="text-lg">by: {review.userName}</h3>
-                <p className="text-xs text-text-muted">{review.date}</p>
+                <p className="text-xs text-muted-foreground">{review.date}</p>
               </div>
               <p className="italic">&ldquo;{review.review}&rdquo;</p>
               <img
