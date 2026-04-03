@@ -315,8 +315,11 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
     for (const event of finishedEvents) {
       if (!event.players) continue;
 
+      const isCornhole = event.format === "cornhole";
+      const isDoubles = event.playerMode === "doubles";
       const eventScores: {
         uid: string;
+        rankingValue: number;
         hits: number;
         putts: number;
         completed: boolean;
@@ -324,49 +327,111 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
         division?: string;
       }[] = [];
 
-      for (const [uid, pdata] of Object.entries(event.players)) {
-        if (
-          divisionFilter !== "all" &&
-          (pdata.division?.toUpperCase() ?? "") !== divisionFilter
-        )
-          continue;
+      if (isCornhole && event.matches && event.matches.length > 0) {
+        // Cornhole: build scores from matches
+        const statsMap: Record<
+          string,
+          { wins: number; hits: number; putts: number }
+        > = {};
 
-        const name = pdata.displayName || pdata.name || uid;
-        let sumHits = 0;
-        let sumPutts = 0;
-        let validCount = 0;
+        for (const match of event.matches) {
+          const p1 = match.player1;
+          const p2 = match.player2;
+          if (p1.uid === "BYE" || p2.uid === "BYE") continue;
 
-        if (pdata.rounds) {
-          for (const r of pdata.rounds) {
-            if (r.dns || r.dnf) continue;
-            const { hits, putts } = roundHitsPutts(r);
-            sumHits += hits;
-            sumPutts += putts;
-            validCount++;
+          const p1Score = p1.score ?? 0;
+          const p2Score = p2.score ?? 0;
+
+          for (const { side, won } of [
+            { side: p1, won: p1Score > p2Score },
+            { side: p2, won: p2Score > p1Score },
+          ]) {
+            if (isDoubles && side.members?.length) {
+              for (const member of side.members) {
+                if (!member.uid) continue;
+                if (!statsMap[member.uid])
+                  statsMap[member.uid] = { wins: 0, hits: 0, putts: 0 };
+                if (won) statsMap[member.uid].wins++;
+                statsMap[member.uid].hits +=
+                  member.sequences?.reduce((a, b) => a + b, 0) ?? 0;
+                statsMap[member.uid].putts +=
+                  (member.sequences?.length ?? 0) * 2;
+              }
+            } else if (side.uid) {
+              if (!statsMap[side.uid])
+                statsMap[side.uid] = { wins: 0, hits: 0, putts: 0 };
+              if (won) statsMap[side.uid].wins++;
+              statsMap[side.uid].hits +=
+                side.sequences?.reduce((a, b) => a + b, 0) ?? 0;
+              statsMap[side.uid].putts += (side.sequences?.length ?? 0) * 2;
+            }
           }
         }
 
-        eventScores.push({
-          uid,
-          hits: sumHits,
-          putts: sumPutts,
-          completed: validCount > 0,
-          name,
-          division: pdata.division?.toUpperCase(),
-        });
+        for (const [uid, stats] of Object.entries(statsMap)) {
+          const pdata = event.players[uid];
+          if (
+            divisionFilter !== "all" &&
+            (pdata?.division?.toUpperCase() ?? "") !== divisionFilter
+          )
+            continue;
+          eventScores.push({
+            uid,
+            rankingValue: stats.wins,
+            hits: stats.hits,
+            putts: stats.putts,
+            completed: true,
+            name: pdata?.displayName || pdata?.name || uid,
+            division: pdata?.division?.toUpperCase(),
+          });
+        }
+      } else {
+        // Standard: build scores from rounds
+        for (const [uid, pdata] of Object.entries(event.players)) {
+          if (
+            divisionFilter !== "all" &&
+            (pdata.division?.toUpperCase() ?? "") !== divisionFilter
+          )
+            continue;
+
+          const name = pdata.displayName || pdata.name || uid;
+          let sumHits = 0;
+          let sumPutts = 0;
+          let validCount = 0;
+
+          if (pdata.rounds) {
+            for (const r of pdata.rounds) {
+              if (r.dns || r.dnf) continue;
+              const { hits, putts } = roundHitsPutts(r);
+              sumHits += hits;
+              sumPutts += putts;
+              validCount++;
+            }
+          }
+
+          eventScores.push({
+            uid,
+            rankingValue: sumHits,
+            hits: sumHits,
+            putts: sumPutts,
+            completed: validCount > 0,
+            name,
+            division: pdata.division?.toUpperCase(),
+          });
+        }
       }
 
-      // Rank by hits desc
-      eventScores.sort((a, b) => b.hits - a.hits);
-      let lastHits = -1;
+      // Rank by rankingValue desc
+      eventScores.sort((a, b) => b.rankingValue - a.rankingValue);
+      let lastVal = -1;
       let lastPlace = 0;
       for (let i = 0; i < eventScores.length; i++) {
         if (i === 0) {
           lastPlace = 1;
-        } else if (eventScores[i].hits !== lastHits) {
+        } else if (eventScores[i].rankingValue !== lastVal) {
           lastPlace = i + 1;
         }
-        lastHits = eventScores[i].hits;
+        lastVal = eventScores[i].rankingValue;
 
         const s = eventScores[i];
         if (!s.completed) continue;

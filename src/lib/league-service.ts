@@ -3,6 +3,7 @@ import { getFirebaseDb } from "@/lib/firebase";
 import type {
   LeagueInstance,
   LeagueEvent,
+  LeagueEventMatch,
   LeagueEventPlayer,
   LeagueEventRound,
   LeagueSeason,
@@ -134,6 +135,7 @@ function parseEvents(raw: unknown): LeagueEvent[] {
           ? (v.formatConfig as Record<string, unknown>)
           : undefined,
       dstIndex: typeof v.dstIndex === "number" ? v.dstIndex : undefined,
+      matches: parseMatches(v.matches),
     });
   }
 
@@ -212,6 +214,65 @@ function parseSeasons(raw: unknown): LeagueSeason[] | undefined {
       };
     })
     .filter((s) => s.id);
+}
+
+function parseMatches(raw: unknown): LeagueEventMatch[] | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+
+  const matches: LeagueEventMatch[] = [];
+  const rounds = toArray(raw);
+
+  for (const round of rounds) {
+    if (!round || typeof round !== "object") continue;
+    for (const matchVal of Object.values(round as Record<string, unknown>)) {
+      if (!matchVal || typeof matchVal !== "object") continue;
+      const m = matchVal as Record<string, unknown>;
+      const p1 = parseMatchSide(m.player1);
+      const p2 = parseMatchSide(m.player2);
+      if (!p1 || !p2) continue;
+      matches.push({
+        player1: p1,
+        player2: p2,
+        finished: typeof m.finished === "boolean" ? m.finished : undefined,
+      });
+    }
+  }
+
+  return matches.length > 0 ? matches : undefined;
+}
+
+function parseMatchSide(raw: unknown): LeagueEventMatch["player1"] | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const v = raw as Record<string, unknown>;
+  return {
+    uid: typeof v.uid === "string" ? v.uid : undefined,
+    score: typeof v.score === "number" ? v.score : undefined,
+    winner: typeof v.winner === "boolean" ? v.winner : undefined,
+    sequences:
+      v.sequences && typeof v.sequences === "object"
+        ? (toArray(v.sequences) as number[])
+        : undefined,
+    members: parseMatchMembers(v.members),
+  };
+}
+
+function parseMatchMembers(
+  raw: unknown,
+): { uid?: string; sequences?: number[] }[] | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const arr = toArray(raw)
+    .filter((m) => m && typeof m === "object")
+    .map((m) => {
+      const v = m as Record<string, unknown>;
+      return {
+        uid: typeof v.uid === "string" ? v.uid : undefined,
+        sequences:
+          v.sequences && typeof v.sequences === "object"
+            ? (toArray(v.sequences) as number[])
+            : undefined,
+      };
+    });
+  return arr.length > 0 ? arr : undefined;
 }
 
 /**

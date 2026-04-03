@@ -36,6 +36,7 @@ export interface LeagueEvent {
   players?: Record<string, LeagueEventPlayer>;
   formatConfig?: Record<string, unknown>;
   dstIndex?: number;
+  matches?: LeagueEventMatch[];
 }
 
 export interface LeagueEventPlayer {
@@ -54,6 +55,20 @@ export interface LeagueEventRound {
   dnf?: boolean;
   hitsPerSequence?: number[];
   puttsPerSequence?: number[];
+}
+
+export interface MatchSide {
+  uid?: string;
+  score?: number;
+  winner?: boolean;
+  sequences?: number[];
+  members?: { uid?: string; sequences?: number[] }[];
+}
+
+export interface LeagueEventMatch {
+  player1: MatchSide;
+  player2: MatchSide;
+  finished?: boolean;
 }
 
 export interface LeagueSeason {
