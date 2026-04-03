@@ -1,40 +1,66 @@
 "use client";
 
 import { useLeagues } from "@/lib/leagues-context";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 
 export function LeagueSearch() {
   const { searchTerm, setSearchTerm, refresh, isLoading } = useLeagues();
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="relative flex-1">
-        <Input
-          type="text"
-          placeholder="Find leagues..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        {searchTerm && (
-          <button
+    <InputGroup>
+      <InputGroupInput
+        placeholder="Find leagues..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      <InputGroupAddon>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-muted-foreground"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+      </InputGroupAddon>
+      {searchTerm && (
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            size="icon-xs"
+            variant="ghost"
             onClick={() => setSearchTerm("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            aria-label="Clear search"
           >
             ✕
-          </button>
-        )}
-      </div>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => refresh()}
-        disabled={isLoading}
-        title="Refresh"
-      >
-        <span className={isLoading ? "animate-spin" : ""}>↻</span>
-      </Button>
-    </div>
+          </InputGroupButton>
+        </InputGroupAddon>
+      )}
+      <InputGroupAddon align="inline-end">
+        <InputGroupButton
+          size="icon-xs"
+          variant="ghost"
+          onClick={() => refresh()}
+          disabled={isLoading}
+          aria-label="Refresh"
+          title="Refresh leagues"
+        >
+          <span className={isLoading ? "animate-spin inline-block" : "inline-block"}>
+            ↻
+          </span>
+        </InputGroupButton>
+      </InputGroupAddon>
+    </InputGroup>
   );
 }
