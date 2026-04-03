@@ -117,7 +117,7 @@ function parseEvents(raw: unknown): LeagueEvent[] {
       location: typeof v.location === "string" ? v.location : undefined,
       description:
         typeof v.description === "string" ? v.description : undefined,
-      finished: typeof v.finished === "boolean" ? v.finished : false,
+      finished: !!v.finished,
       currentRound:
         typeof v.currentRound === "number" ? v.currentRound : undefined,
       rounds: typeof v.rounds === "number" ? v.rounds : undefined,
@@ -166,7 +166,7 @@ function parsePlayers(
       displayName:
         typeof v.displayName === "string" ? v.displayName : undefined,
       name: typeof v.name === "string" ? v.name : undefined,
-      isDummy: typeof v.isDummy === "boolean" ? v.isDummy : false,
+      isDummy: !!v.isDummy,
       division:
         typeof v.division === "string" ? v.division : undefined,
       pairId: typeof v.pairId === "string" ? v.pairId : undefined,
@@ -187,8 +187,8 @@ function parseRounds(raw: unknown): LeagueEventRound[] | undefined {
       return {
         hits: typeof v.hits === "number" ? v.hits : undefined,
         putts: typeof v.putts === "number" ? v.putts : undefined,
-        dns: typeof v.dns === "boolean" ? v.dns : false,
-        dnf: typeof v.dnf === "boolean" ? v.dnf : false,
+        dns: !!v.dns,
+        dnf: !!v.dnf,
         hitsPerSequence: Array.isArray(v.hitsPerSequence)
           ? (v.hitsPerSequence as number[])
           : undefined,
