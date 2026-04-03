@@ -19,7 +19,7 @@ export function FeaturedLeagues() {
   return (
     <section className="rounded-2xl bg-secondary/20 p-4">
       <h3 className="mb-2 text-sm font-bold">Featured</h3>
-      <div className="flex flex-col">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {featured.map((league) => (
           <LeagueTile key={league.id} league={league} />
         ))}

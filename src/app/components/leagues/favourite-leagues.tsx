@@ -37,7 +37,7 @@ export function FavouriteLeagues() {
           Star a league to quickly access it here.
         </p>
       ) : (
-        <div className="flex flex-col">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {favourites.map((league) => (
             <LeagueTile key={league.id} league={league} />
           ))}

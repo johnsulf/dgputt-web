@@ -20,7 +20,7 @@ export function AllLeagues() {
       <h3 className="mb-2 text-sm font-bold">
         All Leagues ({filteredLeagues.length})
       </h3>
-      <div className="flex flex-col">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {filteredLeagues.map((league) => (
           <LeagueTile key={league.id} league={league} />
         ))}

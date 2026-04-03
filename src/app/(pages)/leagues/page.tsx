@@ -49,7 +49,7 @@ export default function LeaguesPage() {
 
   return (
     <LeaguesProvider>
-      <div className="mx-auto max-w-2xl py-4">
+      <div className="py-4">
         <h2 className="px-4">Leagues</h2>
         <LeaguesContent />
       </div>
