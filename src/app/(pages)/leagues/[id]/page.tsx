@@ -20,7 +20,11 @@ export default function LeagueDetailPage({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (authLoading) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     async function loadLeague() {
       try {
