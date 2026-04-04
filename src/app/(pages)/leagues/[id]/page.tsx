@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { fetchLeagueDetails } from "@/lib/league-service";
 import { getCountryFlag } from "@/lib/country-flags";
@@ -24,7 +24,7 @@ export default function LeagueDetailPage({
   const [league, setLeague] = useState<LeagueInstance | null>(null);
   const [loading, setLoading] = useState(true);
   const [seasonFilter, setSeasonFilter] = useState<string | null>(null);
-  const [seasonInitialized, setSeasonInitialized] = useState(false);
+  const seasonInitialized = useRef(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -39,9 +39,9 @@ export default function LeagueDetailPage({
         setLeague(data);
 
         // Default season filter to active season
-        if (data && !seasonInitialized) {
+        if (data && !seasonInitialized.current) {
           setSeasonFilter(data.activeSeasonId ?? null);
-          setSeasonInitialized(true);
+          seasonInitialized.current = true;
         }
       } catch (error) {
         console.error("Failed to load league:", error);
@@ -50,7 +50,7 @@ export default function LeagueDetailPage({
     }
 
     loadLeague();
-  }, [id, user, authLoading, seasonInitialized]);
+  }, [id, user, authLoading]);
 
   if (authLoading || loading) {
     return <LeagueDetailSkeleton />;
@@ -117,9 +117,7 @@ export default function LeagueDetailPage({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {league.isFeatured && (
-                <Badge variant="secondary">Featured</Badge>
-              )}
+              {league.isFeatured && <Badge variant="secondary">Featured</Badge>}
               {league.seasonsEnabled && (
                 <Badge variant="outline">Seasons</Badge>
               )}

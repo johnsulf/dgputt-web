@@ -17,8 +17,14 @@ export function categorizeEvents(
   activeSeasonId?: string,
 ): CategorizedEvents {
   const sorted = [...events].sort((a, b) => {
-    if (!a.date || !b.date) return 0;
-    return new Date(a.date).getTime() - new Date(b.date).getTime();
+    const tA = a.date ? new Date(a.date).getTime() : NaN;
+    const tB = b.date ? new Date(b.date).getTime() : NaN;
+    const validA = !isNaN(tA);
+    const validB = !isNaN(tB);
+    if (validA && validB) return tA - tB;
+    if (validA) return -1;
+    if (validB) return 1;
+    return 0;
   });
 
   const now = new Date();
@@ -32,11 +38,7 @@ export function categorizeEvents(
 
   for (const event of sorted) {
     // Partition past-season events first
-    if (
-      activeSeasonId &&
-      event.seasonId &&
-      event.seasonId !== activeSeasonId
-    ) {
+    if (activeSeasonId && event.seasonId && event.seasonId !== activeSeasonId) {
       pastSeason.push(event);
       continue;
     }
@@ -84,6 +86,7 @@ export function categorizeEvents(
  */
 export function formatEventDate(dateStr: string): string {
   const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
   return date.toLocaleDateString("en-GB", {
     weekday: "short",
     day: "numeric",

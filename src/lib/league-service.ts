@@ -158,7 +158,7 @@ function parsePlayers(
       displayName:
         typeof v.displayName === "string" ? v.displayName : undefined,
       name: typeof v.name === "string" ? v.name : undefined,
-      isDummy: !!v.isDummy,
+      isDummy: v.isDummy === true,
       division: typeof v.division === "string" ? v.division : undefined,
       pairId: typeof v.pairId === "string" ? v.pairId : undefined,
       rounds: parseRounds(v.rounds),
@@ -191,11 +191,15 @@ function parseRounds(raw: unknown): LeagueEventRound[] | undefined {
         dnf: typeof v.dnf === "boolean" ? v.dnf : false,
         hitsPerSequence:
           v.hitsPerSequence && typeof v.hitsPerSequence === "object"
-            ? (toArray(v.hitsPerSequence) as number[])
+            ? toArray(v.hitsPerSequence).map((n) =>
+                typeof n === "number" ? n : 0,
+              )
             : undefined,
         puttsPerSequence:
           v.puttsPerSequence && typeof v.puttsPerSequence === "object"
-            ? (toArray(v.puttsPerSequence) as number[])
+            ? toArray(v.puttsPerSequence).map((n) =>
+                typeof n === "number" ? n : 0,
+              )
             : undefined,
       };
     });
@@ -250,7 +254,7 @@ function parseMatchSide(raw: unknown): LeagueEventMatch["player1"] | undefined {
     winner: typeof v.winner === "boolean" ? v.winner : undefined,
     sequences:
       v.sequences && typeof v.sequences === "object"
-        ? (toArray(v.sequences) as number[])
+        ? toArray(v.sequences).map((n) => (typeof n === "number" ? n : 0))
         : undefined,
     members: parseMatchMembers(v.members),
   };
@@ -268,7 +272,7 @@ function parseMatchMembers(
         uid: typeof v.uid === "string" ? v.uid : undefined,
         sequences:
           v.sequences && typeof v.sequences === "object"
-            ? (toArray(v.sequences) as number[])
+            ? toArray(v.sequences).map((n) => (typeof n === "number" ? n : 0))
             : undefined,
       };
     });

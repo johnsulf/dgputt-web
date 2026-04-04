@@ -27,12 +27,11 @@ export function SeasonSelector({
 }: SeasonSelectorProps) {
   if (seasons.length === 0) return null;
 
-  const activeSeason = seasons.find((s) => s.id === activeSeasonId);
   const selectedLabel =
     selectedSeasonId === null
       ? "All seasons"
-      : seasons.find((s) => s.id === selectedSeasonId)?.title ??
-        selectedSeasonId;
+      : (seasons.find((s) => s.id === selectedSeasonId)?.title ??
+        selectedSeasonId);
 
   return (
     <Select
