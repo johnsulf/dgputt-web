@@ -232,6 +232,472 @@ const columns: ColumnDef<PlayerStanding>[] = [
   },
 ];
 
+function computeLeaderboardStandings({
+  events,
+  seasonFilter,
+  formatFilter,
+  divisionFilter,
+}: {
+  events: LeagueEvent[];
+  seasonFilter: string | null;
+  formatFilter: string;
+  divisionFilter: string;
+}): PlayerStanding[] {
+  const finishedEvents = events.filter((e) => {
+    if (!e.finished) return false;
+    if (seasonFilter && e.seasonId && e.seasonId !== seasonFilter) return false;
+    if (!matchesFormatFilter(e, formatFilter)) return false;
+    return true;
+  });
+
+  if (finishedEvents.length === 0) return [];
+
+  const acc: Record<
+    string,
+    {
+      name: string;
+      division?: string;
+      eventsPlayed: number;
+      eventWins: number;
+      totalHits: number;
+      totalPutts: number;
+      points: number;
+    }
+  > = {};
+
+  const ensureStanding = (uid: string, name: string, division?: string) => {
+    if (!acc[uid]) {
+      acc[uid] = {
+        name,
+        division,
+        eventsPlayed: 0,
+        eventWins: 0,
+        totalHits: 0,
+        totalPutts: 0,
+        points: 0,
+      };
+    }
+    return acc[uid];
+  };
+
+  for (const event of finishedEvents) {
+    if (!event.players) continue;
+
+    const isCornhole = event.format === "cornhole";
+    const isDoubles = event.playerMode === "doubles";
+    const isStormputtOrStations =
+      event.format === "stormputt" || event.format === "stations";
+
+    const memberToTeam: Record<string, string> = {};
+    const teamMembers: Record<string, string[]> = {};
+    if (isDoubles) {
+      for (const [uid, pdata] of Object.entries(event.players)) {
+        const teamId = pdata.pairId?.trim() || uid;
+        memberToTeam[uid] = teamId;
+        if (!teamMembers[teamId]) teamMembers[teamId] = [];
+        teamMembers[teamId].push(uid);
+      }
+    }
+
+    const uidHits: Record<string, number> = {};
+    const uidPutts: Record<string, number> = {};
+    const uidCompleted: Record<string, boolean> = {};
+    const uidNames: Record<string, string> = {};
+    const uidDivisions: Record<string, string | undefined> = {};
+    const eventPlaces: Record<string, number> = {};
+    const winningEntities = new Set<string>();
+
+    if (isCornhole && event.matches && event.matches.length > 0) {
+      const winsRanking: Record<string, number> = {};
+      const matchesPointsOnly: Record<string, number> = {};
+      const diffs: Record<string, number> = {};
+      const evHits: Record<string, number> = {};
+      const evAttempts: Record<string, number> = {};
+
+      const addSeqStats = (uid: string, seq?: number[]) => {
+        if (!uid || uid === "BYE" || !seq) return;
+        let h = 0,
+          a = 0;
+        for (const raw of seq) {
+          const v = typeof raw === "number" ? raw : 0;
+          if (v < 0 || v > 2) continue;
+          h += v;
+          a += 2;
+        }
+        if (h > 0 || a > 0) {
+          evHits[uid] = (evHits[uid] ?? 0) + h;
+          evAttempts[uid] = (evAttempts[uid] ?? 0) + a;
+        }
+      };
+
+      for (const match of event.matches) {
+        const p1 = match.player1;
+        const p2 = match.player2;
+        const u1 = p1.uid;
+        const u2 = p2.uid;
+        const s1 = p1.score ?? 0;
+        const s2 = p2.score ?? 0;
+
+        const team1Uids =
+          isDoubles && p1.members?.length
+            ? (p1.members.map((m) => m.uid).filter(Boolean) as string[])
+            : u1
+              ? [u1]
+              : [];
+        const team2Uids =
+          isDoubles && p2.members?.length
+            ? (p2.members.map((m) => m.uid).filter(Boolean) as string[])
+            : u2
+              ? [u2]
+              : [];
+
+        if (isDoubles && p1.members?.length) {
+          for (const m of p1.members) {
+            if (m.uid) addSeqStats(m.uid, m.sequences);
+          }
+        } else if (u1 && u1 !== "BYE") {
+          addSeqStats(u1, p1.sequences);
+        }
+        if (isDoubles && p2.members?.length) {
+          for (const m of p2.members) {
+            if (m.uid) addSeqStats(m.uid, m.sequences);
+          }
+        } else if (u2 && u2 !== "BYE") {
+          addSeqStats(u2, p2.sequences);
+        }
+
+        if (u1 && u2 === "BYE") {
+          for (const uid of team1Uids)
+            winsRanking[uid] = (winsRanking[uid] ?? 0) + 1;
+          continue;
+        }
+        if (u2 && u1 === "BYE") {
+          for (const uid of team2Uids)
+            winsRanking[uid] = (winsRanking[uid] ?? 0) + 1;
+          continue;
+        }
+
+        if (!u1 || !u2 || u1 === "BYE" || u2 === "BYE") continue;
+
+        if (s1 > s2) {
+          for (const uid of team1Uids)
+            winsRanking[uid] = (winsRanking[uid] ?? 0) + 1;
+        } else if (s2 > s1) {
+          for (const uid of team2Uids)
+            winsRanking[uid] = (winsRanking[uid] ?? 0) + 1;
+        } else if (s1 === 0 && s2 === 0) {
+          if (p1.winner === true) {
+            for (const uid of team1Uids)
+              winsRanking[uid] = (winsRanking[uid] ?? 0) + 1;
+          } else if (p2.winner === true) {
+            for (const uid of team2Uids)
+              winsRanking[uid] = (winsRanking[uid] ?? 0) + 1;
+          }
+        }
+
+        for (const uid of team1Uids) diffs[uid] = (diffs[uid] ?? 0) + (s1 - s2);
+        for (const uid of team2Uids) diffs[uid] = (diffs[uid] ?? 0) + (s2 - s1);
+
+        if (s1 > s2 || s2 > s1) {
+          for (const uid of [...team1Uids, ...team2Uids]) {
+            matchesPointsOnly[uid] = (matchesPointsOnly[uid] ?? 0) + 1;
+          }
+        }
+      }
+
+      type CornholeEntry = {
+        uid: string;
+        winsR: number;
+        hitPct: number;
+        diff: number;
+      };
+      const entries: CornholeEntry[] = [];
+      const participantUids = new Set([
+        ...Object.keys(winsRanking),
+        ...Object.keys(matchesPointsOnly),
+        ...Object.keys(diffs),
+      ]);
+
+      for (const uid of participantUids) {
+        const pdata = event.players[uid];
+        if (
+          divisionFilter !== "all" &&
+          (pdata?.division?.toUpperCase() ?? "") !== divisionFilter
+        ) {
+          continue;
+        }
+
+        const h = evHits[uid] ?? 0;
+        const a = evAttempts[uid] ?? 0;
+        uidHits[uid] = h;
+        uidPutts[uid] = a;
+        uidCompleted[uid] = (matchesPointsOnly[uid] ?? 0) > 0;
+        uidNames[uid] = pdata?.displayName || pdata?.name || uid;
+        uidDivisions[uid] = pdata?.division?.toUpperCase();
+        entries.push({
+          uid,
+          winsR: winsRanking[uid] ?? 0,
+          hitPct: a > 0 ? h / a : -1,
+          diff: diffs[uid] ?? 0,
+        });
+      }
+
+      if (isDoubles) {
+        const teamEntries: {
+          teamId: string;
+          winsR: number;
+          hitPct: number;
+          diff: number;
+        }[] = [];
+        const teamIds = Array.from(
+          new Set(entries.map((entry) => memberToTeam[entry.uid] ?? entry.uid)),
+        );
+        for (const teamId of teamIds) {
+          const members = (teamMembers[teamId] ?? []).filter(
+            (uid) => uid in uidCompleted,
+          );
+          const repUid = members[0] ?? teamId;
+          const winsR = members.reduce(
+            (max, uid) => Math.max(max, winsRanking[uid] ?? 0),
+            0,
+          );
+          const teamHits = members.reduce(
+            (sum, uid) => sum + (evHits[uid] ?? 0),
+            0,
+          );
+          const teamAttempts = members.reduce(
+            (sum, uid) => sum + (evAttempts[uid] ?? 0),
+            0,
+          );
+          teamEntries.push({
+            teamId,
+            winsR,
+            hitPct: teamAttempts > 0 ? teamHits / teamAttempts : -1,
+            diff: diffs[repUid] ?? 0,
+          });
+        }
+
+        teamEntries.sort((a, b) => {
+          if (b.winsR !== a.winsR) return b.winsR - a.winsR;
+          if (b.hitPct !== a.hitPct) return b.hitPct - a.hitPct;
+          return b.diff - a.diff;
+        });
+        if (teamEntries.length > 0) {
+          winningEntities.add(teamEntries[0].teamId);
+        }
+
+        let lastW = -1,
+          lastH = -2,
+          lastD = Number.MIN_SAFE_INTEGER,
+          lastP = 0;
+        const teamPlace: Record<string, number> = {};
+        for (let i = 0; i < teamEntries.length; i++) {
+          const t = teamEntries[i];
+          if (i === 0) {
+            lastP = 1;
+          } else if (
+            t.winsR !== lastW ||
+            t.hitPct !== lastH ||
+            t.diff !== lastD
+          ) {
+            lastP = i + 1;
+          }
+          teamPlace[t.teamId] = lastP;
+          lastW = t.winsR;
+          lastH = t.hitPct;
+          lastD = t.diff;
+        }
+
+        for (const entry of entries) {
+          const teamId = memberToTeam[entry.uid] ?? entry.uid;
+          eventPlaces[entry.uid] = teamPlace[teamId] ?? 1;
+        }
+      } else {
+        entries.sort((a, b) => {
+          if (b.winsR !== a.winsR) return b.winsR - a.winsR;
+          if (b.hitPct !== a.hitPct) return b.hitPct - a.hitPct;
+          return b.diff - a.diff;
+        });
+        if (entries.length > 0) {
+          winningEntities.add(entries[0].uid);
+        }
+
+        let lastW = -1,
+          lastH = -2,
+          lastD = Number.MIN_SAFE_INTEGER,
+          lastP = 0;
+        for (let i = 0; i < entries.length; i++) {
+          const e = entries[i];
+          if (i === 0) {
+            lastP = 1;
+          } else if (
+            e.winsR !== lastW ||
+            e.hitPct !== lastH ||
+            e.diff !== lastD
+          ) {
+            lastP = i + 1;
+          }
+          eventPlaces[e.uid] = lastP;
+          lastW = e.winsR;
+          lastH = e.hitPct;
+          lastD = e.diff;
+        }
+      }
+    } else {
+      for (const [uid, pdata] of Object.entries(event.players)) {
+        if (
+          divisionFilter !== "all" &&
+          (pdata.division?.toUpperCase() ?? "") !== divisionFilter
+        ) {
+          continue;
+        }
+
+        let sumHits = 0;
+        let sumPutts = 0;
+        let validCount = 0;
+        if (pdata.rounds) {
+          for (const r of pdata.rounds) {
+            if (r.dns || r.dnf) continue;
+            const { hits, putts } = roundHitsPutts(r);
+            sumHits += hits;
+            sumPutts += putts;
+            validCount++;
+          }
+        }
+
+        uidHits[uid] = sumHits;
+        uidPutts[uid] = sumPutts;
+        uidCompleted[uid] = validCount > 0;
+        uidNames[uid] = pdata.displayName || pdata.name || uid;
+        uidDivisions[uid] = pdata.division?.toUpperCase();
+      }
+
+      if (isDoubles) {
+        const teamHits: Record<string, number> = {};
+        for (const [uid, hits] of Object.entries(uidHits)) {
+          const teamId = memberToTeam[uid] ?? uid;
+          teamHits[teamId] = (teamHits[teamId] ?? 0) + hits;
+        }
+        if (isStormputtOrStations) {
+          for (const [teamId, hits] of Object.entries(teamHits)) {
+            if ((teamMembers[teamId]?.length ?? 0) === 1) {
+              teamHits[teamId] = hits * 2;
+            }
+          }
+        }
+
+        const teamIds = Object.keys(teamHits).sort(
+          (a, b) => (teamHits[b] ?? 0) - (teamHits[a] ?? 0),
+        );
+        if (teamIds.length > 0) {
+          winningEntities.add(teamIds[0]);
+        }
+
+        let lastH = -1,
+          lastP = 0;
+        const teamPlace: Record<string, number> = {};
+        for (let i = 0; i < teamIds.length; i++) {
+          const h = teamHits[teamIds[i]] ?? 0;
+          if (i === 0) {
+            lastP = 1;
+          } else if (h !== lastH) {
+            lastP = i + 1;
+          }
+          teamPlace[teamIds[i]] = lastP;
+          lastH = h;
+        }
+
+        for (const uid of Object.keys(uidHits)) {
+          const teamId = memberToTeam[uid] ?? uid;
+          eventPlaces[uid] = teamPlace[teamId] ?? 1;
+          if (!uidCompleted[uid]) {
+            const members = teamMembers[teamId] ?? [uid];
+            uidCompleted[uid] = members.some((m) => uidCompleted[m]);
+          }
+        }
+      } else {
+        const uids = Object.keys(uidHits).sort(
+          (a, b) => (uidHits[b] ?? 0) - (uidHits[a] ?? 0),
+        );
+        if (uids.length > 0) {
+          winningEntities.add(uids[0]);
+        }
+
+        let lastH = -1,
+          lastP = 0;
+        for (let i = 0; i < uids.length; i++) {
+          const h = uidHits[uids[i]] ?? 0;
+          if (i === 0) {
+            lastP = 1;
+          } else if (h !== lastH) {
+            lastP = i + 1;
+          }
+          eventPlaces[uids[i]] = lastP;
+          lastH = h;
+        }
+      }
+    }
+
+    for (const uid of Object.keys(eventPlaces)) {
+      if (!uidCompleted[uid]) continue;
+      const place = eventPlaces[uid];
+      const pts = pointsForPlace(place);
+
+      const standing = ensureStanding(
+        uid,
+        uidNames[uid] || uid,
+        uidDivisions[uid],
+      );
+      standing.eventsPlayed++;
+      standing.totalHits += uidHits[uid] ?? 0;
+      standing.totalPutts += uidPutts[uid] ?? 0;
+      standing.points += pts;
+
+      const entityId = isDoubles ? (memberToTeam[uid] ?? uid) : uid;
+      if (winningEntities.has(entityId)) standing.eventWins++;
+    }
+  }
+
+  type StandingWithRaw = PlayerStanding & { _rawHitPct: number };
+  const standings: StandingWithRaw[] = Object.entries(acc).map(([uid, d]) => {
+    const rawHitPct =
+      d.totalPutts > 0 ? (d.totalHits / d.totalPutts) * 100 : -1;
+    return {
+      uid,
+      displayName: d.name,
+      division: d.division,
+      eventsPlayed: d.eventsPlayed,
+      eventWins: d.eventWins,
+      totalHits: d.totalHits,
+      totalPutts: d.totalPutts,
+      hitPercent: rawHitPct >= 0 ? Math.round(rawHitPct * 10) / 10 : 0,
+      _rawHitPct: rawHitPct,
+      points: d.points,
+      pos: 0,
+    };
+  });
+
+  standings.sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    return b._rawHitPct - a._rawHitPct;
+  });
+
+  for (let i = 0; i < standings.length; i++) {
+    if (i === 0) {
+      standings[i].pos = 1;
+    } else {
+      const prev = standings[i - 1];
+      const curr = standings[i];
+      standings[i].pos =
+        curr.points === prev.points && curr._rawHitPct === prev._rawHitPct
+          ? prev.pos
+          : i + 1;
+    }
+  }
+
+  return standings;
+}
+
 export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
   const events = league.events ?? [];
   const [formatFilter, setFormatFilter] = useState("all");
@@ -274,484 +740,16 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
     availableFormats.find((o) => o.value === formatFilter)?.label ??
     "All Formats";
 
-  const players = useMemo(() => {
-    const finishedEvents = events.filter((e) => {
-      if (!e.finished) return false;
-      if (seasonFilter && e.seasonId && e.seasonId !== seasonFilter)
-        return false;
-      if (!matchesFormatFilter(e, formatFilter)) return false;
-      return true;
-    });
-
-    if (finishedEvents.length === 0) return [];
-
-    // Per-event: rank players by total hits, assign points
-    const acc: Record<
-      string,
-      {
-        name: string;
-        division?: string;
-        eventsPlayed: number;
-        eventWins: number;
-        totalHits: number;
-        totalPutts: number;
-        points: number;
-      }
-    > = {};
-
-    const ensureStanding = (uid: string, name: string, division?: string) => {
-      if (!acc[uid]) {
-        acc[uid] = {
-          name,
-          division,
-          eventsPlayed: 0,
-          eventWins: 0,
-          totalHits: 0,
-          totalPutts: 0,
-          points: 0,
-        };
-      }
-      return acc[uid];
-    };
-
-    for (const event of finishedEvents) {
-      if (!event.players) continue;
-
-      const isCornhole = event.format === "cornhole";
-      const isDoubles = event.playerMode === "doubles";
-      const isStormputtOrStations =
-        event.format === "stormputt" || event.format === "stations";
-
-      // Build member-to-team mapping for doubles events
-      const memberToTeam: Record<string, string> = {};
-      const teamMembers: Record<string, string[]> = {};
-      if (isDoubles) {
-        for (const [uid, pdata] of Object.entries(event.players)) {
-          const teamId = pdata.pairId?.trim() || uid;
-          memberToTeam[uid] = teamId;
-          if (!teamMembers[teamId]) teamMembers[teamId] = [];
-          teamMembers[teamId].push(uid);
-        }
-      }
-
-      // Per-uid stats for this event
-      const uidHits: Record<string, number> = {};
-      const uidPutts: Record<string, number> = {};
-      const uidCompleted: Record<string, boolean> = {};
-      const uidNames: Record<string, string> = {};
-      const uidDivisions: Record<string, string | undefined> = {};
-      // uid → event place
-      const eventPlaces: Record<string, number> = {};
-      // Event winner entity IDs: uid for singles, teamId for doubles
-      const winningEntities = new Set<string>();
-
-      if (isCornhole && event.matches && event.matches.length > 0) {
-        // Cornhole: derive all stats from matches
-        const winsRanking: Record<string, number> = {}; // includes BYE
-        const matchesPointsOnly: Record<string, number> = {}; // non-BYE
-        const diffs: Record<string, number> = {};
-        const evHits: Record<string, number> = {};
-        const evAttempts: Record<string, number> = {};
-
-        const addSeqStats = (uid: string, seq?: number[]) => {
-          if (!uid || uid === "BYE" || !seq) return;
-          let h = 0,
-            a = 0;
-          for (const raw of seq) {
-            const v = typeof raw === "number" ? raw : 0;
-            if (v < 0 || v > 2) continue;
-            h += v;
-            a += 2;
-          }
-          if (h > 0 || a > 0) {
-            evHits[uid] = (evHits[uid] ?? 0) + h;
-            evAttempts[uid] = (evAttempts[uid] ?? 0) + a;
-          }
-        };
-
-        for (const match of event.matches) {
-          const p1 = match.player1;
-          const p2 = match.player2;
-          const u1 = p1.uid;
-          const u2 = p2.uid;
-          const s1 = p1.score ?? 0;
-          const s2 = p2.score ?? 0;
-
-          const team1Uids =
-            isDoubles && p1.members?.length
-              ? (p1.members.map((m) => m.uid).filter(Boolean) as string[])
-              : u1
-                ? [u1]
-                : [];
-          const team2Uids =
-            isDoubles && p2.members?.length
-              ? (p2.members.map((m) => m.uid).filter(Boolean) as string[])
-              : u2
-                ? [u2]
-                : [];
-
-          // Accumulate sequence stats
-          if (isDoubles && p1.members?.length) {
-            for (const m of p1.members) {
-              if (m.uid) addSeqStats(m.uid, m.sequences);
-            }
-          } else if (u1 && u1 !== "BYE") {
-            addSeqStats(u1, p1.sequences);
-          }
-          if (isDoubles && p2.members?.length) {
-            for (const m of p2.members) {
-              if (m.uid) addSeqStats(m.uid, m.sequences);
-            }
-          } else if (u2 && u2 !== "BYE") {
-            addSeqStats(u2, p2.sequences);
-          }
-
-          // BYE: count as ranking win only
-          if (u1 && u2 === "BYE") {
-            for (const uid of team1Uids)
-              winsRanking[uid] = (winsRanking[uid] ?? 0) + 1;
-            continue;
-          }
-          if (u2 && u1 === "BYE") {
-            for (const uid of team2Uids)
-              winsRanking[uid] = (winsRanking[uid] ?? 0) + 1;
-            continue;
-          }
-
-          if (!u1 || !u2 || u1 === "BYE" || u2 === "BYE") continue;
-
-          // Determine winner
-          if (s1 > s2) {
-            for (const uid of team1Uids)
-              winsRanking[uid] = (winsRanking[uid] ?? 0) + 1;
-          } else if (s2 > s1) {
-            for (const uid of team2Uids)
-              winsRanking[uid] = (winsRanking[uid] ?? 0) + 1;
-          } else if (s1 === 0 && s2 === 0) {
-            // Winner flag fallback
-            if (p1.winner === true) {
-              for (const uid of team1Uids)
-                winsRanking[uid] = (winsRanking[uid] ?? 0) + 1;
-            } else if (p2.winner === true) {
-              for (const uid of team2Uids)
-                winsRanking[uid] = (winsRanking[uid] ?? 0) + 1;
-            }
-          }
-
-          // Score diff
-          for (const uid of team1Uids)
-            diffs[uid] = (diffs[uid] ?? 0) + (s1 - s2);
-          for (const uid of team2Uids)
-            diffs[uid] = (diffs[uid] ?? 0) + (s2 - s1);
-
-          // Points-only match counting (for completed check)
-          let counted = false;
-          if (s1 > s2 || s2 > s1) counted = true;
-          if (counted) {
-            for (const uid of [...team1Uids, ...team2Uids])
-              matchesPointsOnly[uid] = (matchesPointsOnly[uid] ?? 0) + 1;
-          }
-        }
-
-        // Build per-event entries
-        const participantUids = new Set([
-          ...Object.keys(winsRanking),
-          ...Object.keys(matchesPointsOnly),
-          ...Object.keys(diffs),
-        ]);
-
-        type CornholeEntry = {
-          uid: string;
-          winsR: number;
-          hitPct: number;
-          diff: number;
-        };
-        const entries: CornholeEntry[] = [];
-
-        for (const uid of participantUids) {
-          const pdata = event.players[uid];
-          if (
-            divisionFilter !== "all" &&
-            (pdata?.division?.toUpperCase() ?? "") !== divisionFilter
-          )
-            continue;
-
-          const h = evHits[uid] ?? 0;
-          const a = evAttempts[uid] ?? 0;
-          uidHits[uid] = h;
-          uidPutts[uid] = a;
-          uidCompleted[uid] = (matchesPointsOnly[uid] ?? 0) > 0;
-          uidNames[uid] = pdata?.displayName || pdata?.name || uid;
-          uidDivisions[uid] = pdata?.division?.toUpperCase();
-
-          entries.push({
-            uid,
-            winsR: winsRanking[uid] ?? 0,
-            hitPct: a > 0 ? h / a : -1,
-            diff: diffs[uid] ?? 0,
-          });
-        }
-
-        if (isDoubles) {
-          // Rank teams using team-level aggregates
-          const teamEntries: {
-            teamId: string;
-            winsR: number;
-            hitPct: number;
-            diff: number;
-          }[] = [];
-          const teamIds = Array.from(
-            new Set(
-              entries.map((entry) => memberToTeam[entry.uid] ?? entry.uid),
-            ),
-          );
-          for (const teamId of teamIds) {
-            const members = (teamMembers[teamId] ?? []).filter(
-              (uid) => uid in uidCompleted,
-            );
-            const repUid = members[0] ?? teamId;
-            const winsR = members.reduce(
-              (max, uid) => Math.max(max, winsRanking[uid] ?? 0),
-              0,
-            );
-            const teamHits = members.reduce(
-              (sum, uid) => sum + (evHits[uid] ?? 0),
-              0,
-            );
-            const teamAttempts = members.reduce(
-              (sum, uid) => sum + (evAttempts[uid] ?? 0),
-              0,
-            );
-            teamEntries.push({
-              teamId,
-              winsR,
-              hitPct: teamAttempts > 0 ? teamHits / teamAttempts : -1,
-              diff: diffs[repUid] ?? 0,
-            });
-          }
-          teamEntries.sort((a, b) => {
-            if (b.winsR !== a.winsR) return b.winsR - a.winsR;
-            if (b.hitPct !== a.hitPct) return b.hitPct - a.hitPct;
-            return b.diff - a.diff;
-          });
-          let lastW = -1,
-            lastH = -2,
-            lastD = Number.MIN_SAFE_INTEGER,
-            lastP = 0;
-          const teamPlace: Record<string, number> = {};
-          if (teamEntries.length > 0) {
-            winningEntities.add(teamEntries[0].teamId);
-          }
-          for (let i = 0; i < teamEntries.length; i++) {
-            const t = teamEntries[i];
-            if (i === 0) {
-              lastP = 1;
-            } else if (
-              t.winsR !== lastW ||
-              t.hitPct !== lastH ||
-              t.diff !== lastD
-            ) {
-              lastP = i + 1;
-            }
-            teamPlace[t.teamId] = lastP;
-            lastW = t.winsR;
-            lastH = t.hitPct;
-            lastD = t.diff;
-          }
-          for (const entry of entries) {
-            const teamId = memberToTeam[entry.uid] ?? entry.uid;
-            eventPlaces[entry.uid] = teamPlace[teamId] ?? 1;
-          }
-        } else {
-          // Rank individuals
-          entries.sort((a, b) => {
-            if (b.winsR !== a.winsR) return b.winsR - a.winsR;
-            if (b.hitPct !== a.hitPct) return b.hitPct - a.hitPct;
-            return b.diff - a.diff;
-          });
-          let lastW = -1,
-            lastH = -2,
-            lastD = Number.MIN_SAFE_INTEGER,
-            lastP = 0;
-          if (entries.length > 0) {
-            winningEntities.add(entries[0].uid);
-          }
-          for (let i = 0; i < entries.length; i++) {
-            const e = entries[i];
-            if (i === 0) {
-              lastP = 1;
-            } else if (
-              e.winsR !== lastW ||
-              e.hitPct !== lastH ||
-              e.diff !== lastD
-            ) {
-              lastP = i + 1;
-            }
-            eventPlaces[e.uid] = lastP;
-            lastW = e.winsR;
-            lastH = e.hitPct;
-            lastD = e.diff;
-          }
-        }
-      } else {
-        // Standard events: build scores from rounds
-        for (const [uid, pdata] of Object.entries(event.players)) {
-          if (
-            divisionFilter !== "all" &&
-            (pdata.division?.toUpperCase() ?? "") !== divisionFilter
-          )
-            continue;
-
-          let sumHits = 0;
-          let sumPutts = 0;
-          let validCount = 0;
-          if (pdata.rounds) {
-            for (const r of pdata.rounds) {
-              if (r.dns || r.dnf) continue;
-              const { hits, putts } = roundHitsPutts(r);
-              sumHits += hits;
-              sumPutts += putts;
-              validCount++;
-            }
-          }
-
-          uidHits[uid] = sumHits;
-          uidPutts[uid] = sumPutts;
-          uidCompleted[uid] = validCount > 0;
-          uidNames[uid] = pdata.displayName || pdata.name || uid;
-          uidDivisions[uid] = pdata.division?.toUpperCase();
-        }
-
-        if (isDoubles) {
-          // Sum team hits, rank teams
-          const teamHits: Record<string, number> = {};
-          for (const [uid, hits] of Object.entries(uidHits)) {
-            const teamId = memberToTeam[uid] ?? uid;
-            teamHits[teamId] = (teamHits[teamId] ?? 0) + hits;
-          }
-          // Solo player in stormputt/stations doubles gets hits doubled
-          if (isStormputtOrStations) {
-            for (const [teamId, hits] of Object.entries(teamHits)) {
-              if ((teamMembers[teamId]?.length ?? 0) === 1) {
-                teamHits[teamId] = hits * 2;
-              }
-            }
-          }
-          const teamIds = Object.keys(teamHits).sort(
-            (a, b) => (teamHits[b] ?? 0) - (teamHits[a] ?? 0),
-          );
-          if (teamIds.length > 0) {
-            winningEntities.add(teamIds[0]);
-          }
-          let lastH = -1,
-            lastP = 0;
-          const teamPlace: Record<string, number> = {};
-          for (let i = 0; i < teamIds.length; i++) {
-            const h = teamHits[teamIds[i]] ?? 0;
-            if (i === 0) {
-              lastP = 1;
-            } else if (h !== lastH) {
-              lastP = i + 1;
-            }
-            teamPlace[teamIds[i]] = lastP;
-            lastH = h;
-          }
-          // Assign team place to each member; check team-level completed
-          for (const uid of Object.keys(uidHits)) {
-            const teamId = memberToTeam[uid] ?? uid;
-            eventPlaces[uid] = teamPlace[teamId] ?? 1;
-            // Completed if any team member completed
-            if (!uidCompleted[uid]) {
-              const members = teamMembers[teamId] ?? [uid];
-              uidCompleted[uid] = members.some((m) => uidCompleted[m]);
-            }
-          }
-        } else {
-          // Rank individuals by hits
-          const uids = Object.keys(uidHits).sort(
-            (a, b) => (uidHits[b] ?? 0) - (uidHits[a] ?? 0),
-          );
-          if (uids.length > 0) {
-            winningEntities.add(uids[0]);
-          }
-          let lastH = -1,
-            lastP = 0;
-          for (let i = 0; i < uids.length; i++) {
-            const h = uidHits[uids[i]] ?? 0;
-            if (i === 0) {
-              lastP = 1;
-            } else if (h !== lastH) {
-              lastP = i + 1;
-            }
-            eventPlaces[uids[i]] = lastP;
-            lastH = h;
-          }
-        }
-      }
-
-      // Assign points from event places
-      for (const uid of Object.keys(eventPlaces)) {
-        if (!uidCompleted[uid]) continue;
-        const place = eventPlaces[uid];
-        const pts = pointsForPlace(place);
-
-        const standing = ensureStanding(
-          uid,
-          uidNames[uid] || uid,
-          uidDivisions[uid],
-        );
-
-        standing.eventsPlayed++;
-        standing.totalHits += uidHits[uid] ?? 0;
-        standing.totalPutts += uidPutts[uid] ?? 0;
-        standing.points += pts;
-        const entityId = isDoubles ? (memberToTeam[uid] ?? uid) : uid;
-        if (winningEntities.has(entityId)) standing.eventWins++;
-      }
-    }
-
-    // Build standings
-    type StandingWithRaw = PlayerStanding & { _rawHitPct: number };
-    const standings: StandingWithRaw[] = Object.entries(acc).map(([uid, d]) => {
-      const rawHitPct =
-        d.totalPutts > 0 ? (d.totalHits / d.totalPutts) * 100 : -1;
-      return {
-        uid,
-        displayName: d.name,
-        division: d.division,
-        eventsPlayed: d.eventsPlayed,
-        eventWins: d.eventWins,
-        totalHits: d.totalHits,
-        totalPutts: d.totalPutts,
-        hitPercent: rawHitPct >= 0 ? Math.round(rawHitPct * 10) / 10 : 0,
-        _rawHitPct: rawHitPct,
-        points: d.points,
-        pos: 0,
-      };
-    });
-
-    // Sort by points desc, then hit% desc for position assignment
-    standings.sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      return b._rawHitPct - a._rawHitPct;
-    });
-
-    // Assign positions with ties
-    for (let i = 0; i < standings.length; i++) {
-      if (i === 0) {
-        standings[i].pos = 1;
-      } else {
-        const prev = standings[i - 1];
-        const curr = standings[i];
-        standings[i].pos =
-          curr.points === prev.points && curr._rawHitPct === prev._rawHitPct
-            ? prev.pos
-            : i + 1;
-      }
-    }
-
-    return standings;
-  }, [events, seasonFilter, formatFilter, divisionFilter]);
+  const players = useMemo(
+    () =>
+      computeLeaderboardStandings({
+        events,
+        seasonFilter,
+        formatFilter,
+        divisionFilter,
+      }),
+    [events, seasonFilter, formatFilter, divisionFilter],
+  );
 
   const table = useReactTable({
     data: players,
