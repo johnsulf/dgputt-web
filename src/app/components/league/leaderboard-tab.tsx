@@ -327,6 +327,8 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
       const uidDivisions: Record<string, string | undefined> = {};
       // uid → event place
       const eventPlaces: Record<string, number> = {};
+      // Event winner entity IDs: uid for singles, teamId for doubles
+      const winningEntities = new Set<string>();
 
       if (isCornhole && event.matches && event.matches.length > 0) {
         // Cornhole: derive all stats from matches
@@ -507,6 +509,9 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
             lastD = Number.MIN_SAFE_INTEGER,
             lastP = 0;
           const teamPlace: Record<string, number> = {};
+          if (teamEntries.length > 0) {
+            winningEntities.add(teamEntries[0].teamId);
+          }
           for (let i = 0; i < teamEntries.length; i++) {
             const t = teamEntries[i];
             if (i === 0) {
@@ -538,6 +543,9 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
             lastH = -2,
             lastD = Number.MIN_SAFE_INTEGER,
             lastP = 0;
+          if (entries.length > 0) {
+            winningEntities.add(entries[0].uid);
+          }
           for (let i = 0; i < entries.length; i++) {
             const e = entries[i];
             if (i === 0) {
@@ -602,6 +610,9 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
           const teamIds = Object.keys(teamHits).sort(
             (a, b) => (teamHits[b] ?? 0) - (teamHits[a] ?? 0),
           );
+          if (teamIds.length > 0) {
+            winningEntities.add(teamIds[0]);
+          }
           let lastH = -1,
             lastP = 0;
           const teamPlace: Record<string, number> = {};
@@ -630,6 +641,9 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
           const uids = Object.keys(uidHits).sort(
             (a, b) => (uidHits[b] ?? 0) - (uidHits[a] ?? 0),
           );
+          if (uids.length > 0) {
+            winningEntities.add(uids[0]);
+          }
           let lastH = -1,
             lastP = 0;
           for (let i = 0; i < uids.length; i++) {
@@ -667,7 +681,8 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
         acc[uid].totalHits += uidHits[uid] ?? 0;
         acc[uid].totalPutts += uidPutts[uid] ?? 0;
         acc[uid].points += pts;
-        if (place === 1) acc[uid].eventWins++;
+        const entityId = isDoubles ? (memberToTeam[uid] ?? uid) : uid;
+        if (winningEntities.has(entityId)) acc[uid].eventWins++;
       }
     }
 
