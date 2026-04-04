@@ -94,7 +94,7 @@ export function EventView({ league, event }: EventViewProps) {
         ) : (
           <Alert>
             <AlertTitle>
-              {formatLabel(event.format)} &ndash; under construction
+              {formatLabel(event.format)} events are under construction
             </AlertTitle>
             <AlertDescription>
               Event view for {formatLabel(event.format) || "this format"} is
