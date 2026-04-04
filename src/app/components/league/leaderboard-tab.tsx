@@ -659,6 +659,7 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
       }
 
       // Assign points from event places
+      const creditedWinTeams = new Set<string>(); // Track teams that got a win in this event
       for (const uid of Object.keys(eventPlaces)) {
         if (!uidCompleted[uid]) continue;
         const place = eventPlaces[uid];
@@ -680,7 +681,13 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
         acc[uid].totalHits += uidHits[uid] ?? 0;
         acc[uid].totalPutts += uidPutts[uid] ?? 0;
         acc[uid].points += pts;
-        if (place === 1) acc[uid].eventWins++;
+
+        // For doubles, only credit the team's win once (not per member)
+        const winKey = isDoubles ? (memberToTeam[uid] ?? uid) : uid;
+        if (place === 1 && !creditedWinTeams.has(winKey)) {
+          acc[uid].eventWins++;
+          creditedWinTeams.add(winKey);
+        }
       }
     }
 
