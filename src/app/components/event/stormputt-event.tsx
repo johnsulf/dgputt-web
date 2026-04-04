@@ -13,11 +13,25 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+const METER_DST_NORMAL = ["5m", "6m", "7m", "8m", "9m", "10m"];
+const FEET_DST_NORMAL = ["16ft", "20ft", "23ft", "26ft", "30ft", "33ft"];
+const METER_DST_LONG = ["10m", "11m", "12m", "13m", "14m", "15m"];
+const FEET_DST_LONG = ["33ft", "36ft", "40ft", "43ft", "46ft", "50ft"];
+
+function getDistanceLabels(dstIndex?: number): {
+  meter: string[];
+  feet: string[];
+} {
+  if (dstIndex === 1) return { meter: METER_DST_LONG, feet: FEET_DST_LONG };
+  return { meter: METER_DST_NORMAL, feet: FEET_DST_NORMAL };
+}
+
 interface PlayerRow {
   uid: string;
   name: string;
   place: number;
   distances: number[];
+  distancePutts: number[];
   hits: number;
   putts: number;
   hitPercent: number;
@@ -34,14 +48,17 @@ function computeTotals(
     .filter(([, p]) => p.isDummy !== true)
     .map(([uid, player]) => {
       const distances = Array.from({ length: NUM_DISTANCES }, () => 0);
+      const distancePutts = Array.from({ length: NUM_DISTANCES }, () => 0);
       let totalHits = 0;
       let totalPutts = 0;
 
       for (const round of player.rounds ?? []) {
         if (round.dns === true || round.dnf === true) continue;
         const hps = round.hitsPerSequence ?? [];
+        const pps = round.puttsPerSequence ?? [];
         for (let i = 0; i < NUM_DISTANCES; i++) {
           distances[i] += hps[i] ?? 0;
+          distancePutts[i] += pps[i] ?? 0;
         }
         totalHits += round.hits ?? 0;
         totalPutts += round.putts ?? 0;
@@ -51,6 +68,7 @@ function computeTotals(
         uid,
         name: player.displayName ?? player.name ?? "Unknown",
         distances,
+        distancePutts,
         hits: totalHits,
         putts: totalPutts,
         hitPercent: totalPutts > 0 ? (totalHits / totalPutts) * 100 : 0,
@@ -77,6 +95,7 @@ function computeRound(
           uid,
           name: player.displayName ?? player.name ?? "Unknown",
           distances: Array.from({ length: NUM_DISTANCES }, () => 0),
+          distancePutts: Array.from({ length: NUM_DISTANCES }, () => 0),
           hits: 0,
           putts: 0,
           hitPercent: 0,
@@ -85,15 +104,21 @@ function computeRound(
       }
 
       const hps = round.hitsPerSequence ?? [];
+      const pps = round.puttsPerSequence ?? [];
       const distances = Array.from(
         { length: NUM_DISTANCES },
         (_, i) => hps[i] ?? 0,
+      );
+      const distancePutts = Array.from(
+        { length: NUM_DISTANCES },
+        (_, i) => pps[i] ?? 0,
       );
 
       return {
         uid,
         name: player.displayName ?? player.name ?? "Unknown",
         distances,
+        distancePutts,
         hits: round.hits ?? 0,
         putts: round.putts ?? 0,
         hitPercent:
@@ -130,16 +155,25 @@ function assignPlaces(rows: Omit<PlayerRow, "place">[]): PlayerRow[] {
   });
 }
 
-function ResultsTable({ rows }: { rows: PlayerRow[] }) {
+function ResultsTable({
+  rows,
+  distanceLabels,
+}: {
+  rows: PlayerRow[];
+  distanceLabels: { meter: string[]; feet: string[] };
+}) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead className="w-10 text-center">#</TableHead>
           <TableHead>Player</TableHead>
-          {Array.from({ length: NUM_DISTANCES }, (_, i) => (
-            <TableHead key={i} className="w-10 text-center">
-              D{i + 1}
+          {distanceLabels.meter.map((label, i) => (
+            <TableHead key={i} className="w-14 text-center">
+              <div>{label}</div>
+              <div className="text-[10px] font-normal text-muted-foreground">
+                {distanceLabels.feet[i]}
+              </div>
             </TableHead>
           ))}
           <TableHead className="w-16 text-center">Hit%</TableHead>
@@ -163,11 +197,26 @@ function ResultsTable({ rows }: { rows: PlayerRow[] }) {
               )}
             </TableCell>
             <TableCell className="font-medium">{row.name}</TableCell>
-            {row.distances.map((d, i) => (
-              <TableCell key={i} className="text-center">
-                {row.dns ? "-" : d}
-              </TableCell>
-            ))}
+            {row.distances.map((d, i) => {
+              const p = row.distancePutts[i] ?? 0;
+              const pct = p > 0 ? (d / p) * 100 : 0;
+              return (
+                <TableCell key={i} className="text-center">
+                  {row.dns ? (
+                    "-"
+                  ) : (
+                    <div>
+                      <span>{d}</span>
+                      {p > 0 && (
+                        <div className="text-[10px] text-muted-foreground">
+                          {pct.toFixed(0)}%
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </TableCell>
+              );
+            })}
             <TableCell className="text-center">
               {row.dns ? "-" : `${row.hitPercent.toFixed(1)}%`}
             </TableCell>
@@ -247,6 +296,11 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
 
   const hasStarted = (event.currentRound ?? 0) > 0 || event.finished;
 
+  const distanceLabels = useMemo(
+    () => getDistanceLabels(event.dstIndex),
+    [event.dstIndex],
+  );
+
   const maxRounds = useMemo(
     () =>
       Math.max(0, ...Object.values(players).map((p) => p.rounds?.length ?? 0)),
@@ -270,24 +324,32 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
     return <PlayersRegistrationTable players={players} />;
   }
 
+  // Only totals when a single round
+  if (maxRounds <= 1) {
+    return <ResultsTable rows={totals} distanceLabels={distanceLabels} />;
+  }
+
   return (
     <Tabs defaultValue="totals">
       <TabsList>
         <TabsTrigger value="totals">Totals</TabsTrigger>
-        {Array.from({ length: maxRounds }, (_, i) => (
-          <TabsTrigger key={i} value={`round-${i}`}>
-            Round {i + 1}
-          </TabsTrigger>
-        ))}
+        {Array.from({ length: maxRounds }, (_, i) => {
+          const roundNum = maxRounds - i;
+          return (
+            <TabsTrigger key={roundNum} value={`round-${roundNum - 1}`}>
+              Round {roundNum}
+            </TabsTrigger>
+          );
+        })}
       </TabsList>
 
       <TabsContent value="totals" className="mt-4">
-        <ResultsTable rows={totals} />
+        <ResultsTable rows={totals} distanceLabels={distanceLabels} />
       </TabsContent>
 
       {roundData.map((rows, i) => (
         <TabsContent key={i} value={`round-${i}`} className="mt-4">
-          <ResultsTable rows={rows} />
+          <ResultsTable rows={rows} distanceLabels={distanceLabels} />
         </TabsContent>
       ))}
     </Tabs>

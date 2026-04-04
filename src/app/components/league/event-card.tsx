@@ -28,7 +28,10 @@ export function EventCard({
   }[variant];
 
   return (
-    <Link href={`/leagues/${leagueId}/events/${event.id}`}>
+    <Link
+      href={`/leagues/${leagueId}/events/${event.id}`}
+      className="no-underline"
+    >
       <div
         className={`rounded-2xl border p-4 ${bgClass} transition-colors hover:bg-muted/50`}
       >
