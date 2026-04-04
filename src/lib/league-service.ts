@@ -161,6 +161,12 @@ function parsePlayers(
       isDummy: v.isDummy === true,
       division: typeof v.division === "string" ? v.division : undefined,
       pairId: typeof v.pairId === "string" ? v.pairId : undefined,
+      pdgaNumber:
+        typeof v.pdgaNumber === "string"
+          ? v.pdgaNumber
+          : typeof v.pdgaNumber === "number"
+            ? String(v.pdgaNumber)
+            : undefined,
       rounds: parseRounds(v.rounds),
     };
   }

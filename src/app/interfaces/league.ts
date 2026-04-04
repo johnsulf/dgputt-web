@@ -45,6 +45,7 @@ export interface LeagueEventPlayer {
   isDummy?: boolean;
   division?: string;
   pairId?: string;
+  pdgaNumber?: string;
   rounds?: LeagueEventRound[];
 }
 
