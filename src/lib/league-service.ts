@@ -187,8 +187,8 @@ function parseRounds(raw: unknown): LeagueEventRound[] | undefined {
       return {
         hits: typeof v.hits === "number" ? v.hits : undefined,
         putts: typeof v.putts === "number" ? v.putts : undefined,
-        dns: !!v.dns,
-        dnf: !!v.dnf,
+        dns: typeof v.dns === "boolean" ? v.dns : false,
+        dnf: typeof v.dnf === "boolean" ? v.dnf : false,
         hitsPerSequence:
           v.hitsPerSequence && typeof v.hitsPerSequence === "object"
             ? (toArray(v.hitsPerSequence) as number[])
