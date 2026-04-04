@@ -67,7 +67,11 @@ export function EventsTab({ league, seasonFilter }: EventsTabProps) {
       {nextEvent && ongoingEvents.length === 0 && (
         <section>
           <h3 className="mb-2 text-sm font-bold">Next Event</h3>
-          <EventCard event={nextEvent} variant="highlight" />
+          <EventCard
+            event={nextEvent}
+            leagueId={league.id}
+            variant="highlight"
+          />
         </section>
       )}
 
@@ -79,7 +83,12 @@ export function EventsTab({ league, seasonFilter }: EventsTabProps) {
           </h3>
           <div className="flex flex-col gap-2">
             {ongoingEvents.map((event) => (
-              <EventCard key={event.id} event={event} variant="ongoing" />
+              <EventCard
+                key={event.id}
+                event={event}
+                leagueId={league.id}
+                variant="ongoing"
+              />
             ))}
           </div>
         </section>
@@ -97,7 +106,11 @@ export function EventsTab({ league, seasonFilter }: EventsTabProps) {
             <AccordionContent>
               <div className="flex flex-col gap-2">
                 {upcomingEvents.map((event) => (
-                  <EventCard key={event.id} event={event} />
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    leagueId={league.id}
+                  />
                 ))}
               </div>
             </AccordionContent>
@@ -117,7 +130,11 @@ export function EventsTab({ league, seasonFilter }: EventsTabProps) {
             <AccordionContent>
               <div className="flex flex-col gap-2">
                 {[...finishedEvents].reverse().map((event) => (
-                  <EventCard key={event.id} event={event} />
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    leagueId={league.id}
+                  />
                 ))}
               </div>
             </AccordionContent>
@@ -137,7 +154,12 @@ export function EventsTab({ league, seasonFilter }: EventsTabProps) {
             <AccordionContent>
               <div className="flex flex-col gap-2">
                 {incompleteEvents.map((event) => (
-                  <EventCard key={event.id} event={event} variant="incomplete" />
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    leagueId={league.id}
+                    variant="incomplete"
+                  />
                 ))}
               </div>
             </AccordionContent>
@@ -157,7 +179,11 @@ export function EventsTab({ league, seasonFilter }: EventsTabProps) {
             <AccordionContent>
               <div className="flex flex-col gap-2">
                 {pastSeasonEvents.map((event) => (
-                  <EventCard key={event.id} event={event} />
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    leagueId={league.id}
+                  />
                 ))}
               </div>
             </AccordionContent>
