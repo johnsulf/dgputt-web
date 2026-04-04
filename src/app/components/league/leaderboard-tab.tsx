@@ -36,15 +36,21 @@ interface LeaderboardTabProps {
   seasonFilter: string | null;
 }
 
-const FORMAT_OPTIONS = [
-  { value: "all", label: "All Formats" },
-  { value: "stormputt", label: "StormPutt" },
-  { value: "stormputt_doubles", label: "StormPutt Doubles" },
-  { value: "stations", label: "Stations" },
-  { value: "stations_doubles", label: "Stations Doubles" },
-  { value: "cornhole", label: "Cornhole" },
-  { value: "cornhole_doubles", label: "Cornhole Doubles" },
-] as const;
+const FORMAT_LABELS: Record<string, string> = {
+  stormputt: "StormPutt",
+  stormputt_doubles: "StormPutt Doubles",
+  stations: "Stations",
+  stations_doubles: "Stations Doubles",
+  cornhole: "Cornhole",
+  cornhole_doubles: "Cornhole Doubles",
+};
+
+function formatFilterKey(event: LeagueEvent): string | null {
+  if (!event.format) return null;
+  return event.playerMode === "doubles"
+    ? `${event.format}_doubles`
+    : event.format;
+}
 
 function pointsForPlace(place: number): number {
   switch (place) {
@@ -69,24 +75,7 @@ function pointsForPlace(place: number): number {
 
 function matchesFormatFilter(event: LeagueEvent, filter: string): boolean {
   if (filter === "all") return true;
-  const format = event.format;
-  const mode = event.playerMode;
-  switch (filter) {
-    case "stormputt":
-      return format === "stormputt" && mode !== "doubles";
-    case "stormputt_doubles":
-      return format === "stormputt" && mode === "doubles";
-    case "stations":
-      return format === "stations" && mode !== "doubles";
-    case "stations_doubles":
-      return format === "stations" && mode === "doubles";
-    case "cornhole":
-      return format === "cornhole" && mode !== "doubles";
-    case "cornhole_doubles":
-      return format === "cornhole" && mode === "doubles";
-    default:
-      return true;
-  }
+  return formatFilterKey(event) === filter;
 }
 
 function roundHitsPutts(r: {
@@ -252,10 +241,6 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
   ]);
   const [globalFilter, setGlobalFilter] = useState("");
 
-  const formatFilterLabel =
-    FORMAT_OPTIONS.find((o) => o.value === formatFilter)?.label ??
-    "All Formats";
-
   // Collect available divisions across all events
   const availableDivisions = useMemo(() => {
     const divs = new Set<string>();
@@ -276,16 +261,18 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
     const fmts = new Set<string>();
     for (const event of events) {
       if (!event.finished) continue;
-      if (event.format) {
-        const key =
-          event.playerMode === "doubles"
-            ? `${event.format}_doubles`
-            : event.format;
-        fmts.add(key);
-      }
+      const key = formatFilterKey(event);
+      if (key) fmts.add(key);
     }
-    return FORMAT_OPTIONS.filter((o) => o.value === "all" || fmts.has(o.value));
+    const formatOptions = Array.from(fmts)
+      .sort()
+      .map((key) => ({ value: key, label: FORMAT_LABELS[key] ?? key }));
+    return [{ value: "all", label: "All Formats" }, ...formatOptions];
   }, [events]);
+
+  const formatFilterLabel =
+    availableFormats.find((o) => o.value === formatFilter)?.label ??
+    "All Formats";
 
   const players = useMemo(() => {
     const finishedEvents = events.filter((e) => {
@@ -659,7 +646,6 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
       }
 
       // Assign points from event places
-      const creditedWinTeams = new Set<string>(); // Track teams that got a win in this event
       for (const uid of Object.keys(eventPlaces)) {
         if (!uidCompleted[uid]) continue;
         const place = eventPlaces[uid];
@@ -681,13 +667,7 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
         acc[uid].totalHits += uidHits[uid] ?? 0;
         acc[uid].totalPutts += uidPutts[uid] ?? 0;
         acc[uid].points += pts;
-
-        // For doubles, only credit the team's win once (not per member)
-        const winKey = isDoubles ? (memberToTeam[uid] ?? uid) : uid;
-        if (place === 1 && !creditedWinTeams.has(winKey)) {
-          acc[uid].eventWins++;
-          creditedWinTeams.add(winKey);
-        }
+        if (place === 1) acc[uid].eventWins++;
       }
     }
 
