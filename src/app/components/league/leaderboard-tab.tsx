@@ -299,6 +299,21 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
       }
     > = {};
 
+    const ensureStanding = (uid: string, name: string, division?: string) => {
+      if (!acc[uid]) {
+        acc[uid] = {
+          name,
+          division,
+          eventsPlayed: 0,
+          eventWins: 0,
+          totalHits: 0,
+          totalPutts: 0,
+          points: 0,
+        };
+      }
+      return acc[uid];
+    };
+
     for (const event of finishedEvents) {
       if (!event.players) continue;
 
@@ -450,7 +465,6 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
           winsR: number;
           hitPct: number;
           diff: number;
-          completed: boolean;
         };
         const entries: CornholeEntry[] = [];
 
@@ -475,28 +489,44 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
             winsR: winsRanking[uid] ?? 0,
             hitPct: a > 0 ? h / a : -1,
             diff: diffs[uid] ?? 0,
-            completed: uidCompleted[uid],
           });
         }
 
         if (isDoubles) {
-          // Rank teams by representative member
+          // Rank teams using team-level aggregates
           const teamEntries: {
             teamId: string;
             winsR: number;
             hitPct: number;
             diff: number;
           }[] = [];
-          const seen = new Set<string>();
-          for (const entry of entries) {
-            const teamId = memberToTeam[entry.uid] ?? entry.uid;
-            if (seen.has(teamId)) continue;
-            seen.add(teamId);
+          const teamIds = Array.from(
+            new Set(
+              entries.map((entry) => memberToTeam[entry.uid] ?? entry.uid),
+            ),
+          );
+          for (const teamId of teamIds) {
+            const members = (teamMembers[teamId] ?? []).filter(
+              (uid) => uid in uidCompleted,
+            );
+            const repUid = members[0] ?? teamId;
+            const winsR = members.reduce(
+              (max, uid) => Math.max(max, winsRanking[uid] ?? 0),
+              0,
+            );
+            const teamHits = members.reduce(
+              (sum, uid) => sum + (evHits[uid] ?? 0),
+              0,
+            );
+            const teamAttempts = members.reduce(
+              (sum, uid) => sum + (evAttempts[uid] ?? 0),
+              0,
+            );
             teamEntries.push({
               teamId,
-              winsR: entry.winsR,
-              hitPct: entry.hitPct,
-              diff: entry.diff,
+              winsR,
+              hitPct: teamAttempts > 0 ? teamHits / teamAttempts : -1,
+              diff: diffs[repUid] ?? 0,
             });
           }
           teamEntries.sort((a, b) => {
@@ -665,24 +695,18 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
         const place = eventPlaces[uid];
         const pts = pointsForPlace(place);
 
-        if (!acc[uid]) {
-          acc[uid] = {
-            name: uidNames[uid] || uid,
-            division: uidDivisions[uid],
-            eventsPlayed: 0,
-            eventWins: 0,
-            totalHits: 0,
-            totalPutts: 0,
-            points: 0,
-          };
-        }
+        const standing = ensureStanding(
+          uid,
+          uidNames[uid] || uid,
+          uidDivisions[uid],
+        );
 
-        acc[uid].eventsPlayed++;
-        acc[uid].totalHits += uidHits[uid] ?? 0;
-        acc[uid].totalPutts += uidPutts[uid] ?? 0;
-        acc[uid].points += pts;
+        standing.eventsPlayed++;
+        standing.totalHits += uidHits[uid] ?? 0;
+        standing.totalPutts += uidPutts[uid] ?? 0;
+        standing.points += pts;
         const entityId = isDoubles ? (memberToTeam[uid] ?? uid) : uid;
-        if (winningEntities.has(entityId)) acc[uid].eventWins++;
+        if (winningEntities.has(entityId)) standing.eventWins++;
       }
     }
 
