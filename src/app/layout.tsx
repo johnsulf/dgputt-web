@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import "./globals.css";
-import Footer from "./components/layout/footer";
-import Header from "./components/layout/header";
 import { AuthProvider } from "@/lib/auth-context";
 
 const bricolage = Bricolage_Grotesque({
@@ -56,13 +54,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <AuthProvider>
-          <Header />
-
-          <main className="flex-1 max-w-275 mx-auto w-full">{children}</main>
-
-          <Footer />
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

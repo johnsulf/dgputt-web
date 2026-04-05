@@ -9,6 +9,7 @@ import {
   formatLabel,
   playerModeLabel,
 } from "@/lib/event-utils";
+import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { StormPuttEvent } from "./stormputt-event";
 import { CornholeEvent } from "./cornhole-event";
@@ -38,9 +39,14 @@ function eventStatusBadge(event: LeagueEvent) {
 }
 
 export function EventView({ league, event }: EventViewProps) {
+  const { user } = useAuth();
   const playerCount = event.players ? Object.keys(event.players).length : 0;
   const isStormPutt = event.format === "stormputt";
   const isCornhole = event.format === "cornhole";
+  const isAdmin = user && league.admins?.includes(user.uid);
+  const isOngoing = (event.currentRound ?? 0) > 0 && !event.finished;
+  const supportsLive = isStormPutt || isCornhole;
+  const showLiveButton = isAdmin && isOngoing && supportsLive;
 
   return (
     <div className="p-4">
@@ -50,7 +56,37 @@ export function EventView({ league, event }: EventViewProps) {
 
       {/* Header */}
       <div className="mt-4 rounded-3xl bg-secondary/10 p-6">
-        <h1 className="text-xl font-bold">{event.title || "Untitled Event"}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-xl font-bold">
+            {event.title || "Untitled Event"}
+          </h1>
+          {showLiveButton && (
+            <Link
+              href={`/leagues/${league.id}/events/${event.id}/live`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" className="gap-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="2" y="3" width="20" height="14" rx="2" />
+                  <line x1="8" y1="21" x2="16" y2="21" />
+                  <line x1="12" y1="17" x2="12" y2="21" />
+                </svg>
+                Live View
+              </Button>
+            </Link>
+          )}
+        </div>
 
         {event.date && (
           <p className="mt-1 text-sm text-muted-foreground">

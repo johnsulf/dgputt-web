@@ -95,6 +95,49 @@ export async function fetchLeagueDetails(
   };
 }
 
+export function parseSingleEvent(
+  key: string,
+  value: unknown,
+): LeagueEvent | null {
+  if (!value || typeof value !== "object") return null;
+  const v = value as Record<string, unknown>;
+  const matchesByRound = parseMatchesByRound(v.matches);
+
+  return {
+    id: key,
+    title: typeof v.title === "string" ? v.title : undefined,
+    date: typeof v.date === "string" ? v.date : undefined,
+    location: typeof v.location === "string" ? v.location : undefined,
+    description:
+      typeof v.description === "string" ? v.description : undefined,
+    finished: v.finished === true,
+    currentRound:
+      typeof v.currentRound === "number" ? v.currentRound : undefined,
+    rounds: typeof v.rounds === "number" ? v.rounds : undefined,
+    competitionType:
+      typeof v.competitionType === "string" ? v.competitionType : undefined,
+    format: typeof v.format === "string" ? v.format : undefined,
+    playerMode: typeof v.playerMode === "string" ? v.playerMode : undefined,
+    limit: typeof v.limit === "number" ? v.limit : undefined,
+    seasonId: typeof v.seasonId === "string" ? v.seasonId : undefined,
+    divisionsEnabled:
+      typeof v.divisionsEnabled === "boolean"
+        ? v.divisionsEnabled
+        : undefined,
+    divisions: Array.isArray(v.divisions)
+      ? (v.divisions as string[])
+      : undefined,
+    players: parsePlayers(v._players ?? v.players),
+    formatConfig:
+      v.formatConfig && typeof v.formatConfig === "object"
+        ? (v.formatConfig as Record<string, unknown>)
+        : undefined,
+    dstIndex: typeof v.dstIndex === "number" ? v.dstIndex : undefined,
+    matchesByRound,
+    matches: flattenMatches(matchesByRound),
+  };
+}
+
 function parseEvents(raw: unknown): LeagueEvent[] {
   if (!raw || typeof raw !== "object") return [];
 
@@ -102,43 +145,8 @@ function parseEvents(raw: unknown): LeagueEvent[] {
   const events: LeagueEvent[] = [];
 
   for (const [key, value] of Object.entries(eventsMap)) {
-    if (!value || typeof value !== "object") continue;
-    const v = value as Record<string, unknown>;
-    const matchesByRound = parseMatchesByRound(v.matches);
-
-    events.push({
-      id: key,
-      title: typeof v.title === "string" ? v.title : undefined,
-      date: typeof v.date === "string" ? v.date : undefined,
-      location: typeof v.location === "string" ? v.location : undefined,
-      description:
-        typeof v.description === "string" ? v.description : undefined,
-      finished: v.finished === true,
-      currentRound:
-        typeof v.currentRound === "number" ? v.currentRound : undefined,
-      rounds: typeof v.rounds === "number" ? v.rounds : undefined,
-      competitionType:
-        typeof v.competitionType === "string" ? v.competitionType : undefined,
-      format: typeof v.format === "string" ? v.format : undefined,
-      playerMode: typeof v.playerMode === "string" ? v.playerMode : undefined,
-      limit: typeof v.limit === "number" ? v.limit : undefined,
-      seasonId: typeof v.seasonId === "string" ? v.seasonId : undefined,
-      divisionsEnabled:
-        typeof v.divisionsEnabled === "boolean"
-          ? v.divisionsEnabled
-          : undefined,
-      divisions: Array.isArray(v.divisions)
-        ? (v.divisions as string[])
-        : undefined,
-      players: parsePlayers(v._players ?? v.players),
-      formatConfig:
-        v.formatConfig && typeof v.formatConfig === "object"
-          ? (v.formatConfig as Record<string, unknown>)
-          : undefined,
-      dstIndex: typeof v.dstIndex === "number" ? v.dstIndex : undefined,
-      matchesByRound,
-      matches: flattenMatches(matchesByRound),
-    });
+    const event = parseSingleEvent(key, value);
+    if (event) events.push(event);
   }
 
   return events;
