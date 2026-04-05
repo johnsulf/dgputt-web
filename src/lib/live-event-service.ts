@@ -10,12 +10,18 @@ export function subscribeToEvent(
 ): Unsubscribe {
   const db = getFirebaseDb();
   const eventRef = ref(db, `_leagues/${leagueId}/events/${eventId}`);
-  return onValue(eventRef, (snapshot) => {
-    if (!snapshot.exists()) {
+  return onValue(
+    eventRef,
+    (snapshot) => {
+      if (!snapshot.exists()) {
+        callback(null);
+        return;
+      }
+      const parsed = parseSingleEvent(eventId, snapshot.val());
+      callback(parsed);
+    },
+    () => {
       callback(null);
-      return;
-    }
-    const parsed = parseSingleEvent(eventId, snapshot.val());
-    callback(parsed);
-  });
+    },
+  );
 }
