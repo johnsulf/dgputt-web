@@ -3,9 +3,13 @@
   "configurations": [
     {
       "name": "nextjs-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 3000
+      "runtimeExecutable": "/Users/erlendjohnsen/.nvm/versions/node/v20.19.2/bin/npx",
+      "runtimeArgs": ["next", "dev"],
+      "port": 3000,
+      "autoPort": true,
+      "env": {
+        "PATH": "/Users/erlendjohnsen/.nvm/versions/node/v20.19.2/bin:/usr/local/bin:/usr/bin:/bin"
+      }
     }
   ]
 }
