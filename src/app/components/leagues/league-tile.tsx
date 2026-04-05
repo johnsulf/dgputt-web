@@ -46,7 +46,7 @@ export function LeagueTile({ league }: LeagueTileProps) {
         )}
       </div>
 
-      {/* Tags + star row — visible on cards */}
+      {/* Tags + star row - visible on cards */}
       <div className="flex items-center gap-1.5 max-sm:hidden">
         {league.isFeatured && (
           <span className="rounded-full bg-secondary/40 px-2 py-0.5 font-semibold text-secondary-foreground">
@@ -75,7 +75,7 @@ export function LeagueTile({ league }: LeagueTileProps) {
         {isStarred && <span>⭐</span>}
       </div>
 
-      {/* Star — card view, top-right corner */}
+      {/* Star - card view, top-right corner */}
       {isStarred && (
         <span className="absolute right-3 top-3  max-sm:hidden">⭐</span>
       )}

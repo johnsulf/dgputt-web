@@ -110,7 +110,7 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
           </Badge>
         </div>
 
-        {/* View toggle — only for StormPutt with multiple rounds */}
+        {/* View toggle - only for StormPutt with multiple rounds */}
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger

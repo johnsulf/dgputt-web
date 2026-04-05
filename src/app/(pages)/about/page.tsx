@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import PhoneFrame from "@/app/components/phone-frame";
 
 const freeGames = [
   {
@@ -31,7 +32,7 @@ const freeGames = [
   {
     title: "Twenty",
     summary:
-      "Pick a single distance. 4 rounds of 5 putts. Quick and focused — great for warming up or drilling a weak distance.",
+      "Pick a single distance. 4 rounds of 5 putts. Quick and focused - great for warming up or drilling a weak distance.",
     putts: "20",
   },
   {
@@ -49,7 +50,7 @@ const freeGames = [
   {
     title: "Frøysa",
     summary:
-      "Cycle through 4 distances for 5 sets. Your score naturally gravitates around 100 — the goal is to get as close to 100 as possible.",
+      "Cycle through 4 distances for 5 sets. Your score naturally gravitates around 100 - the goal is to get as close to 100 as possible.",
     putts: "100",
   },
 ];
@@ -94,6 +95,7 @@ const features = [
   { feature: "PDGA linking", free: true, paid: true },
   { feature: "Putting routine", free: true, paid: true },
   { feature: "Achievements", free: true, paid: true },
+  { feature: "Join leagues & events", free: true, paid: true },
   {
     feature: "Hundred, Runsjø, Shuffle, Survival, Cornhole",
     free: false,
@@ -102,7 +104,7 @@ const features = [
   { feature: "Advanced insights", free: false, paid: true },
   { feature: "Round tracking & course management", free: false, paid: true },
   { feature: "Custom tags", free: false, paid: true },
-  { feature: "Leagues & events", free: false, paid: true },
+  { feature: "Create & host leagues & events", free: false, paid: true },
   { feature: "Leaderboards", free: false, paid: true },
 ];
 
@@ -115,7 +117,7 @@ export default function AboutPage() {
         <p className="text-lg">
           dgputt is a disc golf putting practice app designed to help players
           improve through structured drills, progress tracking, course round
-          logging, and competitive leagues. Available on iOS and Android — all
+          logging, and competitive leagues. Available on iOS and Android - all
           you need is a basket and ideally 6 putters.
         </p>
       </section>
@@ -129,7 +131,7 @@ export default function AboutPage() {
               <CardTitle>Practice</CardTitle>
               <CardDescription>
                 Choose from 10 different putting drills. Each one targets a
-                different skill — accuracy, endurance, adaptability, or
+                different skill - accuracy, endurance, adaptability, or
                 competitive pressure. Every putt is recorded.
               </CardDescription>
             </CardHeader>
@@ -160,7 +162,7 @@ export default function AboutPage() {
       {/* Free Games */}
       <section className="space-y-4 max-w-3xl">
         <h2>Free Games</h2>
-        <p>Five drills available to everyone — no subscription needed.</p>
+        <p>Five drills available to everyone - no subscription needed.</p>
         <Accordion>
           {freeGames.map((game) => (
             <AccordionItem key={game.title}>
@@ -171,6 +173,13 @@ export default function AboutPage() {
             </AccordionItem>
           ))}
         </Accordion>
+        <div className="flex justify-center pt-4">
+          <PhoneFrame
+            src="/images/screenshots/jyly.webp"
+            alt="JYLY game screenshot"
+            caption="JYLY - a really popular game!"
+          />
+        </div>
       </section>
 
       {/* Premium Games */}
@@ -187,6 +196,13 @@ export default function AboutPage() {
             </AccordionItem>
           ))}
         </Accordion>
+        <div className="flex justify-center pt-4">
+          <PhoneFrame
+            src="/images/screenshots/cornhole.webp"
+            alt="Cornhole game screenshot"
+            caption="Cornhole - head-to-head match play"
+          />
+        </div>
       </section>
 
       {/* Distances */}
@@ -210,9 +226,16 @@ export default function AboutPage() {
           Create courses and layouts, log per-hole putt attempts, and tag each
           putt with conditions like stance, throwing style, wind, elevation, and
           tension level. Review round summaries with total putts, hit
-          percentage, and score vs par — then share your scorecards with
+          percentage, and score vs par - then share your scorecards with
           friends.
         </p>
+        <div className="flex justify-center pt-4">
+          <PhoneFrame
+            src="/images/screenshots/round.webp"
+            alt="Round tracking screenshot"
+            caption="Tracking putts putts during a round"
+          />
+        </div>
       </section>
 
       {/* Progress & Stats */}
@@ -259,6 +282,18 @@ export default function AboutPage() {
             </AccordionContent>
           </AccordionItem>
         </Accordion>
+        <div className="flex justify-center gap-4 pt-4">
+          <PhoneFrame
+            src="/images/screenshots/progress.webp"
+            alt="Progress overview screenshot"
+            caption="Overall progress"
+          />
+          <PhoneFrame
+            src="/images/screenshots/jyly_progress.webp"
+            alt="JYLY game progress screenshot"
+            caption="JYLY game stats"
+          />
+        </div>
       </section>
 
       {/* Leagues & Events */}
@@ -270,7 +305,7 @@ export default function AboutPage() {
         <p>
           Leagues bring competitive multiplayer to dgputt. Create or join
           leagues, register for events, submit scores, and climb leaderboards.
-          Events support multiple formats — StormPutt, Cornhole, and Stations —
+          Events support multiple formats - StormPutt, Cornhole, and Stations -
           with Classic, Flex, Team, and Bracket event types. Admins get a full
           suite of tournament director tools including group management, score
           editing, bracket generation, and PDF leaderboard export.
@@ -280,6 +315,18 @@ export default function AboutPage() {
             Read the League Admin Guide →
           </Link>
         </p>
+        <div className="flex justify-center gap-4 pt-4">
+          <PhoneFrame
+            src="/images/screenshots/leagues.webp"
+            alt="Leagues overview screenshot"
+            caption="Browse leagues"
+          />
+          <PhoneFrame
+            src="/images/screenshots/event_cornhole.webp"
+            alt="Cornhole event screenshot"
+            caption="Live event leaderboard"
+          />
+        </div>
       </section>
 
       {/* Profile */}
@@ -336,7 +383,7 @@ export default function AboutPage() {
                         ✓
                       </span>
                     ) : (
-                      "—"
+                      "-"
                     )}
                   </TableCell>
                   <TableCell className="text-center">
@@ -345,7 +392,7 @@ export default function AboutPage() {
                         ✓
                       </span>
                     ) : (
-                      "—"
+                      "-"
                     )}
                   </TableCell>
                 </TableRow>

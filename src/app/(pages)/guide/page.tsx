@@ -41,7 +41,7 @@ export default function GuidePage() {
             <AccordionTrigger>Flex</AccordionTrigger>
             <AccordionContent>
               <p>
-                Flexible scheduling — can be played online or in-person. Players
+                Flexible scheduling - can be played online or in-person. Players
                 complete rounds on their own time. No check-in required.
               </p>
             </AccordionContent>
@@ -97,7 +97,7 @@ export default function GuidePage() {
               <p>
                 Fully customizable format. Set distance, putt count, weights,
                 and tags per station. Save layouts as templates for reuse across
-                events — use league templates, global templates, or personal
+                events - use league templates, global templates, or personal
                 ones.
               </p>
             </AccordionContent>
@@ -125,7 +125,7 @@ export default function GuidePage() {
             <AccordionContent>
               <p>
                 Enable seasons to organize events by time period (e.g. "Spring
-                2026"). Set the active season — leaderboards can be filtered by
+                2026"). Set the active season - leaderboards can be filtered by
                 season so you can crown a champion at the end of each one.
               </p>
             </AccordionContent>
@@ -194,7 +194,7 @@ export default function GuidePage() {
             <AccordionContent>
               <p>
                 Create custom station layouts with per-station distance, putt
-                count, and weights. Save layouts as templates for reuse — you
+                count, and weights. Save layouts as templates for reuse - you
                 can use league templates, global templates, or personal
                 templates.
               </p>
@@ -214,7 +214,7 @@ export default function GuidePage() {
                 Open and close registration at any time. Search for dgputt users
                 and add them directly. Copy player rosters from previous events
                 with optional filtering by top N in standings. Add dummy players
-                for byes. Manage players — edit, remove, check-in/out, and
+                for byes. Manage players - edit, remove, check-in/out, and
                 reassign divisions.
               </p>
             </AccordionContent>
@@ -275,7 +275,7 @@ export default function GuidePage() {
             <AccordionContent>
               <p>
                 During an ongoing event, league admins can open the live
-                leaderboard — a full-screen, real-time display designed for TVs
+                leaderboard - a full-screen, real-time display designed for TVs
                 and projectors. It includes dark/light theme, adjustable table
                 density, and an auto-rotate feature that cycles between totals
                 and current round views every 15 seconds.
@@ -335,7 +335,7 @@ export default function GuidePage() {
         <p>
           Events can be edited at any time (format is locked once scoring
           begins). Finished events can be reopened if needed. Deleting an event
-          permanently removes it and all its data — a confirmation is required.
+          permanently removes it and all its data - a confirmation is required.
         </p>
       </section>
 
@@ -348,7 +348,7 @@ export default function GuidePage() {
               <CardTitle>Swiss Pairing</CardTitle>
               <CardDescription>
                 Players are paired based on current standings. Top performers
-                face each other as the event progresses — keeps competition
+                face each other as the event progresses - keeps competition
                 close and fair at every level.
               </CardDescription>
             </CardHeader>

@@ -1,4 +1,5 @@
 import Reviews from "@/app/components/home/reviews";
+import PhoneFrame from "@/app/components/phone-frame";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 
@@ -41,10 +42,9 @@ export default function Home() {
           </div>
         </div>
         <div className="flex justify-center">
-          <img
-            src="/images/home.png"
+          <PhoneFrame
+            src="/images/screenshots/home.webp"
             alt="dgputt app screenshot"
-            className="h-120 w-auto"
           />
         </div>
       </section>
@@ -92,7 +92,7 @@ export default function Home() {
       <section className="py-8 px-4 sm:px-16">
         <h2 className="mb-4">Featured on Kastkultur</h2>
         <p className="mb-4">
-          Check out the dgputt collection on Kastkultur — the home of disc golf
+          Check out the dgputt collection on Kastkultur - the home of disc golf
           culture in Scandinavia.
         </p>
         <div className="flex items-center gap-4">
