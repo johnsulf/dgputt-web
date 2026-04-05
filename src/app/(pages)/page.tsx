@@ -49,7 +49,56 @@ export default function Home() {
 
       <hr className="mx-8 border-gray-200" />
 
+      {/* Ratings */}
+      <section className="py-8 px-4 sm:px-16">
+        <h2 className="mb-4">App Store Ratings</h2>
+        <div className="flex flex-wrap gap-6">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl font-bold">4.8</span>
+            <div>
+              <div className="flex text-yellow-500" aria-label="4.8 out of 5 stars">
+                {"★★★★★"}
+              </div>
+              <p className="text-sm text-muted-foreground">App Store</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl font-bold">4.9</span>
+            <div>
+              <div className="flex text-yellow-500" aria-label="4.9 out of 5 stars">
+                {"★★★★★"}
+              </div>
+              <p className="text-sm text-muted-foreground">Google Play</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr className="mx-8 border-gray-200" />
+
       <Reviews />
+
+      <hr className="mx-8 border-gray-200" />
+
+      {/* Kastkultur */}
+      <section className="py-8 px-4 sm:px-16">
+        <h2 className="mb-4">Featured on Kastkultur</h2>
+        <p className="text-muted-foreground mb-4">
+          Check out the dgputt collection on Kastkultur — the home of disc golf
+          culture in Scandinavia.
+        </p>
+        <a
+          href="https://www.kastkultur.com/dgputt"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="/images/rund_k.png"
+            alt="Kastkultur"
+            className="h-16 w-auto"
+          />
+        </a>
+      </section>
     </>
   );
 }
