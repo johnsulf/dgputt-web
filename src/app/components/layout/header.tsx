@@ -95,6 +95,7 @@ export default function Header() {
               <nav className="flex flex-col gap-2 px-6">
                 {!loading && user && (
                   <SheetClose
+                    nativeButton={false}
                     render={
                       <Link
                         href="/leagues"
@@ -108,6 +109,7 @@ export default function Header() {
                 {navLinks.map((link) => (
                   <SheetClose
                     key={link.href}
+                    nativeButton={false}
                     render={
                       <Link
                         href={link.href}
@@ -133,6 +135,7 @@ export default function Header() {
                     </Button>
                   ) : (
                     <SheetClose
+                      nativeButton={false}
                       render={<Link href="/auth" className="w-full" />}
                     >
                       <Button className="w-full">Login</Button>
