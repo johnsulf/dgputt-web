@@ -70,7 +70,7 @@ export default function Home() {
             <div>
               <div
                 className="flex text-yellow-500"
-                aria-label="4.9 out of 5 stars"
+                aria-label="4.7 out of 5 stars"
               >
                 {"★★★★★"}
               </div>
