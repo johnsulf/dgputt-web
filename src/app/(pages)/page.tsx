@@ -56,7 +56,10 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <span className="text-3xl font-bold">4.8</span>
             <div>
-              <div className="flex text-yellow-500" aria-label="4.8 out of 5 stars">
+              <div
+                className="flex text-yellow-500"
+                aria-label="4.8 out of 5 stars"
+              >
                 {"★★★★★"}
               </div>
               <p className="text-sm text-muted-foreground">App Store</p>
@@ -65,7 +68,10 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <span className="text-3xl font-bold">4.9</span>
             <div>
-              <div className="flex text-yellow-500" aria-label="4.9 out of 5 stars">
+              <div
+                className="flex text-yellow-500"
+                aria-label="4.9 out of 5 stars"
+              >
                 {"★★★★★"}
               </div>
               <p className="text-sm text-muted-foreground">Google Play</p>
@@ -83,7 +89,7 @@ export default function Home() {
       {/* Kastkultur */}
       <section className="py-8 px-4 sm:px-16">
         <h2 className="mb-4">Featured on Kastkultur</h2>
-        <p className="text-muted-foreground mb-4">
+        <p className="mb-4">
           Check out the dgputt collection on Kastkultur — the home of disc golf
           culture in Scandinavia.
         </p>
