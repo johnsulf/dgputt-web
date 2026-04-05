@@ -7,7 +7,6 @@ import type {
   LeagueEventPlayer,
   MatchMember,
 } from "@/app/interfaces/league";
-import { useAuth } from "@/lib/auth-context";
 import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
@@ -66,7 +65,6 @@ interface LeaderboardTableRow {
   hitPctLabel: string;
   hitPctValue: number;
   wins: number;
-  isCurrentUser: boolean;
 }
 
 function parseScore(value: unknown): number {
@@ -419,15 +417,7 @@ function buildLeaderboardRows(event: LeagueEvent): LeaderboardRow[] {
   });
 }
 
-function MatchHeader({
-  match,
-  isCurrentUserLeft,
-  isCurrentUserRight,
-}: {
-  match: LeagueEventMatch;
-  isCurrentUserLeft: boolean;
-  isCurrentUserRight: boolean;
-}) {
+function MatchHeader({ match }: { match: LeagueEventMatch }) {
   const leftName = match.player1.displayName ?? match.player1.uid ?? "Unknown";
   const rightName = match.player2.displayName ?? match.player2.uid ?? "Unknown";
   const leftScore = parseScore(match.player1.score);
@@ -476,11 +466,7 @@ function MatchHeader({
         </div>
       ) : (
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-sm">
-          <div
-            className={
-              isCurrentUserLeft ? "rounded-lg border px-2 py-1" : "px-2 py-1"
-            }
-          >
+          <div className="px-2 py-1">
             <div className="truncate text-right">
               <span className={leftWinner ? "font-semibold" : "font-medium"}>
                 {leftName}
@@ -494,11 +480,7 @@ function MatchHeader({
             </div>
           </div>
 
-          <div
-            className={
-              isCurrentUserRight ? "rounded-lg border px-2 py-1" : "px-2 py-1"
-            }
-          >
+          <div className="px-2 py-1">
             <div className="truncate">
               <span className={rightWinner ? "font-semibold" : "font-medium"}>
                 {rightName}
@@ -515,12 +497,16 @@ function sequenceRows(match: LeagueEventMatch) {
   const leftSequences = match.player1.sequences ?? [];
   const rightSequences = match.player2.sequences ?? [];
   const max = Math.max(leftSequences.length, rightSequences.length);
+  let leftRunningTotal = 0;
+  let rightRunningTotal = 0;
 
   return Array.from({ length: max }, (_, index) => {
     const leftHits = parseScore(leftSequences[index]);
     const rightHits = parseScore(rightSequences[index]);
     const leftPoints = getPointsForSet(leftHits);
     const rightPoints = getPointsForSet(rightHits);
+    leftRunningTotal += leftPoints;
+    rightRunningTotal += rightPoints;
 
     return {
       setNumber: index + 1,
@@ -528,6 +514,8 @@ function sequenceRows(match: LeagueEventMatch) {
       rightHits,
       leftPoints,
       rightPoints,
+      leftRunningTotal,
+      rightRunningTotal,
     };
   });
 }
@@ -555,11 +543,6 @@ function MatchDetails({ match }: { match: LeagueEventMatch }) {
     <div className="space-y-4">
       {sets.length > 0 ? (
         <div className="rounded-2xl border">
-          <div className="grid grid-cols-[1fr_auto_1fr] border-b bg-muted/40 px-3 py-2 text-xs font-semibold">
-            <span className="truncate text-right">{leftName}</span>
-            <span className="px-4">Set</span>
-            <span className="truncate">{rightName}</span>
-          </div>
           <div>
             {sets.map((set) => {
               const leftWinsSet = set.leftPoints > set.rightPoints;
@@ -583,7 +566,10 @@ function MatchDetails({ match }: { match: LeagueEventMatch }) {
                     </span>
                   </div>
                   <div className="px-4 text-center text-xs font-semibold text-muted-foreground">
-                    Set {set.setNumber}
+                    <div>Set {set.setNumber}</div>
+                    <div className="text-[11px] font-medium">
+                      ({set.leftRunningTotal}-{set.rightRunningTotal})
+                    </div>
                   </div>
                   <div className="tabular-nums">
                     <span
@@ -662,11 +648,9 @@ function MatchDetails({ match }: { match: LeagueEventMatch }) {
 function RoundResults({
   roundIndex,
   matches,
-  currentUserUid,
 }: {
   roundIndex: number;
   matches: LeagueEventMatch[];
-  currentUserUid?: string;
 }) {
   const sorted = useMemo(() => sortMatchesForRound(matches), [matches]);
 
@@ -679,22 +663,12 @@ function RoundResults({
       ) : (
         <Accordion>
           {sorted.map((match, idx) => {
-            const leftUid = match.player1.uid;
-            const rightUid = match.player2.uid;
             const itemValue = `${match.id ?? match.shortId ?? roundIndex}-${idx}`;
 
             return (
               <AccordionItem key={itemValue} value={itemValue}>
                 <AccordionTrigger>
-                  <MatchHeader
-                    match={match}
-                    isCurrentUserLeft={
-                      !!currentUserUid && leftUid === currentUserUid
-                    }
-                    isCurrentUserRight={
-                      !!currentUserUid && rightUid === currentUserUid
-                    }
-                  />
+                  <MatchHeader match={match} />
                 </AccordionTrigger>
                 <AccordionContent>
                   <MatchDetails match={match} />
@@ -710,11 +684,9 @@ function RoundResults({
 
 function Leaderboard({
   rows,
-  currentUserUid,
   isDoubles,
 }: {
   rows: LeaderboardRow[];
-  currentUserUid?: string;
   isDoubles: boolean;
 }) {
   const [sorting, setSorting] = useState<SortingState>([
@@ -732,9 +704,8 @@ function Leaderboard({
           row.attempts > 0 ? `${Math.round(row.hitPct * 100)}%` : "-",
         hitPctValue: row.hitPct,
         wins: row.wins,
-        isCurrentUser: currentUserUid === row.participant.id,
       })),
-    [rows, currentUserUid],
+    [rows],
   );
 
   const columns = useMemo<ColumnDef<LeaderboardTableRow>[]>(
@@ -851,12 +822,7 @@ function Leaderboard({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                className={
-                  row.original.isCurrentUser ? "bg-muted/40" : undefined
-                }
-              >
+              <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
@@ -892,7 +858,6 @@ function Leaderboard({
 }
 
 export function CornholeEvent({ event }: CornholeEventProps) {
-  const { user } = useAuth();
   const roundsFromData = useMemo(() => getMatchesByRound(event), [event]);
   const rows = useMemo(() => buildLeaderboardRows(event), [event]);
   const isDoubles = event.playerMode === "doubles";
@@ -977,11 +942,7 @@ export function CornholeEvent({ event }: CornholeEventProps) {
       </div>
 
       <TabsContent value="leaderboard" className="mt-4">
-        <Leaderboard
-          rows={rows}
-          currentUserUid={user?.uid}
-          isDoubles={isDoubles}
-        />
+        <Leaderboard rows={rows} isDoubles={isDoubles} />
       </TabsContent>
 
       {roundOrder.map((roundIndex) => (
@@ -993,7 +954,6 @@ export function CornholeEvent({ event }: CornholeEventProps) {
           <RoundResults
             roundIndex={roundIndex}
             matches={rounds[roundIndex] ?? []}
-            currentUserUid={user?.uid}
           />
         </TabsContent>
       ))}
