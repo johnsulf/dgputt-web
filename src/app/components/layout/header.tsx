@@ -93,19 +93,6 @@ export default function Header() {
                 </SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-2 px-6">
-                {!loading && user && (
-                  <SheetClose
-                    nativeButton={false}
-                    render={
-                      <Link
-                        href="/leagues"
-                        className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted transition-colors"
-                      />
-                    }
-                  >
-                    Leagues
-                  </SheetClose>
-                )}
                 {navLinks.map((link) => (
                   <SheetClose
                     key={link.href}
@@ -120,6 +107,19 @@ export default function Header() {
                     {link.label}
                   </SheetClose>
                 ))}
+                {!loading && user && (
+                  <SheetClose
+                    nativeButton={false}
+                    render={
+                      <Link
+                        href="/leagues"
+                        className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted transition-colors"
+                      />
+                    }
+                  >
+                    Leagues
+                  </SheetClose>
+                )}
                 <div className="my-2 h-px bg-border" />
                 {!loading &&
                   (user ? (
