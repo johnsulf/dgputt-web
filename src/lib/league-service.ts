@@ -104,6 +104,7 @@ function parseEvents(raw: unknown): LeagueEvent[] {
   for (const [key, value] of Object.entries(eventsMap)) {
     if (!value || typeof value !== "object") continue;
     const v = value as Record<string, unknown>;
+    const matchesByRound = parseMatchesByRound(v.matches);
 
     events.push({
       id: key,
@@ -135,7 +136,8 @@ function parseEvents(raw: unknown): LeagueEvent[] {
           ? (v.formatConfig as Record<string, unknown>)
           : undefined,
       dstIndex: typeof v.dstIndex === "number" ? v.dstIndex : undefined,
-      matches: parseMatches(v.matches),
+      matchesByRound,
+      matches: flattenMatches(matchesByRound),
     });
   }
 
@@ -226,29 +228,48 @@ function parseSeasons(raw: unknown): LeagueSeason[] | undefined {
     .filter((s) => s.id);
 }
 
-function parseMatches(raw: unknown): LeagueEventMatch[] | undefined {
+function parseMatchesByRound(raw: unknown): LeagueEventMatch[][] | undefined {
   if (!raw || typeof raw !== "object") return undefined;
 
-  const matches: LeagueEventMatch[] = [];
+  const matchesByRound: LeagueEventMatch[][] = [];
   const rounds = toArray(raw);
 
-  for (const round of rounds) {
+  for (const [roundIndex, round] of rounds.entries()) {
     if (!round || typeof round !== "object") continue;
+    const roundMatches: LeagueEventMatch[] = [];
     for (const matchVal of Object.values(round as Record<string, unknown>)) {
       if (!matchVal || typeof matchVal !== "object") continue;
       const m = matchVal as Record<string, unknown>;
       const p1 = parseMatchSide(m.player1);
       const p2 = parseMatchSide(m.player2);
       if (!p1 || !p2) continue;
-      matches.push({
+      roundMatches.push({
+        id: typeof m.id === "string" ? m.id : undefined,
+        shortId: typeof m.shortId === "string" ? m.shortId : undefined,
+        number: parseNumberish(m.number),
+        started: typeof m.started === "boolean" ? m.started : undefined,
         player1: p1,
         player2: p2,
         finished: typeof m.finished === "boolean" ? m.finished : undefined,
+        roundIndex,
       });
     }
+    matchesByRound[roundIndex] = roundMatches;
   }
 
-  return matches.length > 0 ? matches : undefined;
+  return matchesByRound.some(
+    (round) => Array.isArray(round) && round.length > 0,
+  )
+    ? matchesByRound
+    : undefined;
+}
+
+function flattenMatches(
+  matchesByRound: LeagueEventMatch[][] | undefined,
+): LeagueEventMatch[] | undefined {
+  if (!matchesByRound) return undefined;
+  const flat = matchesByRound.flatMap((round) => round ?? []);
+  return flat.length > 0 ? flat : undefined;
 }
 
 function parseMatchSide(raw: unknown): LeagueEventMatch["player1"] | undefined {
@@ -256,11 +277,25 @@ function parseMatchSide(raw: unknown): LeagueEventMatch["player1"] | undefined {
   const v = raw as Record<string, unknown>;
   return {
     uid: typeof v.uid === "string" ? v.uid : undefined,
-    score: typeof v.score === "number" ? v.score : undefined,
+    displayName: typeof v.displayName === "string" ? v.displayName : undefined,
+    score: parseNumberish(v.score),
     winner: typeof v.winner === "boolean" ? v.winner : undefined,
+    puttsPerSequence:
+      v.puttsPerSequence && typeof v.puttsPerSequence === "object"
+        ? toArray(v.puttsPerSequence).map((n) => parseNumberish(n) ?? 0)
+        : undefined,
     sequences:
       v.sequences && typeof v.sequences === "object"
-        ? toArray(v.sequences).map((n) => (typeof n === "number" ? n : 0))
+        ? toArray(v.sequences).map((n) => parseNumberish(n) ?? 0)
+        : undefined,
+    tieBreakSequences:
+      v.tieBreakSequences && typeof v.tieBreakSequences === "object"
+        ? toArray(v.tieBreakSequences).map((n) => parseNumberish(n) ?? 0)
+        : undefined,
+    tieBreakPuttsPerSequence:
+      v.tieBreakPuttsPerSequence &&
+      typeof v.tieBreakPuttsPerSequence === "object"
+        ? toArray(v.tieBreakPuttsPerSequence).map((n) => parseNumberish(n) ?? 0)
         : undefined,
     members: parseMatchMembers(v.members),
   };
@@ -268,7 +303,7 @@ function parseMatchSide(raw: unknown): LeagueEventMatch["player1"] | undefined {
 
 function parseMatchMembers(
   raw: unknown,
-): { uid?: string; sequences?: number[] }[] | undefined {
+): LeagueEventMatch["player1"]["members"] {
   if (!raw || typeof raw !== "object") return undefined;
   const arr = toArray(raw)
     .filter((m) => m && typeof m === "object")
@@ -276,13 +311,28 @@ function parseMatchMembers(
       const v = m as Record<string, unknown>;
       return {
         uid: typeof v.uid === "string" ? v.uid : undefined,
+        displayName:
+          typeof v.displayName === "string" ? v.displayName : undefined,
         sequences:
           v.sequences && typeof v.sequences === "object"
-            ? toArray(v.sequences).map((n) => (typeof n === "number" ? n : 0))
+            ? toArray(v.sequences).map((n) => parseNumberish(n) ?? 0)
+            : undefined,
+        puttsPerSequence:
+          v.puttsPerSequence && typeof v.puttsPerSequence === "object"
+            ? toArray(v.puttsPerSequence).map((n) => parseNumberish(n) ?? 0)
             : undefined,
       };
     });
   return arr.length > 0 ? arr : undefined;
+}
+
+function parseNumberish(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
 }
 
 /**

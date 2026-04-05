@@ -11,6 +11,7 @@ import {
 } from "@/lib/event-utils";
 import Link from "next/link";
 import { StormPuttEvent } from "./stormputt-event";
+import { CornholeEvent } from "./cornhole-event";
 
 interface EventViewProps {
   league: LeagueInstance;
@@ -39,6 +40,7 @@ function eventStatusBadge(event: LeagueEvent) {
 export function EventView({ league, event }: EventViewProps) {
   const playerCount = event.players ? Object.keys(event.players).length : 0;
   const isStormPutt = event.format === "stormputt";
+  const isCornhole = event.format === "cornhole";
 
   return (
     <div className="p-4">
@@ -91,6 +93,8 @@ export function EventView({ league, event }: EventViewProps) {
       <div className="mt-6">
         {isStormPutt ? (
           <StormPuttEvent event={event} />
+        ) : isCornhole ? (
+          <CornholeEvent event={event} />
         ) : (
           <Alert>
             <AlertTitle>

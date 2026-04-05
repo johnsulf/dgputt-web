@@ -324,15 +324,15 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
     return <PlayersRegistrationTable players={players} />;
   }
 
-  // Only totals when a single round
+  // Only leaderboard when a single round
   if (maxRounds <= 1) {
     return <ResultsTable rows={totals} distanceLabels={distanceLabels} />;
   }
 
   return (
-    <Tabs defaultValue="totals">
+    <Tabs defaultValue="leaderboard">
       <TabsList>
-        <TabsTrigger value="totals">Totals</TabsTrigger>
+        <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
         {Array.from({ length: maxRounds }, (_, i) => {
           const roundNum = maxRounds - i;
           return (
@@ -343,7 +343,7 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
         })}
       </TabsList>
 
-      <TabsContent value="totals" className="mt-4">
+      <TabsContent value="leaderboard" className="mt-4">
         <ResultsTable rows={totals} distanceLabels={distanceLabels} />
       </TabsContent>
 
