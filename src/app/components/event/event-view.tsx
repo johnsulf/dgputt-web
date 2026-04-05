@@ -64,6 +64,7 @@ export function EventView({ league, event }: EventViewProps) {
             <Link
               href={`/leagues/${league.id}/events/${event.id}/live`}
               target="_blank"
+              rel="noopener noreferrer"
             >
               <Button variant="outline" className="gap-2">
                 <svg
