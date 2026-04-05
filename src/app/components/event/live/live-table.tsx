@@ -9,12 +9,16 @@ interface AnimatedRowProps {
   className?: string;
 }
 
-export function AnimatedRow({ layoutId, children, className }: AnimatedRowProps) {
+export function AnimatedRow({
+  layoutId,
+  children,
+  className,
+}: AnimatedRowProps) {
   return (
     <motion.tr
       layout
       layoutId={layoutId}
-      transition={{ layout: { type: "spring", stiffness: 200, damping: 30 } }}
+      transition={{ layout: { type: "spring", stiffness: 95, damping: 26 } }}
       className={className}
     >
       {children}
