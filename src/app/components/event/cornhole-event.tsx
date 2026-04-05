@@ -713,6 +713,7 @@ function Leaderboard({
       {
         accessorKey: "position",
         header: "#",
+        enableSorting: false,
         cell: ({ row }) => (
           <span className="font-semibold">{row.original.position}</span>
         ),
@@ -720,7 +721,7 @@ function Leaderboard({
       {
         accessorKey: "playerName",
         header: "Player",
-        sortingFn: "text",
+        enableSorting: false,
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="font-medium">{row.original.playerName}</span>
