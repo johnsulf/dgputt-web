@@ -72,7 +72,7 @@ export default function TeamPage() {
 
       <section className="space-y-4">
         <h2>The Makers</h2>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 max-w-4xl">
           {makers.map((member) => (
             <MemberCard key={member.name} member={member} />
           ))}
@@ -82,7 +82,7 @@ export default function TeamPage() {
       {members.length > 0 && (
         <section className="space-y-4">
           <h2>Team Members</h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl">
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 max-w-4xl">
             {members.map((member) => (
               <MemberCard key={member.name} member={member} />
             ))}

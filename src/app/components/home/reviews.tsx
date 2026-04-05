@@ -11,7 +11,7 @@ const reviews: Review[] = [
   {
     userName: "G.Hill",
     review:
-      "We run a very large putting league with player attendance averaging around 125 players per week. Keeping track of scores on paper cards was exhausting. This app has simplified our jobs as event directors. Players are able to view the leaderboard during the round and create player profiles. The app runs smoothly with high volume. This will be the official scoring app inside the Putting Arena. ",
+      "We run a very large putting league with player attendance averaging around 125 players per week. This app has simplified our jobs as event directors. The app runs smoothly with high volume. This will be the official scoring app inside the Putting Arena. ",
   },
   {
     userName: "Nicolai",
