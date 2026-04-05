@@ -95,6 +95,7 @@ const features = [
   { feature: "PDGA linking", free: true, paid: true },
   { feature: "Putting routine", free: true, paid: true },
   { feature: "Achievements", free: true, paid: true },
+  { feature: "Join leagues & events", free: true, paid: true },
   {
     feature: "Hundred, Runsjø, Shuffle, Survival, Cornhole",
     free: false,
@@ -103,7 +104,7 @@ const features = [
   { feature: "Advanced insights", free: false, paid: true },
   { feature: "Round tracking & course management", free: false, paid: true },
   { feature: "Custom tags", free: false, paid: true },
-  { feature: "Leagues & events", free: false, paid: true },
+  { feature: "Create & host leagues & events", free: false, paid: true },
   { feature: "Leaderboards", free: false, paid: true },
 ];
 
