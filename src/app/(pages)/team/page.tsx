@@ -1,16 +1,12 @@
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
-
-const team = [
-  {
-    name: "Erlend Johnsen",
-    pdga: 94422,
-    putter: "Prodigy Pa3",
-    instagram: "dg.johnsen",
-    bio: "Created dgputt. Favourite game is Runsjø.",
-  },
-];
+import { team } from "./team-members";
 
 export default function TeamPage() {
   return (
@@ -18,7 +14,7 @@ export default function TeamPage() {
       <section className="space-y-4 max-w-3xl">
         <h1>Team dgputt</h1>
         <p className="text-lg">
-          The people behind the app — disc golfers building tools for disc
+          The people behind the app - disc golfers building tools for disc
           golfers.
         </p>
       </section>
@@ -41,7 +37,7 @@ export default function TeamPage() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-white"
                     style={{
-                      background: "linear-gradient(to left, #003F6A, #008d6f)",
+                      background: "linear-gradient(to left, #008d6f, #003F6A)",
                     }}
                   >
                     #{member.pdga}
@@ -51,14 +47,14 @@ export default function TeamPage() {
                     href={`https://www.instagram.com/${member.instagram}/`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center"
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-white"
+                    style={{
+                      background:
+                        "linear-gradient(to right, #833ab4, #fd1d1d, #fcb045)",
+                    }}
                   >
-                    <img
-                      src="/images/ig.png"
-                      alt="Instagram"
-                      width={24}
-                      height={24}
-                    />
+                    @{member.instagram}
+                    <HugeiconsIcon icon={ArrowUpRight01Icon} size={14} />
                   </a>
                 </div>
               </div>
