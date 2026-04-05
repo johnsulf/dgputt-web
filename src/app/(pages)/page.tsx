@@ -1,4 +1,6 @@
 import Reviews from "@/app/components/home/reviews";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 
 export default function Home() {
   return (
@@ -66,7 +68,7 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-3xl font-bold">4.9</span>
+            <span className="text-3xl font-bold">4.7</span>
             <div>
               <div
                 className="flex text-yellow-500"
@@ -93,17 +95,22 @@ export default function Home() {
           Check out the dgputt collection on Kastkultur — the home of disc golf
           culture in Scandinavia.
         </p>
-        <a
-          href="https://www.kastkultur.com/dgputt"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <div className="flex items-center gap-4">
           <img
             src="/images/rund_k.png"
-            alt="Kastkultur"
-            className="h-16 w-auto"
+            alt="Kastkultur logo"
+            className="h-12 w-auto"
           />
-        </a>
+          <a
+            href="https://www.kastkultur.com/dgputt"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-primary underline underline-offset-4 hover:text-primary/80 transition-colors"
+          >
+            Visit Kastkultur
+            <HugeiconsIcon icon={ArrowUpRight01Icon} size={16} />
+          </a>
+        </div>
       </section>
     </>
   );
