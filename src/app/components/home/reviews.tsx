@@ -1,3 +1,4 @@
+import { Review } from "@/app/interfaces/review";
 import {
   Card,
   CardHeader,
@@ -6,22 +7,24 @@ import {
   CardContent,
 } from "@/components/ui/card";
 
-const reviews = [
+const reviews: Review[] = [
+  {
+    userName: "G.Hill",
+    review:
+      "We run a very large putting league with player attendance averaging around 125 players per week. Keeping track of scores on paper cards was exhausting. This app has simplified our jobs as event directors. Players are able to view the leaderboard during the round and create player profiles. The app runs smoothly with high volume. This will be the official scoring app inside the Putting Arena. ",
+  },
   {
     userName: "Nicolai",
-    date: "Nov 29, 2024",
     review:
       "Fantastic tool for consistent training! Well thought-out exercises, that are both challenging and rewarding!",
   },
   {
     userName: "Ashley",
-    date: "Jun 2, 2024",
     review:
       "Great app with a variety of games to track your putting practice and keep it interesting! Definitely worth the premium.",
   },
   {
     userName: "Jimmy",
-    date: "Feb 20, 2024",
     review:
       "This app definitely keeps me pushing to do better. I currently stink at putting, simply because of losing interest while practicing. This is going to be a game changer.",
   },
@@ -36,7 +39,6 @@ export default function Reviews() {
           <Card key={review.userName} size="sm">
             <CardHeader>
               <CardTitle>{review.userName}</CardTitle>
-              <CardDescription>{review.date}</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="italic text-muted-foreground">
