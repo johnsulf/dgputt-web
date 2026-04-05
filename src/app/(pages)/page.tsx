@@ -1,4 +1,5 @@
 import Reviews from "@/app/components/home/reviews";
+import PhoneFrame from "@/app/components/phone-frame";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 
@@ -41,13 +42,10 @@ export default function Home() {
           </div>
         </div>
         <div className="flex justify-center">
-          <div className="rounded-[2.5rem] outline-1 border-6 border-black outline-gray-500 overflow-hidden">
-            <img
-              src="/images/screenshots/home.webp"
-              alt="dgputt app screenshot"
-              className="h-120 w-auto"
-            />
-          </div>
+          <PhoneFrame
+            src="/images/screenshots/home.webp"
+            alt="dgputt app screenshot"
+          />
         </div>
       </section>
 
