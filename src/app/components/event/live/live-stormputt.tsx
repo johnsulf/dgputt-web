@@ -30,7 +30,9 @@ export function LiveStormPutt({
   );
   const isLight = theme === "light";
 
-  const currentRoundIndex = (event.currentRound ?? 1) - 1;
+  const currentRoundValue = event.currentRound ?? 0;
+  const hasStartedRound = currentRoundValue > 0;
+  const currentRoundIndex = Math.max(currentRoundValue - 1, 0);
 
   const densityStyles =
     density === "small"
@@ -40,11 +42,11 @@ export function LiveStormPutt({
         : { header: "py-3 text-sm", cell: "py-3", score: "text-lg" };
 
   const rows = useMemo(() => {
-    if (viewMode === "currentRound") {
+    if (viewMode === "currentRound" && hasStartedRound) {
       return computeRound(players, currentRoundIndex);
     }
     return computeTotals(players);
-  }, [players, viewMode, currentRoundIndex]);
+  }, [players, viewMode, currentRoundIndex, hasStartedRound]);
 
   return (
     <div className="overflow-x-auto">
