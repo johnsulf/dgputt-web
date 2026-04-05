@@ -104,7 +104,9 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
           >
             {event.finished
               ? "Finished"
-              : `Round ${event.currentRound ?? 1}${event.rounds ? ` / ${event.rounds}` : ""}`}
+              : event.currentRound && event.currentRound > 0
+                ? `Round ${event.currentRound}${event.rounds ? ` / ${event.rounds}` : ""}`
+                : "Not Started"}
           </Badge>
         </div>
 
