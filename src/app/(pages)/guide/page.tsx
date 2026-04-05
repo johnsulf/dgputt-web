@@ -24,38 +24,85 @@ export default function GuidePage() {
         </p>
       </section>
 
-      {/* Overview cards */}
-      <section className="space-y-4">
-        <h2>Event Types &amp; Formats</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Event Types</CardTitle>
-              <CardDescription>
-                <strong>Classic</strong> — Standard tournament with groups at an
-                organized location. <strong>Flex</strong> — Players complete
-                rounds on their own time, online or in-person.{" "}
-                <strong>Team</strong> — Doubles or team-based competition.{" "}
-                <strong>Bracket</strong> — Single or double elimination with
-                bracket progression.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Formats</CardTitle>
-              <CardDescription>
-                <strong>StormPutt</strong> — 18 or 36 putts (3 or 6 per station
-                across 6 stations). Lowest score wins. <strong>Cornhole</strong>{" "}
-                — Head-to-head match play with configurable target points,
-                win-by-2, and max sets. Swiss or round-robin pairing.{" "}
-                <strong>Stations</strong> — Fully customizable format with
-                per-station distance, putt count, weights, and tags. Supports
-                templates.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
+      {/* Event Types & Formats */}
+      <section className="space-y-4 max-w-3xl">
+        <h2>Event Types</h2>
+        <Accordion>
+          <AccordionItem>
+            <AccordionTrigger>Classic</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Standard tournament with groups at an organized location.
+                Players compete in structured rounds at the same time and place.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>Flex</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Flexible scheduling — can be played online or in-person. Players
+                complete rounds on their own time. No check-in required.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>Team</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Doubles or team-based competition. Players pair up and compete
+                as teams with custom or randomly generated pairings.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>Bracket</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Single or double elimination tournament. Head-to-head matches
+                with bracket progression. Requires player check-in and supports
+                optional seeding.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </section>
+
+      <section className="space-y-4 max-w-3xl">
+        <h2>Event Formats</h2>
+        <Accordion>
+          <AccordionItem>
+            <AccordionTrigger>StormPutt</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                The standard dgputt format. 18 or 36 putts (3 or 6 per station
+                across 6 stations). Lowest score wins. The most popular format
+                for league events.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>Cornhole</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Head-to-head match play with configurable target points,
+                win-by-2, and max sets. Supports Swiss pairing (matched by
+                standings) or round-robin (fixed schedule) pairing systems.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>Stations</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Fully customizable format. Set distance, putt count, weights,
+                and tags per station. Save layouts as templates for reuse across
+                events — use league templates, global templates, or personal
+                ones.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </section>
 
       {/* Creating a League */}
