@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import PhoneFrame from "@/app/components/phone-frame";
 
 const freeGames = [
   {
@@ -171,6 +172,12 @@ export default function AboutPage() {
             </AccordionItem>
           ))}
         </Accordion>
+        <div className="flex justify-center pt-4">
+          <PhoneFrame
+            src="/images/screenshots/jyly.webp"
+            alt="JYLY game screenshot"
+          />
+        </div>
       </section>
 
       {/* Premium Games */}
@@ -187,6 +194,12 @@ export default function AboutPage() {
             </AccordionItem>
           ))}
         </Accordion>
+        <div className="flex justify-center pt-4">
+          <PhoneFrame
+            src="/images/screenshots/cornhole.webp"
+            alt="Cornhole game screenshot"
+          />
+        </div>
       </section>
 
       {/* Distances */}
@@ -213,6 +226,12 @@ export default function AboutPage() {
           percentage, and score vs par — then share your scorecards with
           friends.
         </p>
+        <div className="flex justify-center pt-4">
+          <PhoneFrame
+            src="/images/screenshots/round.webp"
+            alt="Round tracking screenshot"
+          />
+        </div>
       </section>
 
       {/* Progress & Stats */}
@@ -259,6 +278,16 @@ export default function AboutPage() {
             </AccordionContent>
           </AccordionItem>
         </Accordion>
+        <div className="flex justify-center gap-4 pt-4">
+          <PhoneFrame
+            src="/images/screenshots/progress.webp"
+            alt="Progress overview screenshot"
+          />
+          <PhoneFrame
+            src="/images/screenshots/jyly_progress.webp"
+            alt="JYLY game progress screenshot"
+          />
+        </div>
       </section>
 
       {/* Leagues & Events */}
@@ -280,6 +309,16 @@ export default function AboutPage() {
             Read the League Admin Guide →
           </Link>
         </p>
+        <div className="flex justify-center gap-4 pt-4">
+          <PhoneFrame
+            src="/images/screenshots/leagues.webp"
+            alt="Leagues overview screenshot"
+          />
+          <PhoneFrame
+            src="/images/screenshots/event_cornhole.webp"
+            alt="Cornhole event screenshot"
+          />
+        </div>
       </section>
 
       {/* Profile */}
