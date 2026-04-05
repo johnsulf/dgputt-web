@@ -8,6 +8,7 @@ export function useLiveEvent(leagueId: string, eventId: string) {
 
   useEffect(() => {
     if (!leagueId || !eventId) {
+      setEvent(null);
       setLoading(false);
       return;
     }
