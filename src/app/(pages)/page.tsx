@@ -92,7 +92,7 @@ export default function Home() {
       <section className="py-8 px-4 sm:px-16">
         <h2 className="mb-4">Featured on Kastkultur</h2>
         <p className="mb-4">
-          Check out the dgputt collection on Kastkultur — the home of disc golf
+          Check out the dgputt collection on Kastkultur - the home of disc golf
           culture in Scandinavia.
         </p>
         <div className="flex items-center gap-4">
