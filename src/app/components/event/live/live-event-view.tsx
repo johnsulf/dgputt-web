@@ -95,7 +95,13 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
               LIVE
             </span>
           </div>
-          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-sm">
+          <Badge
+            className={`text-sm ${
+              isLight
+                ? "border-amber-500/40 bg-amber-100 text-amber-900"
+                : "border-yellow-500/35 bg-yellow-500/20 text-yellow-300"
+            }`}
+          >
             {event.finished
               ? "Finished"
               : `Round ${event.currentRound ?? 1}${event.rounds ? ` / ${event.rounds}` : ""}`}
@@ -138,7 +144,9 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
                     strokeWidth={2}
                     className="size-4"
                   />
-                  <span>{isLight ? "Light mode" : "Dark mode"}</span>
+                  <span>
+                    {isLight ? "Switch to dark mode" : "Switch to light mode"}
+                  </span>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
