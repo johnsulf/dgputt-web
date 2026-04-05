@@ -1,4 +1,8 @@
-import type { LeagueEvent, LeagueEventMatch, LeagueEventPlayer } from "@/app/interfaces/league";
+import type {
+  LeagueEvent,
+  LeagueEventMatch,
+  LeagueEventPlayer,
+} from "@/app/interfaces/league";
 
 export interface Participant {
   id: string;
@@ -74,9 +78,7 @@ export function buildParticipants(event: LeagueEvent): {
   isDoubles: boolean;
 } {
   const players = event.players ?? {};
-  const entries = Object.entries(players).filter(
-    ([, player]) => !player.isDummy,
-  );
+  const entries = Object.entries(players);
   const isDoubles = event.playerMode === "doubles";
   const participants = new Map<string, Participant>();
   const memberToTeam = new Map<string, string>();

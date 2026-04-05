@@ -561,9 +561,7 @@ export function CornholeEvent({ event }: CornholeEventProps) {
     });
   }, [roundCount, roundsFromData]);
 
-  const hasAnyPlayers = Object.keys(event.players ?? {}).some(
-    (uid) => event.players?.[uid]?.isDummy !== true,
-  );
+  const hasAnyPlayers = Object.keys(event.players ?? {}).length > 0;
 
   const isStarted =
     event.finished === true ||
@@ -583,18 +581,16 @@ export function CornholeEvent({ event }: CornholeEventProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.entries(event.players ?? {})
-                .filter(([, player]) => !player.isDummy)
-                .map(([uid, player]) => (
-                  <TableRow key={uid}>
-                    <TableCell className="font-medium">
-                      {player.displayName ?? player.name ?? "Unknown"}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {player.division ?? "-"}
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {Object.entries(event.players ?? {}).map(([uid, player]) => (
+                <TableRow key={uid}>
+                  <TableCell className="font-medium">
+                    {player.displayName ?? player.name ?? "Unknown"}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {player.division ?? "-"}
+                  </TableCell>
+                </TableRow>
+              ))}
 
               {!hasAnyPlayers && (
                 <TableRow>

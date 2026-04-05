@@ -111,7 +111,6 @@ function PlayersRegistrationTable({
   players: Record<string, LeagueEventPlayer>;
 }) {
   const rows = Object.entries(players)
-    .filter(([, p]) => p.isDummy !== true)
     .map(([uid, p]) => ({
       uid,
       name: p.displayName ?? p.name ?? "Unknown",
