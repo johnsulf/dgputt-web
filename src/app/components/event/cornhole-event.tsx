@@ -16,13 +16,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -32,8 +25,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-type SortMode = "position" | "hitPct";
+import {
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnDef,
+  type SortingState,
+} from "@tanstack/react-table";
 
 interface CornholeEventProps {
   event: LeagueEvent;
@@ -57,6 +56,17 @@ interface LeaderboardRow {
   matchesPlayed: number;
   roundsPlayed: number;
   basePosition: number;
+}
+
+interface LeaderboardTableRow {
+  id: string;
+  position: number;
+  playerName: string;
+  division?: string;
+  hitPctLabel: string;
+  hitPctValue: number;
+  wins: number;
+  isCurrentUser: boolean;
 }
 
 function parseScore(value: unknown): number {
@@ -538,15 +548,17 @@ function MatchDetails({ match }: { match: LeagueEventMatch }) {
   const sets = sequenceRows(match);
   const leftMembers = match.player1.members ?? [];
   const rightMembers = match.player2.members ?? [];
+  const leftName = match.player1.displayName ?? match.player1.uid ?? "Unknown";
+  const rightName = match.player2.displayName ?? match.player2.uid ?? "Unknown";
 
   return (
     <div className="space-y-4">
       {sets.length > 0 ? (
         <div className="rounded-2xl border">
           <div className="grid grid-cols-[1fr_auto_1fr] border-b bg-muted/40 px-3 py-2 text-xs font-semibold">
-            <span className="text-right">Left</span>
+            <span className="truncate text-right">{leftName}</span>
             <span className="px-4">Set</span>
-            <span>Right</span>
+            <span className="truncate">{rightName}</span>
           </div>
           <div>
             {sets.map((set) => {
@@ -598,7 +610,7 @@ function MatchDetails({ match }: { match: LeagueEventMatch }) {
         <div className="grid gap-3 md:grid-cols-2">
           <div className="rounded-2xl border p-3">
             <h4 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-              Left team
+              {leftName}
             </h4>
             {leftMembers.length === 0 ? (
               <p className="text-sm text-muted-foreground">No member stats</p>
@@ -621,7 +633,7 @@ function MatchDetails({ match }: { match: LeagueEventMatch }) {
 
           <div className="rounded-2xl border p-3">
             <h4 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-              Right team
+              {rightName}
             </h4>
             {rightMembers.length === 0 ? (
               <p className="text-sm text-muted-foreground">No member stats</p>
@@ -705,91 +717,167 @@ function Leaderboard({
   currentUserUid?: string;
   isDoubles: boolean;
 }) {
-  const [sortMode, setSortMode] = useState<SortMode>("position");
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "position", desc: false },
+  ]);
 
-  const displayRows = useMemo(() => {
-    const next = [...rows];
-    if (sortMode === "hitPct") {
-      next.sort((a, b) => {
-        const pctDiff = b.hitPct - a.hitPct;
-        if (pctDiff !== 0) return pctDiff;
-        return a.basePosition - b.basePosition;
-      });
-    }
-    return next;
-  }, [rows, sortMode]);
+  const tableRows = useMemo<LeaderboardTableRow[]>(
+    () =>
+      rows.map((row) => ({
+        id: row.participant.id,
+        position: row.basePosition,
+        playerName: row.participant.name,
+        division: row.participant.division,
+        hitPctLabel:
+          row.attempts > 0 ? `${Math.round(row.hitPct * 100)}%` : "-",
+        hitPctValue: row.hitPct,
+        wins: row.wins,
+        isCurrentUser: currentUserUid === row.participant.id,
+      })),
+    [rows, currentUserUid],
+  );
+
+  const columns = useMemo<ColumnDef<LeaderboardTableRow>[]>(
+    () => [
+      {
+        accessorKey: "position",
+        header: "#",
+        cell: ({ row }) => (
+          <span className="font-semibold">{row.original.position}</span>
+        ),
+      },
+      {
+        accessorKey: "playerName",
+        header: "Player",
+        sortingFn: "text",
+        cell: ({ row }) => (
+          <div className="flex flex-col">
+            <span className="font-medium">{row.original.playerName}</span>
+            {isDoubles && row.original.division ? (
+              <span className="text-xs text-muted-foreground">
+                Division {row.original.division.toUpperCase()}
+              </span>
+            ) : null}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "hitPctValue",
+        header: "Hit%",
+        cell: ({ row }) => row.original.hitPctLabel,
+      },
+      {
+        accessorKey: "wins",
+        header: "Wins",
+        cell: ({ row }) => (
+          <span className="font-semibold">{row.original.wins}</span>
+        ),
+      },
+    ],
+    [isDoubles],
+  );
+
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable({
+    data: tableRows,
+    columns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    enableSortingRemoval: false,
+  });
 
   return (
     <Card className="rounded-3xl border py-4 shadow-none">
       <CardContent className="space-y-4 px-3 sm:px-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-base font-semibold">Leaderboard</h3>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Sort by</span>
-            <Select
-              value={sortMode}
-              onValueChange={(v) => setSortMode(v as SortMode)}
-            >
-              <SelectTrigger className="h-8 min-w-28 rounded-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="position">Position</SelectItem>
-                <SelectItem value="hitPct">Hit%</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <h3 className="text-base font-semibold">Leaderboard</h3>
 
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-12 text-center">#</TableHead>
-              <TableHead>Player</TableHead>
-              <TableHead className="w-24 text-center">Hit%</TableHead>
-              <TableHead className="w-20 text-center">Wins</TableHead>
-            </TableRow>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  const canSort = header.column.getCanSort();
+                  const sortState = header.column.getIsSorted();
+                  return (
+                    <TableHead
+                      key={header.id}
+                      className={
+                        header.id === "position"
+                          ? "w-12 text-center"
+                          : header.id === "hitPctValue"
+                            ? "w-24 text-center"
+                            : header.id === "wins"
+                              ? "w-20 text-center"
+                              : undefined
+                      }
+                    >
+                      {header.isPlaceholder ? null : canSort ? (
+                        <button
+                          type="button"
+                          className={
+                            header.id === "position" ||
+                            header.id === "hitPctValue" ||
+                            header.id === "wins"
+                              ? "mx-auto inline-flex items-center gap-1"
+                              : "inline-flex items-center gap-1"
+                          }
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                          <span className="text-xs text-muted-foreground">
+                            {sortState === "asc"
+                              ? "▲"
+                              : sortState === "desc"
+                                ? "▼"
+                                : "↕"}
+                          </span>
+                        </button>
+                      ) : (
+                        flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )
+                      )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
           </TableHeader>
           <TableBody>
-            {displayRows.map((row) => {
-              const playerId = row.participant.id;
-              const isCurrentUser = currentUserUid === playerId;
-              const displayedPosition = row.basePosition;
-              const hitPctLabel =
-                row.attempts > 0 ? `${Math.round(row.hitPct * 100)}%` : "-";
+            {table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                className={
+                  row.original.isCurrentUser ? "bg-muted/40" : undefined
+                }
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className={
+                      cell.column.id === "position" ||
+                      cell.column.id === "hitPctValue" ||
+                      cell.column.id === "wins"
+                        ? "text-center"
+                        : undefined
+                    }
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
 
-              return (
-                <TableRow
-                  key={playerId}
-                  className={isCurrentUser ? "bg-muted/40" : undefined}
-                >
-                  <TableCell className="text-center font-semibold">
-                    {displayedPosition}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-medium">
-                        {row.participant.name}
-                      </span>
-                      {isDoubles && row.participant.division ? (
-                        <span className="text-xs text-muted-foreground">
-                          Division {row.participant.division.toUpperCase()}
-                        </span>
-                      ) : null}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">{hitPctLabel}</TableCell>
-                  <TableCell className="text-center font-semibold">
-                    {row.wins}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-
-            {displayRows.length === 0 && (
+            {table.getRowModel().rows.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={4}
+                  colSpan={columns.length}
                   className="py-10 text-center text-muted-foreground"
                 >
                   No players yet.
@@ -877,14 +965,16 @@ export function CornholeEvent({ event }: CornholeEventProps) {
 
   return (
     <Tabs defaultValue="leaderboard">
-      <TabsList>
-        <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-        {roundOrder.map((roundIndex) => (
-          <TabsTrigger key={roundIndex} value={`round-${roundIndex}`}>
-            Round {roundIndex + 1}
-          </TabsTrigger>
-        ))}
-      </TabsList>
+      <div className="w-full overflow-x-auto pb-1">
+        <TabsList className="min-w-max">
+          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+          {roundOrder.map((roundIndex) => (
+            <TabsTrigger key={roundIndex} value={`round-${roundIndex}`}>
+              Round {roundIndex + 1}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
 
       <TabsContent value="leaderboard" className="mt-4">
         <Leaderboard
