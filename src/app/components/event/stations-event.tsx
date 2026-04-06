@@ -45,14 +45,12 @@ function ResultsTable({
             return (
               <TableHead key={s.key} className="w-14 text-center">
                 <div>{getStationLabel(s, i)}</div>
-                {dist && (
+                <div className="text-[10px] font-normal text-muted-foreground">
+                  {dist ?? "\u00A0"}
+                </div>
+                {showWeight && (
                   <div className="text-[10px] font-normal text-muted-foreground">
-                    {dist}
-                  </div>
-                )}
-                {showWeight && s.weight !== 1 && (
-                  <div className="text-[10px] font-normal text-muted-foreground">
-                    ×{s.weight}
+                    {s.weight !== 1 ? `×${s.weight}` : "\u00A0"}
                   </div>
                 )}
               </TableHead>

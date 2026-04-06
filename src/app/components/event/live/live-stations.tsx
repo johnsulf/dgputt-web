@@ -84,22 +84,20 @@ export function LiveStations({
                   className={`w-18 px-2 text-center ${densityStyles.header}`}
                 >
                   <div>{getStationLabel(s, i)}</div>
-                  {dist && (
+                  <div
+                    className={`text-xs font-normal ${
+                      isLight ? "text-zinc-500" : "text-zinc-500"
+                    }`}
+                  >
+                    {dist ?? "\u00A0"}
+                  </div>
+                  {showWeight && (
                     <div
                       className={`text-xs font-normal ${
                         isLight ? "text-zinc-500" : "text-zinc-500"
                       }`}
                     >
-                      {dist}
-                    </div>
-                  )}
-                  {showWeight && s.weight !== 1 && (
-                    <div
-                      className={`text-xs font-normal ${
-                        isLight ? "text-zinc-500" : "text-zinc-500"
-                      }`}
-                    >
-                      ×{s.weight}
+                      {s.weight !== 1 ? `×${s.weight}` : "\u00A0"}
                     </div>
                   )}
                 </th>

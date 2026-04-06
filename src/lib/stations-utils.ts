@@ -54,10 +54,7 @@ export function getStationDistance(
   if (station.customDistance) {
     return `${station.customDistance}${unit}`;
   }
-  if (
-    station.distanceIndex != null &&
-    station.distanceIndex >= 0
-  ) {
+  if (station.distanceIndex != null && station.distanceIndex >= 0) {
     // distanceIndex maps to distances starting from the lowest
     // Meters: index 0 = 3m, so distance = index + 3
     // Feet: index 0 = 10ft, so distance = index + 10
