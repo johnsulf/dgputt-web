@@ -97,22 +97,22 @@ const premiumGames = [
 
 const features = [
   { feature: "StormPutt, Twenty, Fifty, JYLY, Frøysa", free: true, paid: true },
-  { feature: "Basic progress & stats", free: true, paid: true },
-  { feature: "Goals & streaks", free: true, paid: true },
+  { feature: "Basic stats", free: true, paid: true },
   { feature: "PDGA linking", free: true, paid: true },
   { feature: "Putting routine", free: true, paid: true },
-  { feature: "Achievements", free: true, paid: true },
   { feature: "Join leagues & events", free: true, paid: true },
+  { feature: "Tag practice rounds with preset tags", free: true, paid: true },
+  { feature: "Tag practice rounds with custom tags", free: false, paid: true },
+  { feature: "Goals & streaks", free: false, paid: true },
   {
     feature: "Hundred, Runsjø, Shuffle, Survival, Cornhole",
     free: false,
     paid: true,
   },
-  { feature: "Advanced insights", free: false, paid: true },
+  { feature: "Advanced progress insights", free: false, paid: true },
   { feature: "Round tracking & course management", free: false, paid: true },
-  { feature: "Custom tags", free: false, paid: true },
   { feature: "Create & host leagues & events", free: false, paid: true },
-  { feature: "Leaderboards", free: false, paid: true },
+  { feature: "League Leaderboards", free: false, paid: true },
 ];
 
 export default function AboutPage() {
@@ -122,10 +122,10 @@ export default function AboutPage() {
       <section className="space-y-4 max-w-3xl">
         <h1>About dgputt</h1>
         <p className="text-lg">
-          dgputt is a disc golf putting practice app designed to help players
-          improve through structured drills, progress tracking, course round
-          logging, and competitive leagues. Available on iOS and Android - all
-          you need is a basket and ideally 6 putters.
+          dgputt is a disc golf putting app designed to help players improve
+          through structured drills, progress tracking, course round logging,
+          and competitive leagues. Available on iOS and Android - all you need
+          is a basket and ideally 6 putters.
         </p>
       </section>
 
@@ -133,7 +133,7 @@ export default function AboutPage() {
       <section className="space-y-4">
         <h2>How it works</h2>
         <div className="grid gap-6 sm:grid-cols-3">
-          <Card size="sm">
+          <Card>
             <CardHeader>
               <CardTitle>Practice</CardTitle>
               <CardDescription>
@@ -143,7 +143,7 @@ export default function AboutPage() {
               </CardDescription>
             </CardHeader>
           </Card>
-          <Card size="sm">
+          <Card>
             <CardHeader>
               <CardTitle>Track</CardTitle>
               <CardDescription>
@@ -153,7 +153,7 @@ export default function AboutPage() {
               </CardDescription>
             </CardHeader>
           </Card>
-          <Card size="sm">
+          <Card>
             <CardHeader>
               <CardTitle>Compete</CardTitle>
               <CardDescription>
@@ -232,15 +232,15 @@ export default function AboutPage() {
           Track your putting during actual disc golf rounds on real courses.
           Create courses and layouts, log per-hole putt attempts, and tag each
           putt with conditions like stance, throwing style, wind, elevation, and
-          tension level. Review round summaries with total putts, hit
-          percentage, and score vs par - then share your scorecards with
-          friends.
+          tension level. And of course, track hit- and miss point by tapping the
+          basket. Review round summaries with total putts, hit percentage, and
+          score vs par - then share your scorecards with friends.
         </p>
         <div className="flex justify-center pt-4">
           <PhoneFrame
             src="/images/screenshots/round.webp"
             alt="Round tracking screenshot"
-            caption="Tracking putts putts during a round"
+            caption="Tracking putts during a round of disc golf"
           />
         </div>
       </section>
