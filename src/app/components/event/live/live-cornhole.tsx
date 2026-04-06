@@ -3,19 +3,39 @@
 import { useMemo } from "react";
 import { LayoutGroup } from "motion/react";
 import type { LeagueEvent } from "@/app/interfaces/league";
-import { buildLeaderboardRows } from "@/lib/cornhole-utils";
+import { buildLeaderboardRows, getMatchesByRound } from "@/lib/cornhole-utils";
 import { AnimatedRow } from "./live-table";
 
 interface LiveCornholeProps {
   event: LeagueEvent;
+  viewMode: "totals" | number;
   theme: "dark" | "light";
   density: "small" | "medium" | "large";
+  totalRounds: number;
 }
 
-export function LiveCornhole({ event, theme, density }: LiveCornholeProps) {
-  const rows = useMemo(() => buildLeaderboardRows(event), [event]);
+export function LiveCornhole({
+  event,
+  viewMode,
+  theme,
+  density,
+  totalRounds,
+}: LiveCornholeProps) {
+  const effectiveEvent = useMemo(() => {
+    if (typeof viewMode !== "number") return event;
+    const roundMatches = getMatchesByRound(event);
+    const roundOnly = roundMatches[viewMode] ?? [];
+    return { ...event, matches: roundOnly, matchesByRound: [roundOnly] };
+  }, [event, viewMode]);
+
+  const rows = useMemo(
+    () => buildLeaderboardRows(effectiveEvent),
+    [effectiveEvent],
+  );
   const isDoubles = event.playerMode === "doubles";
   const isLight = theme === "light";
+
+  const showThru = viewMode === "totals" && totalRounds > 1;
   const densityStyles =
     density === "small"
       ? { header: "py-1.5 text-xs", cell: "py-1.5 text-sm", score: "text-base" }
@@ -38,6 +58,11 @@ export function LiveCornhole({ event, theme, density }: LiveCornholeProps) {
               #
             </th>
             <th className={`px-3 text-left ${densityStyles.header}`}>Player</th>
+            {showThru && (
+              <th className={`w-16 px-2 text-center ${densityStyles.header}`}>
+                Thru
+              </th>
+            )}
             <th className={`w-20 px-3 text-center ${densityStyles.header}`}>
               Hit%
             </th>
@@ -71,6 +96,15 @@ export function LiveCornhole({ event, theme, density }: LiveCornholeProps) {
                     </div>
                   )}
                 </td>
+                {showThru && (
+                  <td
+                    className={`px-2 text-center tabular-nums ${densityStyles.cell} ${
+                      isLight ? "text-zinc-500" : "text-zinc-500"
+                    }`}
+                  >
+                    {`${row.roundsPlayed}/${totalRounds}`}
+                  </td>
+                )}
                 <td
                   className={`px-3 text-center tabular-nums ${densityStyles.cell}`}
                 >

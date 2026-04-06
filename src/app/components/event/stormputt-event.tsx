@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { LeagueEvent, LeagueEventPlayer } from "@/app/interfaces/league";
 import {
   Table,
@@ -176,6 +176,27 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
 
   const hasStarted = (event.currentRound ?? 0) > 0 || event.finished;
 
+  const divisions = useMemo(() => {
+    const divs = new Set<string>();
+    for (const player of Object.values(players)) {
+      if (player.division) divs.add(player.division);
+    }
+    return Array.from(divs).sort();
+  }, [players]);
+
+  const [selectedDivision, setSelectedDivision] = useState<string | null>(null);
+
+  const filteredPlayers = useMemo(() => {
+    if (!selectedDivision) return players;
+    const filtered: Record<string, LeagueEventPlayer> = {};
+    for (const [uid, player] of Object.entries(players)) {
+      if (player.division === selectedDivision) {
+        filtered[uid] = player;
+      }
+    }
+    return filtered;
+  }, [players, selectedDivision]);
+
   const distanceLabels = useMemo(
     () => getDistanceLabels(event.dstIndex),
     [event.dstIndex],
@@ -183,62 +204,97 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
 
   const maxRounds = useMemo(
     () =>
-      Math.max(0, ...Object.values(players).map((p) => p.rounds?.length ?? 0)),
-    [players],
+      Math.max(
+        0,
+        ...Object.values(filteredPlayers).map((p) => p.rounds?.length ?? 0),
+      ),
+    [filteredPlayers],
   );
 
   const totalRounds = event.rounds ?? maxRounds;
 
   const totals = useMemo(
-    () => (hasStarted ? computeTotals(players) : []),
-    [players, hasStarted],
+    () => (hasStarted ? computeTotals(filteredPlayers) : []),
+    [filteredPlayers, hasStarted],
   );
 
   const roundData = useMemo(
     () =>
       hasStarted
-        ? Array.from({ length: maxRounds }, (_, i) => computeRound(players, i))
+        ? Array.from({ length: maxRounds }, (_, i) =>
+            computeRound(filteredPlayers, i),
+          )
         : [],
-    [players, maxRounds, hasStarted],
+    [filteredPlayers, maxRounds, hasStarted],
   );
 
   if (!hasStarted) {
     return <PlayersRegistrationTable players={players} />;
   }
 
+  const divisionFilter = divisions.length > 0 && (
+    <div className="mb-4 flex flex-wrap gap-2">
+      <Badge
+        variant={selectedDivision === null ? "default" : "outline"}
+        className="cursor-pointer"
+        onClick={() => setSelectedDivision(null)}
+      >
+        All
+      </Badge>
+      {divisions.map((div) => (
+        <Badge
+          key={div}
+          variant={selectedDivision === div ? "default" : "outline"}
+          className="cursor-pointer"
+          onClick={() => setSelectedDivision(div)}
+        >
+          {div}
+        </Badge>
+      ))}
+    </div>
+  );
+
   // Only leaderboard when a single round
   if (maxRounds <= 1) {
-    return <ResultsTable rows={totals} distanceLabels={distanceLabels} />;
+    return (
+      <div>
+        {divisionFilter}
+        <ResultsTable rows={totals} distanceLabels={distanceLabels} />
+      </div>
+    );
   }
 
   return (
-    <Tabs defaultValue="leaderboard">
-      <TabsList>
-        <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-        {Array.from({ length: maxRounds }, (_, i) => {
-          const roundNum = maxRounds - i;
-          return (
-            <TabsTrigger key={roundNum} value={`round-${roundNum - 1}`}>
-              Round {roundNum}
-            </TabsTrigger>
-          );
-        })}
-      </TabsList>
+    <div>
+      {divisionFilter}
+      <Tabs defaultValue="leaderboard">
+        <TabsList>
+          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+          {Array.from({ length: maxRounds }, (_, i) => {
+            const roundNum = maxRounds - i;
+            return (
+              <TabsTrigger key={roundNum} value={`round-${roundNum - 1}`}>
+                Round {roundNum}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
-      <TabsContent value="leaderboard" className="mt-4">
-        <ResultsTable
-          rows={totals}
-          distanceLabels={distanceLabels}
-          showThru={maxRounds > 1}
-          totalRounds={totalRounds}
-        />
-      </TabsContent>
-
-      {roundData.map((rows, i) => (
-        <TabsContent key={i} value={`round-${i}`} className="mt-4">
-          <ResultsTable rows={rows} distanceLabels={distanceLabels} />
+        <TabsContent value="leaderboard" className="mt-4">
+          <ResultsTable
+            rows={totals}
+            distanceLabels={distanceLabels}
+            showThru={maxRounds > 1}
+            totalRounds={totalRounds}
+          />
         </TabsContent>
-      ))}
-    </Tabs>
+
+        {roundData.map((rows, i) => (
+          <TabsContent key={i} value={`round-${i}`} className="mt-4">
+            <ResultsTable rows={rows} distanceLabels={distanceLabels} />
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
   );
 }

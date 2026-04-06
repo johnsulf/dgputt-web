@@ -46,7 +46,7 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
       0,
       ...Object.values(event.players ?? {}).map((p) => p.rounds?.length ?? 0),
     );
-  const showViewSelect = (isStormPutt || isStations) && totalRounds > 1;
+  const showViewSelect = totalRounds > 1;
 
   return (
     <div
@@ -234,7 +234,13 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
             totalRounds={totalRounds}
           />
         ) : event.format === "cornhole" ? (
-          <LiveCornhole event={event} theme={theme} density={density} />
+          <LiveCornhole
+            event={event}
+            viewMode={viewMode}
+            theme={theme}
+            density={density}
+            totalRounds={totalRounds}
+          />
         ) : (
           <p
             className={`py-10 text-center ${isLight ? "text-zinc-500" : "text-zinc-500"}`}
