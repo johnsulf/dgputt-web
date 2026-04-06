@@ -37,9 +37,7 @@ function ResultsTable({
         <TableRow>
           <TableHead className="w-10 text-center">#</TableHead>
           <TableHead>Player</TableHead>
-          {showThru && (
-            <TableHead className="w-14 text-center">Thru</TableHead>
-          )}
+          {showThru && <TableHead className="w-14 text-center">Thru</TableHead>}
           {distanceLabels.meter.map((label, i) => (
             <TableHead key={i} className="w-14 text-center">
               <div>{label}</div>

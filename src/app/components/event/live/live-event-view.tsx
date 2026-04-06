@@ -40,7 +40,12 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
 
   const isStormPutt = event.format === "stormputt";
   const isStations = event.format === "stations";
-  const totalRounds = event.rounds ?? Math.max(0, ...Object.values(event.players ?? {}).map((p) => p.rounds?.length ?? 0));
+  const totalRounds =
+    event.rounds ??
+    Math.max(
+      0,
+      ...Object.values(event.players ?? {}).map((p) => p.rounds?.length ?? 0),
+    );
   const showViewSelect = (isStormPutt || isStations) && totalRounds > 1;
 
   return (
