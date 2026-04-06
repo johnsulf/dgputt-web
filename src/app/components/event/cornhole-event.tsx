@@ -413,7 +413,7 @@ function Leaderboard({
       },
       {
         accessorKey: "playerName",
-        header: "Player",
+        header: isDoubles ? "Team" : "Player",
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex flex-col">

@@ -57,7 +57,9 @@ export function LiveCornhole({
             <th className={`w-14 px-3 text-center ${densityStyles.header}`}>
               #
             </th>
-            <th className={`px-3 text-left ${densityStyles.header}`}>Player</th>
+            <th className={`px-3 text-left ${densityStyles.header}`}>
+              {isDoubles ? "Team" : "Player"}
+            </th>
             {showThru && (
               <th className={`w-16 px-2 text-center ${densityStyles.header}`}>
                 Thru

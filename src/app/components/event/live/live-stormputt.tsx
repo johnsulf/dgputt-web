@@ -30,6 +30,7 @@ export function LiveStormPutt({
     () => getDistanceLabels(event.dstIndex),
     [event.dstIndex],
   );
+  const isDoubles = event.playerMode === "doubles";
   const isLight = theme === "light";
 
   const showThru = viewMode === "totals" && totalRounds > 1;
@@ -43,10 +44,10 @@ export function LiveStormPutt({
 
   const rows = useMemo(() => {
     if (typeof viewMode === "number") {
-      return computeRound(players, viewMode);
+      return computeRound(players, viewMode, isDoubles);
     }
-    return computeTotals(players);
-  }, [players, viewMode]);
+    return computeTotals(players, isDoubles);
+  }, [players, viewMode, isDoubles]);
 
   return (
     <div className="overflow-x-auto">
@@ -62,7 +63,9 @@ export function LiveStormPutt({
             <th className={`w-14 px-3 text-center ${densityStyles.header}`}>
               #
             </th>
-            <th className={`px-3 text-left ${densityStyles.header}`}>Player</th>
+            <th className={`px-3 text-left ${densityStyles.header}`}>
+              {isDoubles ? "Team" : "Player"}
+            </th>
             {distanceLabels.meter.map((label, i) => (
               <th
                 key={i}

@@ -27,11 +27,13 @@ function ResultsTable({
   distanceLabels,
   showThru,
   totalRounds,
+  isDoubles,
 }: {
   rows: PlayerRow[];
   distanceLabels: { meter: string[]; feet: string[] };
   showThru?: boolean;
   totalRounds?: number;
+  isDoubles?: boolean;
 }) {
   return (
     <Table>
@@ -41,7 +43,7 @@ function ResultsTable({
             #
           </TableHead>
           <TableHead className="sticky left-10 z-10 bg-background">
-            Player
+            {isDoubles ? "Team" : "Player"}
           </TableHead>
           {distanceLabels.meter.map((label, i) => (
             <TableHead key={i} className="w-14 text-center">
@@ -230,20 +232,21 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
   );
 
   const totalRounds = event.rounds ?? maxRounds;
+  const isDoubles = event.playerMode === "doubles";
 
   const totals = useMemo(
-    () => (hasStarted ? computeTotals(filteredPlayers) : []),
-    [filteredPlayers, hasStarted],
+    () => (hasStarted ? computeTotals(filteredPlayers, isDoubles) : []),
+    [filteredPlayers, hasStarted, isDoubles],
   );
 
   const roundData = useMemo(
     () =>
       hasStarted
         ? Array.from({ length: maxRounds }, (_, i) =>
-            computeRound(filteredPlayers, i),
+            computeRound(filteredPlayers, i, isDoubles),
           )
         : [],
-    [filteredPlayers, maxRounds, hasStarted],
+    [filteredPlayers, maxRounds, hasStarted, isDoubles],
   );
 
   if (!hasStarted) {
@@ -277,7 +280,11 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
     return (
       <div>
         {divisionFilter}
-        <ResultsTable rows={totals} distanceLabels={distanceLabels} />
+        <ResultsTable
+          rows={totals}
+          distanceLabels={distanceLabels}
+          isDoubles={isDoubles}
+        />
       </div>
     );
   }
@@ -304,12 +311,17 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
             distanceLabels={distanceLabels}
             showThru={maxRounds > 1}
             totalRounds={totalRounds}
+            isDoubles={isDoubles}
           />
         </TabsContent>
 
         {roundData.map((rows, i) => (
           <TabsContent key={i} value={`round-${i}`} className="mt-4">
-            <ResultsTable rows={rows} distanceLabels={distanceLabels} />
+            <ResultsTable
+              rows={rows}
+              distanceLabels={distanceLabels}
+              isDoubles={isDoubles}
+            />
           </TabsContent>
         ))}
       </Tabs>

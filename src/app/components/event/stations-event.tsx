@@ -32,6 +32,7 @@ function ResultsTable({
   distanceUnit,
   showThru,
   totalRounds,
+  isDoubles,
 }: {
   rows: StationsPlayerRow[];
   stations: StationDef[];
@@ -39,6 +40,7 @@ function ResultsTable({
   distanceUnit: string;
   showThru?: boolean;
   totalRounds?: number;
+  isDoubles?: boolean;
 }) {
   return (
     <Table>
@@ -48,7 +50,7 @@ function ResultsTable({
             #
           </TableHead>
           <TableHead className="sticky left-10 z-10 bg-background">
-            Player
+            {isDoubles ? "Team" : "Player"}
           </TableHead>
           {stations.map((s, i) => {
             const dist = getStationDistance(s, distanceUnit);
@@ -246,6 +248,7 @@ export function StationsEvent({ event }: StationsEventProps) {
   );
 
   const totalRounds = event.rounds ?? maxRounds;
+  const isDoubles = event.playerMode === "doubles";
 
   const totals = useMemo(
     () => (hasStarted ? computeStationsTotals(filteredPlayers, stations) : []),
@@ -305,6 +308,7 @@ export function StationsEvent({ event }: StationsEventProps) {
           stations={stations}
           showWeight={showWeight}
           distanceUnit={distanceUnit}
+          isDoubles={isDoubles}
         />
       </div>
     );
@@ -334,6 +338,7 @@ export function StationsEvent({ event }: StationsEventProps) {
             distanceUnit={distanceUnit}
             showThru={maxRounds > 1}
             totalRounds={totalRounds}
+            isDoubles={isDoubles}
           />
         </TabsContent>
 
@@ -344,6 +349,7 @@ export function StationsEvent({ event }: StationsEventProps) {
               stations={stations}
               showWeight={showWeight}
               distanceUnit={distanceUnit}
+              isDoubles={isDoubles}
             />
           </TabsContent>
         ))}

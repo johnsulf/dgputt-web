@@ -75,7 +75,9 @@ export function LiveStations({
             <th className={`w-14 px-3 text-center ${densityStyles.header}`}>
               #
             </th>
-            <th className={`px-3 text-left ${densityStyles.header}`}>Player</th>
+            <th className={`px-3 text-left ${densityStyles.header}`}>
+              {event.playerMode === "doubles" ? "Team" : "Player"}
+            </th>
             {stations.map((s, i) => {
               const dist = getStationDistance(s, distanceUnit);
               return (
