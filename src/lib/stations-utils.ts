@@ -148,10 +148,7 @@ export function computeStationsRound(
         totalHits,
         totalPutts,
         totalScore,
-        hitPercent:
-          totalPutts > 0
-            ? (totalHits / totalPutts) * 100
-            : 0,
+        hitPercent: totalPutts > 0 ? (totalHits / totalPutts) * 100 : 0,
         dns,
         dnf,
       };
