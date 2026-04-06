@@ -282,7 +282,7 @@ export default function AboutPage() {
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-        <div className="flex justify-center gap-4 pt-4">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
           <PhoneFrame
             src="/images/screenshots/progress.webp"
             alt="Progress overview screenshot"
@@ -315,7 +315,7 @@ export default function AboutPage() {
             Read the League Admin Guide →
           </Link>
         </p>
-        <div className="flex justify-center gap-4 pt-4">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
           <PhoneFrame
             src="/images/screenshots/leagues.webp"
             alt="Leagues overview screenshot"
