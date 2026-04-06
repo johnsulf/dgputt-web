@@ -39,6 +39,9 @@ export interface LeaderboardEntry {
   totalPoints: number;
   validPoints: number;
   eventCount: number;
+  wins: number;
+  seconds: number;
+  thirds: number;
   placements: EventPlacement[];
 }
 
@@ -172,12 +175,19 @@ export function buildLeagueLeaderboard(
       .slice(0, validRounds)
       .reduce((sum, p) => sum + p, 0);
 
+    const wins = placements.filter((p) => p.place === 1).length;
+    const seconds = placements.filter((p) => p.place === 2).length;
+    const thirds = placements.filter((p) => p.place === 3).length;
+
     entries.push({
       uid,
       name,
       totalPoints,
       validPoints,
       eventCount: placements.length,
+      wins,
+      seconds,
+      thirds,
       placements,
     });
   }

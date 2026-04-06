@@ -5,8 +5,17 @@ import type { LeagueInstance } from "@/app/interfaces/league";
 import {
   buildLeagueLeaderboard,
   getFinishedFormats,
+  type LeaderboardEntry,
 } from "@/lib/league-leaderboard-utils";
 import { formatLabel } from "@/lib/event-utils";
+import {
+  type ColumnDef,
+  type SortingState,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import {
   Table,
   TableBody,
@@ -52,13 +61,27 @@ const POINTS_TABLE = [
   { place: "8th+", points: 2 },
 ];
 
-function formatFilterLabel(format: string | null, formats: string[]): string {
+interface TableRow_ {
+  position: number;
+  name: string;
+  events: number;
+  wins: number;
+  seconds: number;
+  thirds: number;
+  points: number;
+  totalPoints: number;
+}
+
+function formatFilterLabel(format: string | null): string {
   if (!format) return "All Formats";
   return formatLabel(format);
 }
 
 export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
   const [formatFilter, setFormatFilter] = useState<string | null>(null);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "points", desc: true },
+  ]);
 
   const formats = useMemo(
     () => getFinishedFormats(league, seasonFilter),
@@ -82,6 +105,90 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
     return true;
   }).length;
 
+  const tableData = useMemo<TableRow_[]>(
+    () =>
+      entries.map((entry, i) => ({
+        position: i + 1,
+        name: entry.name,
+        events: entry.eventCount,
+        wins: entry.wins,
+        seconds: entry.seconds,
+        thirds: entry.thirds,
+        points: entry.validPoints,
+        totalPoints: entry.totalPoints,
+      })),
+    [entries],
+  );
+
+  const columns = useMemo<ColumnDef<TableRow_>[]>(
+    () => [
+      {
+        accessorKey: "position",
+        header: "#",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.position}</span>
+        ),
+      },
+      {
+        accessorKey: "name",
+        header: "Player",
+        enableSorting: true,
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.name}</span>
+        ),
+      },
+      {
+        accessorKey: "events",
+        header: "Events",
+        enableSorting: true,
+      },
+      {
+        accessorKey: "wins",
+        header: "🥇",
+        enableSorting: true,
+      },
+      {
+        accessorKey: "seconds",
+        header: "🥈",
+        enableSorting: true,
+      },
+      {
+        accessorKey: "thirds",
+        header: "🥉",
+        enableSorting: true,
+      },
+      {
+        accessorKey: "points",
+        header: "Points",
+        enableSorting: true,
+        cell: ({ row }) => (
+          <span className="font-semibold">
+            {row.original.points}
+            {row.original.events > validRounds &&
+              row.original.totalPoints !== row.original.points && (
+                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                  ({row.original.totalPoints})
+                </span>
+              )}
+          </span>
+        ),
+      },
+    ],
+    [validRounds],
+  );
+
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable({
+    data: tableData,
+    columns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    enableSortingRemoval: false,
+  });
+
   if (!hasEvents) {
     return (
       <Alert>
@@ -101,7 +208,7 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
             <DropdownMenuTrigger
               render={
                 <Button variant="outline" size="sm">
-                  {formatFilterLabel(formatFilter, formats)}
+                  {formatFilterLabel(formatFilter)}
                 </Button>
               }
             />
@@ -187,49 +294,73 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
 
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead className="w-10 text-center">#</TableHead>
-            <TableHead>Player</TableHead>
-            <TableHead className="w-16 text-center">Events</TableHead>
-            <TableHead className="w-16 text-center">Points</TableHead>
-          </TableRow>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                const canSort = header.column.getCanSort();
+                const sortState = header.column.getIsSorted();
+                const isCentered = header.id !== "name";
+                return (
+                  <TableHead
+                    key={header.id}
+                    className={
+                      header.id === "position"
+                        ? "w-10 text-center"
+                        : header.id === "name"
+                          ? undefined
+                          : "w-16 text-center"
+                    }
+                  >
+                    {header.isPlaceholder ? null : canSort ? (
+                      <button
+                        type="button"
+                        className={`inline-flex items-center gap-1 ${isCentered ? "mx-auto" : ""}`}
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {sortState === "asc"
+                            ? "▲"
+                            : sortState === "desc"
+                              ? "▼"
+                              : "↕"}
+                        </span>
+                      </button>
+                    ) : (
+                      flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )
+                    )}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
+          ))}
         </TableHeader>
         <TableBody>
-          {entries.map((entry, i) => {
-            const place = i + 1;
-            const prevEntry = i > 0 ? entries[i - 1] : null;
-            const displayPlace =
-              prevEntry &&
-              prevEntry.validPoints === entry.validPoints &&
-              prevEntry.totalPoints === entry.totalPoints
-                ? ""
-                : place;
+          {table.getRowModel().rows.map((row) => (
+            <TableRow key={row.id}>
+              {row.getVisibleCells().map((cell) => (
+                <TableCell
+                  key={cell.id}
+                  className={
+                    cell.column.id !== "name" ? "text-center" : undefined
+                  }
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
 
-            return (
-              <TableRow key={entry.uid}>
-                <TableCell className="text-center font-medium">
-                  {displayPlace}
-                </TableCell>
-                <TableCell className="font-medium">{entry.name}</TableCell>
-                <TableCell className="text-center text-muted-foreground">
-                  {entry.eventCount}
-                </TableCell>
-                <TableCell className="text-center font-semibold">
-                  {entry.validPoints}
-                  {entry.eventCount > validRounds &&
-                    entry.totalPoints !== entry.validPoints && (
-                      <span className="ml-1 text-xs text-muted-foreground">
-                        ({entry.totalPoints})
-                      </span>
-                    )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-          {entries.length === 0 && (
+          {table.getRowModel().rows.length === 0 && (
             <TableRow>
               <TableCell
-                colSpan={4}
+                colSpan={columns.length}
                 className="py-8 text-center text-muted-foreground"
               >
                 No results for this filter.

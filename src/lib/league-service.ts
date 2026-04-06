@@ -137,12 +137,10 @@ export function parseSingleEvent(
   const v = value as Record<string, unknown>;
   const matchesByRound = parseMatchesByRound(v.matches);
 
-  const explicitFormat =
-    typeof v.format === "string" ? v.format : undefined;
+  const explicitFormat = typeof v.format === "string" ? v.format : undefined;
 
   // Infer format for older events that don't have the field
-  const format =
-    explicitFormat ?? inferFormat(v, matchesByRound);
+  const format = explicitFormat ?? inferFormat(v, matchesByRound);
 
   return {
     id: key,
