@@ -42,7 +42,7 @@ export function computeTotals(
 
       for (const round of player.rounds ?? []) {
         if (round.dns === true || round.dnf === true) continue;
-        roundsPlayed++;
+        if (round.finished === true) roundsPlayed++;
         const hps = round.hitsPerSequence ?? [];
         const pps = round.puttsPerSequence ?? [];
         for (let i = 0; i < NUM_DISTANCES; i++) {
