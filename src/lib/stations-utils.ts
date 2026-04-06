@@ -12,6 +12,7 @@ export interface StationDef {
 export interface StationsPlayerRow {
   uid: string;
   name: string;
+  pdgaNumber?: string;
   place: number;
   stationHits: number[];
   stationPutts: number[];
@@ -106,6 +107,7 @@ export function computeStationsTotals(
       return {
         uid,
         name: player.displayName ?? player.name ?? "Unknown",
+        pdgaNumber: player.pdgaNumber || undefined,
         stationHits,
         stationPutts,
         stationScores,
@@ -142,6 +144,7 @@ export function computeStationsRound(
         return {
           uid,
           name: player.displayName ?? player.name ?? "Unknown",
+          pdgaNumber: player.pdgaNumber || undefined,
           stationHits: Array.from({ length: numStations }, () => 0),
           stationPutts: Array.from({ length: numStations }, () => 0),
           stationScores: Array.from({ length: numStations }, () => 0),
@@ -174,6 +177,7 @@ export function computeStationsRound(
       return {
         uid,
         name: player.displayName ?? player.name ?? "Unknown",
+        pdgaNumber: player.pdgaNumber || undefined,
         stationHits,
         stationPutts,
         stationScores,

@@ -16,6 +16,7 @@ export function getDistanceLabels(dstIndex?: number): {
 export interface PlayerRow {
   uid: string;
   name: string;
+  pdgaNumber?: string;
   place: number;
   distances: number[];
   distancePutts: number[];
@@ -56,6 +57,7 @@ export function computeTotals(
       return {
         uid,
         name: player.displayName ?? player.name ?? "Unknown",
+        pdgaNumber: player.pdgaNumber || undefined,
         distances,
         distancePutts,
         hits: totalHits,
@@ -83,6 +85,7 @@ export function computeRound(
         return {
           uid,
           name: player.displayName ?? player.name ?? "Unknown",
+          pdgaNumber: player.pdgaNumber || undefined,
           distances: Array.from({ length: NUM_DISTANCES }, () => 0),
           distancePutts: Array.from({ length: NUM_DISTANCES }, () => 0),
           hits: 0,
@@ -107,6 +110,7 @@ export function computeRound(
       return {
         uid,
         name: player.displayName ?? player.name ?? "Unknown",
+        pdgaNumber: player.pdgaNumber || undefined,
         distances,
         distancePutts,
         hits: round.hits ?? 0,

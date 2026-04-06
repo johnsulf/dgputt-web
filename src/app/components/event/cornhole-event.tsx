@@ -40,6 +40,8 @@ import {
   isWalkover,
   buildLeaderboardRows,
 } from "@/lib/cornhole-utils";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 
 interface CornholeEventProps {
   event: LeagueEvent;
@@ -50,6 +52,7 @@ interface LeaderboardTableRow {
   position: number;
   playerName: string;
   division?: string;
+  pdgaNumber?: string;
   hitPctLabel: string;
   hitPctValue: number;
   wins: number;
@@ -389,6 +392,7 @@ function Leaderboard({
         position: row.basePosition,
         playerName: row.participant.name,
         division: row.participant.division,
+        pdgaNumber: row.participant.pdgaNumber,
         hitPctLabel:
           row.attempts > 0 ? `${Math.round(row.hitPct * 100)}%` : "-",
         hitPctValue: row.hitPct,
@@ -413,7 +417,23 @@ function Leaderboard({
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex flex-col">
-            <span className="font-medium">{row.original.playerName}</span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{row.original.playerName}</span>
+              {row.original.pdgaNumber && (
+                <a
+                  href={`https://www.pdga.com/player/${row.original.pdgaNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
+                  style={{
+                    background: "linear-gradient(to left, #008d6f, #003F6A)",
+                  }}
+                >
+                  #{row.original.pdgaNumber}
+                  <HugeiconsIcon icon={ArrowUpRight01Icon} size={12} />
+                </a>
+              )}
+            </div>
             {isDoubles && row.original.division ? (
               <span className="text-xs text-muted-foreground">
                 Division {row.original.division.toUpperCase()}

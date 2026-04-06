@@ -19,6 +19,8 @@ import {
   computeTotals,
   computeRound,
 } from "@/lib/stormputt-utils";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 
 function ResultsTable({
   rows,
@@ -71,7 +73,23 @@ function ResultsTable({
               )}
             </TableCell>
             <TableCell className="sticky left-10 z-10 bg-background font-medium">
-              {row.name}
+              <div className="flex items-center gap-2">
+                {row.name}
+                {row.pdgaNumber && (
+                  <a
+                    href={`https://www.pdga.com/player/${row.pdgaNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
+                    style={{
+                      background: "linear-gradient(to left, #008d6f, #003F6A)",
+                    }}
+                  >
+                    #{row.pdgaNumber}
+                    <HugeiconsIcon icon={ArrowUpRight01Icon} size={12} />
+                  </a>
+                )}
+              </div>
             </TableCell>
             {row.distances.map((d, i) => {
               const p = row.distancePutts[i] ?? 0;
