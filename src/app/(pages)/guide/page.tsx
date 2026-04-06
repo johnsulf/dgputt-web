@@ -12,6 +12,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "League Admin Guide - dgputt",
@@ -27,7 +28,35 @@ export default function GuidePage() {
         <h1>League Admin Guide</h1>
         <p className="text-lg">
           Everything you need to know about creating and running leagues and
-          events in dgputt. League features require a premium subscription.
+          events in dgputt - from the mobile app to the web.
+        </p>
+        <div className="flex gap-3">
+          <a
+            href="#app"
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            dgputt App
+          </a>
+          <span className="text-muted-foreground">·</span>
+          <a
+            href="#web"
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            dgputt Web
+          </a>
+        </div>
+      </section>
+
+      {/* ── dgputt App ── */}
+      <section id="app" className="space-y-4 max-w-3xl">
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl">dgputt App</h2>
+          <Badge variant="secondary">Mobile</Badge>
+        </div>
+        <p className="text-muted-foreground">
+          League management, event creation, scoring, and administration are all
+          handled in the dgputt mobile app. League features require a premium
+          subscription.
         </p>
       </section>
 
@@ -371,6 +400,204 @@ export default function GuidePage() {
             </CardHeader>
           </Card>
         </div>
+      </section>
+
+      {/* ── dgputt Web ── */}
+      <section id="web" className="space-y-4 max-w-3xl pt-4">
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl">dgputt Web</h2>
+          <Badge variant="secondary">This site</Badge>
+        </div>
+        <p className="text-muted-foreground">
+          The dgputt website lets you browse leagues, view event results and
+          leaderboards, and follow live events. Accessing leagues requires
+          logging in with a dgputt account - to create one, download the dgputt
+          app and register first.
+        </p>
+      </section>
+
+      {/* Browsing Leagues */}
+      <section className="space-y-4 max-w-3xl">
+        <h2>Browsing Leagues</h2>
+        <Accordion>
+          <AccordionItem>
+            <AccordionTrigger>Finding leagues</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                The{" "}
+                <Link
+                  href="/leagues"
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  Leagues
+                </Link>{" "}
+                page shows all leagues you have access to. Use the search bar to
+                filter by name. Switch between tabs to view your favourite
+                leagues, featured leagues, or all available leagues.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>League detail page</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Each league has its own page with the league name, location,
+                season info, and contact details. Use the{" "}
+                <strong>Events</strong> and <strong>Leaderboard</strong> tabs to
+                navigate between event listings and overall standings.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>Season filter</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Leagues with seasons enabled show a season selector. Switching
+                seasons filters both the event list and the leaderboard to only
+                show data from that season.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </section>
+
+      {/* Event Views */}
+      <section className="space-y-4 max-w-3xl">
+        <h2>Event Results</h2>
+        <Accordion>
+          <AccordionItem>
+            <AccordionTrigger>StormPutt &amp; StormPutt 18</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Event pages show a leaderboard with per-distance hit counts, hit
+                percentages, and total score. Multi-round events have tabs to
+                switch between the overall leaderboard and individual rounds. A
+                &quot;Thru&quot; column shows how many rounds each player has
+                completed.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>Cornhole</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Cornhole events display a sortable leaderboard with wins, hit
+                percentage, and strength of schedule. Below the leaderboard,
+                individual match results are shown per round with scores and
+                sequence details.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>Stations</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Stations events show per-station hit counts, hit percentages,
+                and weighted scores. Station headers display the station
+                distance and weight when applicable.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>Divisions &amp; doubles</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                All event views support division filtering - tap a division
+                badge to show only players in that division. Doubles events
+                automatically group team members and display team names.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>PDGA links</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Players with a PDGA number show a badge next to their name that
+                links directly to their PDGA player profile.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </section>
+
+      {/* League Leaderboard */}
+      <section className="space-y-4 max-w-3xl">
+        <h2>League Leaderboard</h2>
+        <Accordion>
+          <AccordionItem>
+            <AccordionTrigger>Points system</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                The league leaderboard ranks players by points earned across all
+                finished events. Points are awarded based on placement:
+                1st&nbsp;=&nbsp;12, 2nd&nbsp;=&nbsp;10, 3rd&nbsp;=&nbsp;8,
+                4th&nbsp;=&nbsp;6, 5th&nbsp;=&nbsp;5, 6th&nbsp;=&nbsp;4,
+                7th&nbsp;=&nbsp;3, and 8th or lower&nbsp;=&nbsp;2 points.
+                Players who don&apos;t complete an event receive 0 points.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>Valid rounds</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Leagues can limit how many event scores count (e.g. best 6 of
+                10). When a player has played more events than the valid rounds
+                limit, only their top scores count. The leaderboard shows an
+                info badge with the counting rule.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>Format filter</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                When a league has events in multiple formats, a dropdown lets
+                you filter the leaderboard by format (e.g. show only StormPutt
+                results or only Cornhole results).
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>Doubles</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                In doubles events, both team members receive points based on
+                their team&apos;s placement. These points count toward each
+                player&apos;s individual league leaderboard total.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </section>
+
+      {/* Live View */}
+      <section className="space-y-4 max-w-3xl">
+        <h2>Live Event View</h2>
+        <Accordion>
+          <AccordionItem>
+            <AccordionTrigger>Real-time updates</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                Ongoing events have a <strong>Live</strong> button that opens a
+                full-screen, real-time leaderboard. Scores update automatically
+                as players submit results - positions animate smoothly as the
+                rankings change.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem>
+            <AccordionTrigger>Display settings</AccordionTrigger>
+            <AccordionContent>
+              <p>
+                The live view is designed for TVs and projectors. Use the
+                settings menu to toggle between dark and light themes, adjust
+                table density (small, medium, large), and select which round to
+                display or show totals.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </section>
     </div>
   );
