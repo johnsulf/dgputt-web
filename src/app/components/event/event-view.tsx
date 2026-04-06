@@ -13,6 +13,7 @@ import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { StormPuttEvent } from "./stormputt-event";
 import { CornholeEvent } from "./cornhole-event";
+import { StationsEvent } from "./stations-event";
 
 interface EventViewProps {
   league: LeagueInstance;
@@ -41,11 +42,13 @@ function eventStatusBadge(event: LeagueEvent) {
 export function EventView({ league, event }: EventViewProps) {
   const { user } = useAuth();
   const playerCount = event.players ? Object.keys(event.players).length : 0;
-  const isStormPutt = event.format === "stormputt";
+  const isStormPutt =
+    event.format === "stormputt" || event.format === "stormputt18";
   const isCornhole = event.format === "cornhole";
+  const isStations = event.format === "stations";
   const isAdmin = user && league.admins?.includes(user.uid);
   const isOngoing = (event.currentRound ?? 0) > 0 && !event.finished;
-  const supportsLive = isStormPutt || isCornhole;
+  const supportsLive = isStormPutt || isCornhole || isStations;
   const showLiveButton = isAdmin && isOngoing && supportsLive;
 
   return (
@@ -131,6 +134,8 @@ export function EventView({ league, event }: EventViewProps) {
           <StormPuttEvent event={event} />
         ) : isCornhole ? (
           <CornholeEvent event={event} />
+        ) : isStations ? (
+          <StationsEvent event={event} />
         ) : (
           <Alert>
             <AlertTitle>

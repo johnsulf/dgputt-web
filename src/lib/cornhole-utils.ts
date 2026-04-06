@@ -8,6 +8,7 @@ export interface Participant {
   id: string;
   name: string;
   division?: string;
+  pdgaNumber?: string;
   members: string[];
 }
 
@@ -89,6 +90,7 @@ export function buildParticipants(event: LeagueEvent): {
         id: uid,
         name: player.displayName ?? player.name ?? "Unknown",
         division: player.division,
+        pdgaNumber: player.pdgaNumber || undefined,
         members: [player.displayName ?? player.name ?? "Unknown"],
       });
     }

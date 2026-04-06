@@ -102,6 +102,8 @@ export function formatLabel(format?: string): string {
   switch (format) {
     case "stormputt":
       return "StormPutt";
+    case "stormputt18":
+      return "StormPutt 18";
     case "stations":
       return "Stations";
     case "cornhole":

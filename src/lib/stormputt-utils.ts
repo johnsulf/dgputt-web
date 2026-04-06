@@ -16,30 +16,125 @@ export function getDistanceLabels(dstIndex?: number): {
 export interface PlayerRow {
   uid: string;
   name: string;
+  pdgaNumber?: string;
   place: number;
   distances: number[];
   distancePutts: number[];
   hits: number;
   putts: number;
   hitPercent: number;
+  roundsPlayed: number;
   dns?: boolean;
   dnf?: boolean;
 }
 
 export const NUM_DISTANCES = 6;
 
+/**
+ * Group players into teams for doubles mode.
+ * Players sharing a pairId are merged into a single entry with combined rounds.
+ */
+function groupPlayersForDoubles(
+  players: Record<string, LeagueEventPlayer>,
+): Record<string, LeagueEventPlayer> {
+  const teams = new Map<
+    string,
+    {
+      names: string[];
+      pdgaNumbers: string[];
+      rounds: LeagueEventPlayer["rounds"];
+      division?: string;
+    }
+  >();
+
+  for (const [uid, player] of Object.entries(players)) {
+    const teamId = player.pairId ?? uid;
+    const existing = teams.get(teamId);
+    const name = player.displayName ?? player.name ?? "Unknown";
+    if (existing) {
+      existing.names.push(name);
+      if (player.pdgaNumber) existing.pdgaNumbers.push(player.pdgaNumber);
+      // Merge rounds: sum hitsPerSequence, puttsPerSequence, hits, putts per round
+      const existingRounds = existing.rounds ?? [];
+      const newRounds = player.rounds ?? [];
+      const maxLen = Math.max(existingRounds.length, newRounds.length);
+      const merged: LeagueEventPlayer["rounds"] = [];
+      for (let i = 0; i < maxLen; i++) {
+        const a = existingRounds[i];
+        const b = newRounds[i];
+        if (!a && !b) {
+          merged.push({});
+          continue;
+        }
+        if (!a) {
+          merged.push(b!);
+          continue;
+        }
+        if (!b) {
+          merged.push(a);
+          continue;
+        }
+        const aHps = a.hitsPerSequence ?? [];
+        const bHps = b.hitsPerSequence ?? [];
+        const aPps = a.puttsPerSequence ?? [];
+        const bPps = b.puttsPerSequence ?? [];
+        const hps = Array.from(
+          { length: NUM_DISTANCES },
+          (_, j) => (aHps[j] ?? 0) + (bHps[j] ?? 0),
+        );
+        const pps = Array.from(
+          { length: NUM_DISTANCES },
+          (_, j) => (aPps[j] ?? 0) + (bPps[j] ?? 0),
+        );
+        merged.push({
+          hits: (a.hits ?? 0) + (b.hits ?? 0),
+          putts: (a.putts ?? 0) + (b.putts ?? 0),
+          hitsPerSequence: hps,
+          puttsPerSequence: pps,
+          dns: a.dns === true && b.dns === true,
+          dnf: a.dnf === true || b.dnf === true,
+          finished: a.finished === true || b.finished === true,
+        });
+      }
+      existing.rounds = merged;
+    } else {
+      teams.set(teamId, {
+        names: [name],
+        pdgaNumbers: player.pdgaNumber ? [player.pdgaNumber] : [],
+        rounds: player.rounds ? [...player.rounds] : [],
+        division: player.division,
+      });
+    }
+  }
+
+  const result: Record<string, LeagueEventPlayer> = {};
+  for (const [teamId, team] of teams.entries()) {
+    result[teamId] = {
+      displayName: team.names.slice(0, 2).join(" / "),
+      division: team.division,
+      pdgaNumber: undefined,
+      rounds: team.rounds,
+    };
+  }
+  return result;
+}
+
 export function computeTotals(
   players: Record<string, LeagueEventPlayer>,
+  isDoubles?: boolean,
 ): PlayerRow[] {
-  const rows: Omit<PlayerRow, "place">[] = Object.entries(players)
+  const effective = isDoubles ? groupPlayersForDoubles(players) : players;
+  const rows: Omit<PlayerRow, "place">[] = Object.entries(effective)
     .map(([uid, player]) => {
       const distances = Array.from({ length: NUM_DISTANCES }, () => 0);
       const distancePutts = Array.from({ length: NUM_DISTANCES }, () => 0);
       let totalHits = 0;
       let totalPutts = 0;
+      let roundsPlayed = 0;
 
       for (const round of player.rounds ?? []) {
         if (round.dns === true || round.dnf === true) continue;
+        if (round.finished === true) roundsPlayed++;
         const hps = round.hitsPerSequence ?? [];
         const pps = round.puttsPerSequence ?? [];
         for (let i = 0; i < NUM_DISTANCES; i++) {
@@ -53,11 +148,13 @@ export function computeTotals(
       return {
         uid,
         name: player.displayName ?? player.name ?? "Unknown",
+        pdgaNumber: player.pdgaNumber || undefined,
         distances,
         distancePutts,
         hits: totalHits,
         putts: totalPutts,
         hitPercent: totalPutts > 0 ? (totalHits / totalPutts) * 100 : 0,
+        roundsPlayed,
       };
     })
     .sort((a, b) => b.hits - a.hits || b.hitPercent - a.hitPercent);
@@ -68,8 +165,10 @@ export function computeTotals(
 export function computeRound(
   players: Record<string, LeagueEventPlayer>,
   roundIndex: number,
+  isDoubles?: boolean,
 ): PlayerRow[] {
-  const rows: Omit<PlayerRow, "place">[] = Object.entries(players)
+  const effective = isDoubles ? groupPlayersForDoubles(players) : players;
+  const rows: Omit<PlayerRow, "place">[] = Object.entries(effective)
     .map(([uid, player]) => {
       const round = player.rounds?.[roundIndex];
       const dns = round?.dns === true;
@@ -79,11 +178,13 @@ export function computeRound(
         return {
           uid,
           name: player.displayName ?? player.name ?? "Unknown",
+          pdgaNumber: player.pdgaNumber || undefined,
           distances: Array.from({ length: NUM_DISTANCES }, () => 0),
           distancePutts: Array.from({ length: NUM_DISTANCES }, () => 0),
           hits: 0,
           putts: 0,
           hitPercent: 0,
+          roundsPlayed: 0,
           dns,
         };
       }
@@ -102,6 +203,7 @@ export function computeRound(
       return {
         uid,
         name: player.displayName ?? player.name ?? "Unknown",
+        pdgaNumber: player.pdgaNumber || undefined,
         distances,
         distancePutts,
         hits: round.hits ?? 0,
@@ -110,6 +212,7 @@ export function computeRound(
           (round.putts ?? 0) > 0
             ? ((round.hits ?? 0) / (round.putts ?? 0)) * 100
             : 0,
+        roundsPlayed: 0,
         dns,
         dnf,
       };

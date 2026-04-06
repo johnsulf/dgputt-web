@@ -40,6 +40,8 @@ import {
   isWalkover,
   buildLeaderboardRows,
 } from "@/lib/cornhole-utils";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 
 interface CornholeEventProps {
   event: LeagueEvent;
@@ -50,6 +52,7 @@ interface LeaderboardTableRow {
   position: number;
   playerName: string;
   division?: string;
+  pdgaNumber?: string;
   hitPctLabel: string;
   hitPctValue: number;
   wins: number;
@@ -389,6 +392,7 @@ function Leaderboard({
         position: row.basePosition,
         playerName: row.participant.name,
         division: row.participant.division,
+        pdgaNumber: row.participant.pdgaNumber,
         hitPctLabel:
           row.attempts > 0 ? `${Math.round(row.hitPct * 100)}%` : "-",
         hitPctValue: row.hitPct,
@@ -409,11 +413,27 @@ function Leaderboard({
       },
       {
         accessorKey: "playerName",
-        header: "Player",
+        header: isDoubles ? "Team" : "Player",
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex flex-col">
-            <span className="font-medium">{row.original.playerName}</span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{row.original.playerName}</span>
+              {row.original.pdgaNumber && (
+                <a
+                  href={`https://www.pdga.com/player/${row.original.pdgaNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
+                  style={{
+                    background: "linear-gradient(to left, #008d6f, #003F6A)",
+                  }}
+                >
+                  #{row.original.pdgaNumber}
+                  <HugeiconsIcon icon={ArrowUpRight01Icon} size={12} />
+                </a>
+              )}
+            </div>
             {isDoubles && row.original.division ? (
               <span className="text-xs text-muted-foreground">
                 Division {row.original.division.toUpperCase()}
@@ -549,8 +569,25 @@ function Leaderboard({
 
 export function CornholeEvent({ event }: CornholeEventProps) {
   const roundsFromData = useMemo(() => getMatchesByRound(event), [event]);
-  const rows = useMemo(() => buildLeaderboardRows(event), [event]);
+  const allRows = useMemo(() => buildLeaderboardRows(event), [event]);
   const isDoubles = event.playerMode === "doubles";
+
+  const divisions = useMemo(() => {
+    const divs = new Set<string>();
+    for (const row of allRows) {
+      if (row.participant.division) divs.add(row.participant.division);
+    }
+    return Array.from(divs).sort();
+  }, [allRows]);
+
+  const [selectedDivision, setSelectedDivision] = useState<string | null>(null);
+
+  const rows = useMemo(() => {
+    if (!selectedDivision) return allRows;
+    return allRows.filter(
+      (row) => row.participant.division === selectedDivision,
+    );
+  }, [allRows, selectedDivision]);
 
   const computedRoundCount = Math.max(event.rounds ?? 0, roundsFromData.length);
   const roundCount = computedRoundCount > 0 ? computedRoundCount : 1;
@@ -614,35 +651,60 @@ export function CornholeEvent({ event }: CornholeEventProps) {
     (_, index) => roundCount - 1 - index,
   );
 
-  return (
-    <Tabs defaultValue="leaderboard">
-      <div className="w-full overflow-x-auto pb-1">
-        <TabsList className="min-w-max">
-          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-          {roundOrder.map((roundIndex) => (
-            <TabsTrigger key={roundIndex} value={`round-${roundIndex}`}>
-              Round {roundIndex + 1}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </div>
-
-      <TabsContent value="leaderboard" className="mt-4">
-        <Leaderboard rows={rows} isDoubles={isDoubles} />
-      </TabsContent>
-
-      {roundOrder.map((roundIndex) => (
-        <TabsContent
-          key={roundIndex}
-          value={`round-${roundIndex}`}
-          className="mt-4"
+  const divisionFilter = divisions.length > 0 && (
+    <div className="mb-4 flex flex-wrap gap-2">
+      <Badge
+        variant={selectedDivision === null ? "default" : "outline"}
+        className="cursor-pointer"
+        onClick={() => setSelectedDivision(null)}
+      >
+        All
+      </Badge>
+      {divisions.map((div) => (
+        <Badge
+          key={div}
+          variant={selectedDivision === div ? "default" : "outline"}
+          className="cursor-pointer"
+          onClick={() => setSelectedDivision(div)}
         >
-          <RoundResults
-            roundIndex={roundIndex}
-            matches={rounds[roundIndex] ?? []}
-          />
-        </TabsContent>
+          {div}
+        </Badge>
       ))}
-    </Tabs>
+    </div>
+  );
+
+  return (
+    <div>
+      {divisionFilter}
+      <Tabs defaultValue="leaderboard">
+        <div className="w-full overflow-x-auto pb-1">
+          <TabsList className="min-w-max">
+            <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+            {roundOrder.map((roundIndex) => (
+              <TabsTrigger key={roundIndex} value={`round-${roundIndex}`}>
+                Round {roundIndex + 1}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+
+        <TabsContent value="leaderboard" className="mt-4">
+          <Leaderboard rows={rows} isDoubles={isDoubles} />
+        </TabsContent>
+
+        {roundOrder.map((roundIndex) => (
+          <TabsContent
+            key={roundIndex}
+            value={`round-${roundIndex}`}
+            className="mt-4"
+          >
+            <RoundResults
+              roundIndex={roundIndex}
+              matches={rounds[roundIndex] ?? []}
+            />
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
   );
 }

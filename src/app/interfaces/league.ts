@@ -55,6 +55,7 @@ export interface LeagueEventRound {
   putts?: number;
   dns?: boolean;
   dnf?: boolean;
+  finished?: boolean;
   hitsPerSequence?: number[];
   puttsPerSequence?: number[];
 }

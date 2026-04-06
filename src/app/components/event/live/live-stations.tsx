@@ -4,13 +4,16 @@ import { useMemo } from "react";
 import { LayoutGroup } from "motion/react";
 import type { LeagueEvent } from "@/app/interfaces/league";
 import {
-  getDistanceLabels,
-  computeTotals,
-  computeRound,
-} from "@/lib/stormputt-utils";
+  getStations,
+  getStationLabel,
+  getStationDistance,
+  getDistanceUnit,
+  computeStationsTotals,
+  computeStationsRound,
+} from "@/lib/stations-utils";
 import { AnimatedRow } from "./live-table";
 
-interface LiveStormPuttProps {
+interface LiveStationsProps {
   event: LeagueEvent;
   viewMode: "totals" | number;
   theme: "dark" | "light";
@@ -18,36 +21,45 @@ interface LiveStormPuttProps {
   totalRounds: number;
 }
 
-export function LiveStormPutt({
+export function LiveStations({
   event,
   viewMode,
   theme,
   density,
   totalRounds,
-}: LiveStormPuttProps) {
+}: LiveStationsProps) {
   const players = useMemo(() => event.players ?? {}, [event.players]);
-  const distanceLabels = useMemo(
-    () => getDistanceLabels(event.dstIndex),
-    [event.dstIndex],
+  const stations = useMemo(() => getStations(event), [event]);
+  const distanceUnit = useMemo(() => getDistanceUnit(event), [event]);
+  const showWeight = useMemo(
+    () => stations.some((s) => s.weight !== 1),
+    [stations],
   );
-  const isDoubles = event.playerMode === "doubles";
   const isLight = theme === "light";
 
   const showThru = viewMode === "totals" && totalRounds > 1;
 
   const densityStyles =
     density === "small"
-      ? { header: "py-1.5 text-xs", cell: "py-1.5 text-sm", score: "text-base" }
+      ? {
+          header: "py-1.5 text-xs",
+          cell: "py-1.5 text-sm",
+          score: "text-base",
+        }
       : density === "large"
-        ? { header: "py-4 text-base", cell: "py-4 text-lg", score: "text-xl" }
+        ? {
+            header: "py-4 text-base",
+            cell: "py-4 text-lg",
+            score: "text-xl",
+          }
         : { header: "py-3 text-sm", cell: "py-3", score: "text-lg" };
 
   const rows = useMemo(() => {
     if (typeof viewMode === "number") {
-      return computeRound(players, viewMode, isDoubles);
+      return computeStationsRound(players, stations, viewMode);
     }
-    return computeTotals(players, isDoubles);
-  }, [players, viewMode, isDoubles]);
+    return computeStationsTotals(players, stations);
+  }, [players, stations, viewMode]);
 
   return (
     <div className="overflow-x-auto">
@@ -64,23 +76,35 @@ export function LiveStormPutt({
               #
             </th>
             <th className={`px-3 text-left ${densityStyles.header}`}>
-              {isDoubles ? "Team" : "Player"}
+              {event.playerMode === "doubles" ? "Team" : "Player"}
             </th>
-            {distanceLabels.meter.map((label, i) => (
-              <th
-                key={i}
-                className={`w-18 px-2 text-center ${densityStyles.header}`}
-              >
-                <div>{label}</div>
-                <div
-                  className={`text-xs font-normal ${
-                    isLight ? "text-zinc-500" : "text-zinc-500"
-                  }`}
+            {stations.map((s, i) => {
+              const dist = getStationDistance(s, distanceUnit);
+              return (
+                <th
+                  key={s.key}
+                  className={`w-18 px-2 text-center align-bottom ${densityStyles.header}`}
                 >
-                  {distanceLabels.feet[i]}
-                </div>
-              </th>
-            ))}
+                  <div>{getStationLabel(s, i)}</div>
+                  <div
+                    className={`text-xs font-normal ${
+                      isLight ? "text-zinc-500" : "text-zinc-500"
+                    }`}
+                  >
+                    {dist ?? "\u00A0"}
+                  </div>
+                  {showWeight && (
+                    <div
+                      className={`text-xs font-normal ${
+                        isLight ? "text-zinc-500" : "text-zinc-500"
+                      }`}
+                    >
+                      {s.weight !== 1 ? `×${s.weight}` : "\u00A0"}
+                    </div>
+                  )}
+                </th>
+              );
+            })}
             {showThru && (
               <th className={`w-16 px-2 text-center ${densityStyles.header}`}>
                 Thru
@@ -120,9 +144,9 @@ export function LiveStormPutt({
                 <td className={`px-3 font-semibold ${densityStyles.cell}`}>
                   {row.name}
                 </td>
-                {row.distances.map((d, i) => {
-                  const p = row.distancePutts[i] ?? 0;
-                  const pct = p > 0 ? (d / p) * 100 : 0;
+                {row.stationHits.map((h, i) => {
+                  const p = row.stationPutts[i] ?? 0;
+                  const score = row.stationScores[i] ?? 0;
                   return (
                     <td
                       key={i}
@@ -138,10 +162,10 @@ export function LiveStormPutt({
                         </span>
                       ) : (
                         <div>
-                          <span>{d}</span>
+                          <span>{score}</span>
                           {p > 0 && (
                             <div className="text-xs text-zinc-500">
-                              {pct.toFixed(0)}%
+                              {h}/{p}
                             </div>
                           )}
                         </div>
@@ -181,7 +205,7 @@ export function LiveStormPutt({
                       -
                     </span>
                   ) : (
-                    row.hits
+                    row.totalScore
                   )}
                 </td>
               </AnimatedRow>

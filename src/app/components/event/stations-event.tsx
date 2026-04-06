@@ -13,24 +13,31 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  type PlayerRow,
-  NUM_DISTANCES,
-  getDistanceLabels,
-  computeTotals,
-  computeRound,
-} from "@/lib/stormputt-utils";
+  type StationDef,
+  type StationsPlayerRow,
+  getStations,
+  getStationLabel,
+  getStationDistance,
+  getDistanceUnit,
+  computeStationsTotals,
+  computeStationsRound,
+} from "@/lib/stations-utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 
 function ResultsTable({
   rows,
-  distanceLabels,
+  stations,
+  showWeight,
+  distanceUnit,
   showThru,
   totalRounds,
   isDoubles,
 }: {
-  rows: PlayerRow[];
-  distanceLabels: { meter: string[]; feet: string[] };
+  rows: StationsPlayerRow[];
+  stations: StationDef[];
+  showWeight: boolean;
+  distanceUnit: string;
   showThru?: boolean;
   totalRounds?: number;
   isDoubles?: boolean;
@@ -45,14 +52,22 @@ function ResultsTable({
           <TableHead className="sticky left-10 z-10 bg-background">
             {isDoubles ? "Team" : "Player"}
           </TableHead>
-          {distanceLabels.meter.map((label, i) => (
-            <TableHead key={i} className="w-14 text-center">
-              <div>{label}</div>
-              <div className="text-[10px] font-normal text-muted-foreground">
-                {distanceLabels.feet[i]}
-              </div>
-            </TableHead>
-          ))}
+          {stations.map((s, i) => {
+            const dist = getStationDistance(s, distanceUnit);
+            return (
+              <TableHead key={s.key} className="w-14 text-center">
+                <div>{getStationLabel(s, i)}</div>
+                <div className="text-[10px] font-normal text-muted-foreground">
+                  {dist ?? "\u00A0"}
+                </div>
+                {showWeight && (
+                  <div className="text-[10px] font-normal text-muted-foreground">
+                    {s.weight !== 1 ? `×${s.weight}` : "\u00A0"}
+                  </div>
+                )}
+              </TableHead>
+            );
+          })}
           {showThru && <TableHead className="w-14 text-center">Thru</TableHead>}
           <TableHead className="w-16 text-center">Hit%</TableHead>
           <TableHead className="w-14 text-center">Score</TableHead>
@@ -93,19 +108,19 @@ function ResultsTable({
                 )}
               </div>
             </TableCell>
-            {row.distances.map((d, i) => {
-              const p = row.distancePutts[i] ?? 0;
-              const pct = p > 0 ? (d / p) * 100 : 0;
+            {row.stationHits.map((h, i) => {
+              const p = row.stationPutts[i] ?? 0;
+              const score = row.stationScores[i] ?? 0;
               return (
                 <TableCell key={i} className="text-center">
                   {row.dns ? (
                     "-"
                   ) : (
                     <div>
-                      <span>{d}</span>
+                      <span>{score}</span>
                       {p > 0 && (
                         <div className="text-[10px] text-muted-foreground">
-                          {pct.toFixed(0)}%
+                          {h}/{p}
                         </div>
                       )}
                     </div>
@@ -122,14 +137,14 @@ function ResultsTable({
               {row.dns ? "-" : `${row.hitPercent.toFixed(1)}%`}
             </TableCell>
             <TableCell className="text-center font-semibold">
-              {row.dns ? "-" : row.hits}
+              {row.dns ? "-" : row.totalScore}
             </TableCell>
           </TableRow>
         ))}
         {rows.length === 0 && (
           <TableRow>
             <TableCell
-              colSpan={NUM_DISTANCES + 4 + (showThru ? 1 : 0)}
+              colSpan={stations.length + 4 + (showThru ? 1 : 0)}
               className="py-8 text-center text-muted-foreground"
             >
               No results yet.
@@ -187,13 +202,12 @@ function PlayersRegistrationTable({
   );
 }
 
-interface StormPuttEventProps {
+interface StationsEventProps {
   event: LeagueEvent;
 }
 
-export function StormPuttEvent({ event }: StormPuttEventProps) {
+export function StationsEvent({ event }: StationsEventProps) {
   const players = event.players ?? {};
-
   const hasStarted = (event.currentRound ?? 0) > 0 || event.finished;
 
   const divisions = useMemo(() => {
@@ -217,9 +231,11 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
     return filtered;
   }, [players, selectedDivision]);
 
-  const distanceLabels = useMemo(
-    () => getDistanceLabels(event.dstIndex),
-    [event.dstIndex],
+  const stations = useMemo(() => getStations(event), [event]);
+  const distanceUnit = useMemo(() => getDistanceUnit(event), [event]);
+  const showWeight = useMemo(
+    () => stations.some((s) => s.weight !== 1),
+    [stations],
   );
 
   const maxRounds = useMemo(
@@ -235,22 +251,30 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
   const isDoubles = event.playerMode === "doubles";
 
   const totals = useMemo(
-    () => (hasStarted ? computeTotals(filteredPlayers, isDoubles) : []),
-    [filteredPlayers, hasStarted, isDoubles],
+    () => (hasStarted ? computeStationsTotals(filteredPlayers, stations) : []),
+    [filteredPlayers, stations, hasStarted],
   );
 
   const roundData = useMemo(
     () =>
       hasStarted
         ? Array.from({ length: maxRounds }, (_, i) =>
-            computeRound(filteredPlayers, i, isDoubles),
+            computeStationsRound(filteredPlayers, stations, i),
           )
         : [],
-    [filteredPlayers, maxRounds, hasStarted, isDoubles],
+    [filteredPlayers, stations, maxRounds, hasStarted],
   );
 
   if (!hasStarted) {
     return <PlayersRegistrationTable players={players} />;
+  }
+
+  if (stations.length === 0) {
+    return (
+      <p className="py-8 text-center text-muted-foreground">
+        No stations configured for this event.
+      </p>
+    );
   }
 
   const divisionFilter = divisions.length > 0 && (
@@ -275,14 +299,15 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
     </div>
   );
 
-  // Only leaderboard when a single round
   if (maxRounds <= 1) {
     return (
       <div>
         {divisionFilter}
         <ResultsTable
           rows={totals}
-          distanceLabels={distanceLabels}
+          stations={stations}
+          showWeight={showWeight}
+          distanceUnit={distanceUnit}
           isDoubles={isDoubles}
         />
       </div>
@@ -308,7 +333,9 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
         <TabsContent value="leaderboard" className="mt-4">
           <ResultsTable
             rows={totals}
-            distanceLabels={distanceLabels}
+            stations={stations}
+            showWeight={showWeight}
+            distanceUnit={distanceUnit}
             showThru={maxRounds > 1}
             totalRounds={totalRounds}
             isDoubles={isDoubles}
@@ -319,7 +346,9 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
           <TabsContent key={i} value={`round-${i}`} className="mt-4">
             <ResultsTable
               rows={rows}
-              distanceLabels={distanceLabels}
+              stations={stations}
+              showWeight={showWeight}
+              distanceUnit={distanceUnit}
               isDoubles={isDoubles}
             />
           </TabsContent>
