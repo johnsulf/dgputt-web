@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   Accordion,
   AccordionItem,
@@ -11,6 +12,12 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+export const metadata: Metadata = {
+  title: "League Admin Guide - dgputt",
+  description:
+    "Step-by-step guide for running dgputt leagues and events. Event types, formats, pairing systems, and tournament director tools.",
+};
 
 export default function GuidePage() {
   return (

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   Card,
   CardHeader,
@@ -6,6 +7,12 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "Contact - dgputt",
+  description:
+    "Get in touch with the dgputt team. Email us or find us on Instagram and Facebook.",
+};
 
 export default function ContactPage() {
   return (
