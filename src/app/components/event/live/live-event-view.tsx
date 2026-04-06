@@ -22,6 +22,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { LiveStormPutt } from "./live-stormputt";
 import { LiveCornhole } from "./live-cornhole";
+import { LiveStations } from "./live-stations";
 
 type ViewMode = "totals" | "currentRound";
 type TableDensity = "small" | "medium" | "large";
@@ -39,7 +40,9 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
   const isLight = theme === "light";
 
   const isStormPutt = event.format === "stormputt";
+  const isStations = event.format === "stations";
   const hasMultipleRounds = (event.rounds ?? 0) > 1;
+  const showViewToggle = (isStormPutt || isStations) && hasMultipleRounds;
 
   const toggleView = useCallback(() => {
     setViewMode((prev) => (prev === "totals" ? "currentRound" : "totals"));
@@ -172,7 +175,7 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {isStormPutt && hasMultipleRounds && (
+          {showViewToggle && (
             <>
               <div
                 className={`flex rounded-lg p-1 ${
@@ -243,6 +246,13 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
       >
         {isStormPutt ? (
           <LiveStormPutt
+            event={event}
+            viewMode={viewMode}
+            theme={theme}
+            density={density}
+          />
+        ) : isStations ? (
+          <LiveStations
             event={event}
             viewMode={viewMode}
             theme={theme}

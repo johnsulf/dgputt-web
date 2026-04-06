@@ -47,7 +47,7 @@ export function EventView({ league, event }: EventViewProps) {
   const isStations = event.format === "stations";
   const isAdmin = user && league.admins?.includes(user.uid);
   const isOngoing = (event.currentRound ?? 0) > 0 && !event.finished;
-  const supportsLive = isStormPutt || isCornhole;
+  const supportsLive = isStormPutt || isCornhole || isStations;
   const showLiveButton = isAdmin && isOngoing && supportsLive;
 
   return (
