@@ -4,6 +4,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 import { makers, members } from "./team-members";
@@ -26,6 +27,12 @@ function MemberCard({ member }: { member: TeamMember }) {
             <span className="text-muted-foreground">Favorite Game:</span>{" "}
             {member.favoriteGame}
           </p>
+          {member.memorablePutt && (
+            <p>
+              <span className="text-muted-foreground">Memorable Putt:</span>{" "}
+              {member.memorablePutt}
+            </p>
+          )}
           <div className="flex items-center gap-2 my-2">
             <a
               href={`https://www.pdga.com/player/${member.pdga}`}
@@ -89,6 +96,16 @@ export default function TeamPage() {
           </div>
         </section>
       )}
+
+      <Alert className="max-w-4xl">
+        <AlertDescription>
+          <p>
+            Our team spans multiple countries — more members will be featured
+            here shortly!
+          </p>
+          <p className="text-2xl mt-2">🇳🇴 🇸🇪 🇫🇮 🇺🇸 🇩🇪 🇳🇱 🇨🇦 🇫🇷</p>
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }
