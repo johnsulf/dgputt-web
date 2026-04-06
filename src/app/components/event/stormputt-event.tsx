@@ -23,9 +23,13 @@ import {
 function ResultsTable({
   rows,
   distanceLabels,
+  showThru,
+  totalRounds,
 }: {
   rows: PlayerRow[];
   distanceLabels: { meter: string[]; feet: string[] };
+  showThru?: boolean;
+  totalRounds?: number;
 }) {
   return (
     <Table>
@@ -33,6 +37,9 @@ function ResultsTable({
         <TableRow>
           <TableHead className="w-10 text-center">#</TableHead>
           <TableHead>Player</TableHead>
+          {showThru && (
+            <TableHead className="w-14 text-center">Thru</TableHead>
+          )}
           {distanceLabels.meter.map((label, i) => (
             <TableHead key={i} className="w-14 text-center">
               <div>{label}</div>
@@ -62,6 +69,11 @@ function ResultsTable({
               )}
             </TableCell>
             <TableCell className="font-medium">{row.name}</TableCell>
+            {showThru && (
+              <TableCell className="text-center text-muted-foreground">
+                {row.dns ? "-" : `${row.roundsPlayed}/${totalRounds}`}
+              </TableCell>
+            )}
             {row.distances.map((d, i) => {
               const p = row.distancePutts[i] ?? 0;
               const pct = p > 0 ? (d / p) * 100 : 0;
@@ -93,7 +105,7 @@ function ResultsTable({
         {rows.length === 0 && (
           <TableRow>
             <TableCell
-              colSpan={NUM_DISTANCES + 4}
+              colSpan={NUM_DISTANCES + 4 + (showThru ? 1 : 0)}
               className="py-8 text-center text-muted-foreground"
             >
               No results yet.
@@ -171,6 +183,8 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
     [players],
   );
 
+  const totalRounds = event.rounds ?? maxRounds;
+
   const totals = useMemo(
     () => (hasStarted ? computeTotals(players) : []),
     [players, hasStarted],
@@ -208,7 +222,12 @@ export function StormPuttEvent({ event }: StormPuttEventProps) {
       </TabsList>
 
       <TabsContent value="leaderboard" className="mt-4">
-        <ResultsTable rows={totals} distanceLabels={distanceLabels} />
+        <ResultsTable
+          rows={totals}
+          distanceLabels={distanceLabels}
+          showThru={maxRounds > 1}
+          totalRounds={totalRounds}
+        />
       </TabsContent>
 
       {roundData.map((rows, i) => (

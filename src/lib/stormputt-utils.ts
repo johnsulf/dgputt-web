@@ -22,6 +22,7 @@ export interface PlayerRow {
   hits: number;
   putts: number;
   hitPercent: number;
+  roundsPlayed: number;
   dns?: boolean;
   dnf?: boolean;
 }
@@ -37,9 +38,11 @@ export function computeTotals(
       const distancePutts = Array.from({ length: NUM_DISTANCES }, () => 0);
       let totalHits = 0;
       let totalPutts = 0;
+      let roundsPlayed = 0;
 
       for (const round of player.rounds ?? []) {
         if (round.dns === true || round.dnf === true) continue;
+        roundsPlayed++;
         const hps = round.hitsPerSequence ?? [];
         const pps = round.puttsPerSequence ?? [];
         for (let i = 0; i < NUM_DISTANCES; i++) {
@@ -58,6 +61,7 @@ export function computeTotals(
         hits: totalHits,
         putts: totalPutts,
         hitPercent: totalPutts > 0 ? (totalHits / totalPutts) * 100 : 0,
+        roundsPlayed,
       };
     })
     .sort((a, b) => b.hits - a.hits || b.hitPercent - a.hitPercent);
@@ -84,6 +88,7 @@ export function computeRound(
           hits: 0,
           putts: 0,
           hitPercent: 0,
+          roundsPlayed: 0,
           dns,
         };
       }
@@ -110,6 +115,7 @@ export function computeRound(
           (round.putts ?? 0) > 0
             ? ((round.hits ?? 0) / (round.putts ?? 0)) * 100
             : 0,
+        roundsPlayed: 0,
         dns,
         dnf,
       };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import type { LeagueEvent } from "@/app/interfaces/league";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -24,7 +24,7 @@ import { LiveStormPutt } from "./live-stormputt";
 import { LiveCornhole } from "./live-cornhole";
 import { LiveStations } from "./live-stations";
 
-type ViewMode = "totals" | "currentRound";
+type ViewMode = "totals" | number;
 type TableDensity = "small" | "medium" | "large";
 
 interface LiveEventViewProps {
@@ -34,25 +34,14 @@ interface LiveEventViewProps {
 
 export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("totals");
-  const [autoRotate, setAutoRotate] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [density, setDensity] = useState<TableDensity>("medium");
   const isLight = theme === "light";
 
   const isStormPutt = event.format === "stormputt";
   const isStations = event.format === "stations";
-  const hasMultipleRounds = (event.rounds ?? 0) > 1;
-  const showViewToggle = (isStormPutt || isStations) && hasMultipleRounds;
-
-  const toggleView = useCallback(() => {
-    setViewMode((prev) => (prev === "totals" ? "currentRound" : "totals"));
-  }, []);
-
-  useEffect(() => {
-    if (!autoRotate || !hasMultipleRounds) return;
-    const interval = setInterval(toggleView, 15000);
-    return () => clearInterval(interval);
-  }, [autoRotate, hasMultipleRounds, toggleView]);
+  const totalRounds = event.rounds ?? Math.max(0, ...Object.values(event.players ?? {}).map((p) => p.rounds?.length ?? 0));
+  const showViewSelect = (isStormPutt || isStations) && totalRounds > 1;
 
   return (
     <div
@@ -175,65 +164,26 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {showViewToggle && (
-            <>
-              <div
-                className={`flex rounded-lg p-1 ${
-                  isLight ? "bg-zinc-200" : "bg-zinc-800"
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    setViewMode("totals");
-                    setAutoRotate(false);
-                  }}
-                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                    viewMode === "totals"
-                      ? isLight
-                        ? "bg-white text-zinc-800"
-                        : "bg-zinc-600 text-zinc-100"
-                      : isLight
-                        ? "text-zinc-600 hover:text-zinc-900"
-                        : "text-zinc-400 hover:text-zinc-200"
-                  }`}
-                >
-                  Totals
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setViewMode("currentRound");
-                    setAutoRotate(false);
-                  }}
-                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                    viewMode === "currentRound"
-                      ? isLight
-                        ? "bg-white text-zinc-800"
-                        : "bg-zinc-600 text-zinc-100"
-                      : isLight
-                        ? "text-zinc-600 hover:text-zinc-900"
-                        : "text-zinc-400 hover:text-zinc-200"
-                  }`}
-                >
-                  Current Round
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAutoRotate((prev) => !prev)}
-                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  autoRotate
-                    ? "bg-emerald-600/30 text-emerald-400"
-                    : isLight
-                      ? "bg-zinc-200 text-zinc-600 hover:text-zinc-900"
-                      : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
-                }`}
-                title="Auto-rotate between views"
-              >
-                Auto
-              </button>
-            </>
+          {showViewSelect && (
+            <select
+              value={viewMode === "totals" ? "totals" : String(viewMode)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setViewMode(v === "totals" ? "totals" : Number(v));
+              }}
+              className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                isLight
+                  ? "bg-zinc-200 text-zinc-700"
+                  : "bg-zinc-800 text-zinc-300"
+              }`}
+            >
+              <option value="totals">Totals</option>
+              {Array.from({ length: totalRounds }, (_, i) => (
+                <option key={i} value={String(i)}>
+                  Round {i + 1}
+                </option>
+              ))}
+            </select>
           )}
         </div>
       </div>
@@ -250,6 +200,7 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
             viewMode={viewMode}
             theme={theme}
             density={density}
+            totalRounds={totalRounds}
           />
         ) : isStations ? (
           <LiveStations
@@ -257,6 +208,7 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
             viewMode={viewMode}
             theme={theme}
             density={density}
+            totalRounds={totalRounds}
           />
         ) : event.format === "cornhole" ? (
           <LiveCornhole event={event} theme={theme} density={density} />

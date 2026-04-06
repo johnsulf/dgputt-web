@@ -28,11 +28,15 @@ function ResultsTable({
   stations,
   showWeight,
   distanceUnit,
+  showThru,
+  totalRounds,
 }: {
   rows: StationsPlayerRow[];
   stations: StationDef[];
   showWeight: boolean;
   distanceUnit: string;
+  showThru?: boolean;
+  totalRounds?: number;
 }) {
   return (
     <Table>
@@ -40,6 +44,9 @@ function ResultsTable({
         <TableRow>
           <TableHead className="w-10 text-center">#</TableHead>
           <TableHead>Player</TableHead>
+          {showThru && (
+            <TableHead className="w-14 text-center">Thru</TableHead>
+          )}
           {stations.map((s, i) => {
             const dist = getStationDistance(s, distanceUnit);
             return (
@@ -77,6 +84,11 @@ function ResultsTable({
               )}
             </TableCell>
             <TableCell className="font-medium">{row.name}</TableCell>
+            {showThru && (
+              <TableCell className="text-center text-muted-foreground">
+                {row.dns ? "-" : `${row.roundsPlayed}/${totalRounds}`}
+              </TableCell>
+            )}
             {row.stationHits.map((h, i) => {
               const p = row.stationPutts[i] ?? 0;
               const score = row.stationScores[i] ?? 0;
@@ -108,7 +120,7 @@ function ResultsTable({
         {rows.length === 0 && (
           <TableRow>
             <TableCell
-              colSpan={stations.length + 4}
+              colSpan={stations.length + 4 + (showThru ? 1 : 0)}
               className="py-8 text-center text-muted-foreground"
             >
               No results yet.
@@ -211,6 +223,8 @@ export function StationsEvent({ event }: StationsEventProps) {
     [filteredPlayers],
   );
 
+  const totalRounds = event.rounds ?? maxRounds;
+
   const totals = useMemo(
     () => (hasStarted ? computeStationsTotals(filteredPlayers, stations) : []),
     [filteredPlayers, stations, hasStarted],
@@ -296,6 +310,8 @@ export function StationsEvent({ event }: StationsEventProps) {
             stations={stations}
             showWeight={showWeight}
             distanceUnit={distanceUnit}
+            showThru={maxRounds > 1}
+            totalRounds={totalRounds}
           />
         </TabsContent>
 

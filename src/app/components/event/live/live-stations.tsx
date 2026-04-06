@@ -15,9 +15,10 @@ import { AnimatedRow } from "./live-table";
 
 interface LiveStationsProps {
   event: LeagueEvent;
-  viewMode: "totals" | "currentRound";
+  viewMode: "totals" | number;
   theme: "dark" | "light";
   density: "small" | "medium" | "large";
+  totalRounds: number;
 }
 
 export function LiveStations({
@@ -25,6 +26,7 @@ export function LiveStations({
   viewMode,
   theme,
   density,
+  totalRounds,
 }: LiveStationsProps) {
   const players = useMemo(() => event.players ?? {}, [event.players]);
   const stations = useMemo(() => getStations(event), [event]);
@@ -35,9 +37,7 @@ export function LiveStations({
   );
   const isLight = theme === "light";
 
-  const currentRoundValue = event.currentRound ?? 0;
-  const hasStartedRound = currentRoundValue > 0;
-  const currentRoundIndex = Math.max(currentRoundValue - 1, 0);
+  const showThru = viewMode === "totals" && totalRounds > 1;
 
   const densityStyles =
     density === "small"
@@ -55,11 +55,11 @@ export function LiveStations({
         : { header: "py-3 text-sm", cell: "py-3", score: "text-lg" };
 
   const rows = useMemo(() => {
-    if (viewMode === "currentRound" && hasStartedRound) {
-      return computeStationsRound(players, stations, currentRoundIndex);
+    if (typeof viewMode === "number") {
+      return computeStationsRound(players, stations, viewMode);
     }
     return computeStationsTotals(players, stations);
-  }, [players, stations, viewMode, currentRoundIndex, hasStartedRound]);
+  }, [players, stations, viewMode]);
 
   return (
     <div className="overflow-x-auto">
@@ -76,6 +76,11 @@ export function LiveStations({
               #
             </th>
             <th className={`px-3 text-left ${densityStyles.header}`}>Player</th>
+            {showThru && (
+              <th className={`w-16 px-2 text-center ${densityStyles.header}`}>
+                Thru
+              </th>
+            )}
             {stations.map((s, i) => {
               const dist = getStationDistance(s, distanceUnit);
               return (
@@ -137,6 +142,15 @@ export function LiveStations({
                 <td className={`px-3 font-semibold ${densityStyles.cell}`}>
                   {row.name}
                 </td>
+                {showThru && (
+                  <td
+                    className={`px-2 text-center tabular-nums ${densityStyles.cell} ${
+                      isLight ? "text-zinc-500" : "text-zinc-500"
+                    }`}
+                  >
+                    {row.dns ? "-" : `${row.roundsPlayed}/${totalRounds}`}
+                  </td>
+                )}
                 {row.stationHits.map((h, i) => {
                   const p = row.stationPutts[i] ?? 0;
                   const score = row.stationScores[i] ?? 0;

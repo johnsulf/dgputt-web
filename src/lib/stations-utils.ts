@@ -20,6 +20,7 @@ export interface StationsPlayerRow {
   totalPutts: number;
   totalScore: number;
   hitPercent: number;
+  roundsPlayed: number;
   dns?: boolean;
   dnf?: boolean;
 }
@@ -81,9 +82,11 @@ export function computeStationsTotals(
     .map(([uid, player]) => {
       const stationHits = Array.from({ length: numStations }, () => 0);
       const stationPutts = Array.from({ length: numStations }, () => 0);
+      let roundsPlayed = 0;
 
       for (const round of player.rounds ?? []) {
         if (round.dns === true || round.dnf === true) continue;
+        roundsPlayed++;
         const hps = round.hitsPerSequence ?? [];
         const pps = round.puttsPerSequence ?? [];
         for (let i = 0; i < numStations; i++) {
@@ -110,6 +113,7 @@ export function computeStationsTotals(
         totalPutts,
         totalScore,
         hitPercent: totalPutts > 0 ? (totalHits / totalPutts) * 100 : 0,
+        roundsPlayed,
       };
     })
     .sort(
@@ -145,6 +149,7 @@ export function computeStationsRound(
           totalPutts: 0,
           totalScore: 0,
           hitPercent: 0,
+          roundsPlayed: 0,
           dns,
         };
       }
@@ -176,6 +181,7 @@ export function computeStationsRound(
         totalPutts,
         totalScore,
         hitPercent: totalPutts > 0 ? (totalHits / totalPutts) * 100 : 0,
+        roundsPlayed: 0,
         dns,
         dnf,
       };

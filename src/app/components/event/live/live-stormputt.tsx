@@ -12,9 +12,10 @@ import { AnimatedRow } from "./live-table";
 
 interface LiveStormPuttProps {
   event: LeagueEvent;
-  viewMode: "totals" | "currentRound";
+  viewMode: "totals" | number;
   theme: "dark" | "light";
   density: "small" | "medium" | "large";
+  totalRounds: number;
 }
 
 export function LiveStormPutt({
@@ -22,6 +23,7 @@ export function LiveStormPutt({
   viewMode,
   theme,
   density,
+  totalRounds,
 }: LiveStormPuttProps) {
   const players = useMemo(() => event.players ?? {}, [event.players]);
   const distanceLabels = useMemo(
@@ -30,9 +32,7 @@ export function LiveStormPutt({
   );
   const isLight = theme === "light";
 
-  const currentRoundValue = event.currentRound ?? 0;
-  const hasStartedRound = currentRoundValue > 0;
-  const currentRoundIndex = Math.max(currentRoundValue - 1, 0);
+  const showThru = viewMode === "totals" && totalRounds > 1;
 
   const densityStyles =
     density === "small"
@@ -42,11 +42,11 @@ export function LiveStormPutt({
         : { header: "py-3 text-sm", cell: "py-3", score: "text-lg" };
 
   const rows = useMemo(() => {
-    if (viewMode === "currentRound" && hasStartedRound) {
-      return computeRound(players, currentRoundIndex);
+    if (typeof viewMode === "number") {
+      return computeRound(players, viewMode);
     }
     return computeTotals(players);
-  }, [players, viewMode, currentRoundIndex, hasStartedRound]);
+  }, [players, viewMode]);
 
   return (
     <div className="overflow-x-auto">
@@ -63,6 +63,11 @@ export function LiveStormPutt({
               #
             </th>
             <th className={`px-3 text-left ${densityStyles.header}`}>Player</th>
+            {showThru && (
+              <th className={`w-16 px-2 text-center ${densityStyles.header}`}>
+                Thru
+              </th>
+            )}
             {distanceLabels.meter.map((label, i) => (
               <th
                 key={i}
@@ -112,6 +117,15 @@ export function LiveStormPutt({
                 <td className={`px-3 font-semibold ${densityStyles.cell}`}>
                   {row.name}
                 </td>
+                {showThru && (
+                  <td
+                    className={`px-2 text-center tabular-nums ${densityStyles.cell} ${
+                      isLight ? "text-zinc-500" : "text-zinc-500"
+                    }`}
+                  >
+                    {row.dns ? "-" : `${row.roundsPlayed}/${totalRounds}`}
+                  </td>
+                )}
                 {row.distances.map((d, i) => {
                   const p = row.distancePutts[i] ?? 0;
                   const pct = p > 0 ? (d / p) * 100 : 0;
