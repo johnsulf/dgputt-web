@@ -100,7 +100,7 @@ export default function TeamPage() {
       <Alert className="max-w-4xl">
         <AlertDescription>
           <p>
-            Our team spans multiple countries — more members will be featured
+            Our team spans multiple countries - more members will be featured
             here shortly!
           </p>
           <p className="text-2xl mt-2">🇳🇴 🇸🇪 🇫🇮 🇺🇸 🇩🇪 🇳🇱 🇨🇦 🇫🇷</p>
