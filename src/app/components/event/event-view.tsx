@@ -13,6 +13,7 @@ import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { StormPuttEvent } from "./stormputt-event";
 import { CornholeEvent } from "./cornhole-event";
+import { StationsEvent } from "./stations-event";
 
 interface EventViewProps {
   league: LeagueInstance;
@@ -43,6 +44,7 @@ export function EventView({ league, event }: EventViewProps) {
   const playerCount = event.players ? Object.keys(event.players).length : 0;
   const isStormPutt = event.format === "stormputt";
   const isCornhole = event.format === "cornhole";
+  const isStations = event.format === "stations";
   const isAdmin = user && league.admins?.includes(user.uid);
   const isOngoing = (event.currentRound ?? 0) > 0 && !event.finished;
   const supportsLive = isStormPutt || isCornhole;
@@ -131,6 +133,8 @@ export function EventView({ league, event }: EventViewProps) {
           <StormPuttEvent event={event} />
         ) : isCornhole ? (
           <CornholeEvent event={event} />
+        ) : isStations ? (
+          <StationsEvent event={event} />
         ) : (
           <Alert>
             <AlertTitle>
