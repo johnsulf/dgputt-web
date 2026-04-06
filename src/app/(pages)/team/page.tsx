@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   Card,
   CardHeader,
@@ -65,6 +66,12 @@ function MemberCard({ member }: { member: TeamMember }) {
     </Card>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Team dgputt - Meet the Team",
+  description:
+    "Meet the makers and team members behind dgputt — disc golfers building tools for disc golfers.",
+};
 
 export default function TeamPage() {
   return (

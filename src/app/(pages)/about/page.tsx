@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   Card,
   CardHeader,
@@ -21,6 +22,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import PhoneFrame from "@/app/components/phone-frame";
+
+export const metadata: Metadata = {
+  title: "About dgputt - Games, Features & Pricing",
+  description:
+    "Learn about dgputt's putting drills, progress tracking, round logging, leagues, and pricing. 10 games, advanced stats, and competitive events.",
+};
 
 const freeGames = [
   {
