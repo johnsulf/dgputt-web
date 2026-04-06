@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { LeagueEvent, LeagueEventPlayer } from "@/app/interfaces/league";
 import {
   Table,
@@ -164,6 +164,27 @@ export function StationsEvent({ event }: StationsEventProps) {
   const players = event.players ?? {};
   const hasStarted = (event.currentRound ?? 0) > 0 || event.finished;
 
+  const divisions = useMemo(() => {
+    const divs = new Set<string>();
+    for (const player of Object.values(players)) {
+      if (player.division) divs.add(player.division);
+    }
+    return Array.from(divs).sort();
+  }, [players]);
+
+  const [selectedDivision, setSelectedDivision] = useState<string | null>(null);
+
+  const filteredPlayers = useMemo(() => {
+    if (!selectedDivision) return players;
+    const filtered: Record<string, LeagueEventPlayer> = {};
+    for (const [uid, player] of Object.entries(players)) {
+      if (player.division === selectedDivision) {
+        filtered[uid] = player;
+      }
+    }
+    return filtered;
+  }, [players, selectedDivision]);
+
   const stations = useMemo(() => getStations(event), [event]);
   const showWeight = useMemo(
     () => stations.some((s) => s.weight !== 1),
@@ -172,23 +193,26 @@ export function StationsEvent({ event }: StationsEventProps) {
 
   const maxRounds = useMemo(
     () =>
-      Math.max(0, ...Object.values(players).map((p) => p.rounds?.length ?? 0)),
-    [players],
+      Math.max(
+        0,
+        ...Object.values(filteredPlayers).map((p) => p.rounds?.length ?? 0),
+      ),
+    [filteredPlayers],
   );
 
   const totals = useMemo(
-    () => (hasStarted ? computeStationsTotals(players, stations) : []),
-    [players, stations, hasStarted],
+    () => (hasStarted ? computeStationsTotals(filteredPlayers, stations) : []),
+    [filteredPlayers, stations, hasStarted],
   );
 
   const roundData = useMemo(
     () =>
       hasStarted
         ? Array.from({ length: maxRounds }, (_, i) =>
-            computeStationsRound(players, stations, i),
+            computeStationsRound(filteredPlayers, stations, i),
           )
         : [],
-    [players, stations, maxRounds, hasStarted],
+    [filteredPlayers, stations, maxRounds, hasStarted],
   );
 
   if (!hasStarted) {
@@ -203,43 +227,75 @@ export function StationsEvent({ event }: StationsEventProps) {
     );
   }
 
+  const divisionFilter = divisions.length > 0 && (
+    <div className="mb-4 flex flex-wrap gap-2">
+      <Badge
+        variant={selectedDivision === null ? "default" : "outline"}
+        className="cursor-pointer"
+        onClick={() => setSelectedDivision(null)}
+      >
+        All
+      </Badge>
+      {divisions.map((div) => (
+        <Badge
+          key={div}
+          variant={selectedDivision === div ? "default" : "outline"}
+          className="cursor-pointer"
+          onClick={() => setSelectedDivision(div)}
+        >
+          {div}
+        </Badge>
+      ))}
+    </div>
+  );
+
   if (maxRounds <= 1) {
     return (
-      <ResultsTable rows={totals} stations={stations} showWeight={showWeight} />
-    );
-  }
-
-  return (
-    <Tabs defaultValue="leaderboard">
-      <TabsList>
-        <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-        {Array.from({ length: maxRounds }, (_, i) => {
-          const roundNum = maxRounds - i;
-          return (
-            <TabsTrigger key={roundNum} value={`round-${roundNum - 1}`}>
-              Round {roundNum}
-            </TabsTrigger>
-          );
-        })}
-      </TabsList>
-
-      <TabsContent value="leaderboard" className="mt-4">
+      <div>
+        {divisionFilter}
         <ResultsTable
           rows={totals}
           stations={stations}
           showWeight={showWeight}
         />
-      </TabsContent>
+      </div>
+    );
+  }
 
-      {roundData.map((rows, i) => (
-        <TabsContent key={i} value={`round-${i}`} className="mt-4">
+  return (
+    <div>
+      {divisionFilter}
+      <Tabs defaultValue="leaderboard">
+        <TabsList>
+          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+          {Array.from({ length: maxRounds }, (_, i) => {
+            const roundNum = maxRounds - i;
+            return (
+              <TabsTrigger key={roundNum} value={`round-${roundNum - 1}`}>
+                Round {roundNum}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+
+        <TabsContent value="leaderboard" className="mt-4">
           <ResultsTable
-            rows={rows}
+            rows={totals}
             stations={stations}
             showWeight={showWeight}
           />
         </TabsContent>
-      ))}
-    </Tabs>
+
+        {roundData.map((rows, i) => (
+          <TabsContent key={i} value={`round-${i}`} className="mt-4">
+            <ResultsTable
+              rows={rows}
+              stations={stations}
+              showWeight={showWeight}
+            />
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
   );
 }
