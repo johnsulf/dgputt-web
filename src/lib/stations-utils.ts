@@ -39,6 +39,36 @@ export function getStations(event: LeagueEvent): StationDef[] {
   }));
 }
 
+export function getDistanceUnit(event: LeagueEvent): string {
+  const cfg = event.formatConfig;
+  if (!cfg) return "m";
+  const unit = cfg.distanceUnit as string | undefined;
+  if (unit && unit.toLowerCase().startsWith("f")) return "ft";
+  return "m";
+}
+
+export function getStationDistance(
+  station: StationDef,
+  unit: string,
+): string | null {
+  if (station.customDistance) {
+    return `${station.customDistance}${unit}`;
+  }
+  if (
+    station.distanceIndex != null &&
+    station.distanceIndex >= 0
+  ) {
+    // distanceIndex maps to distances starting from the lowest
+    // Meters: index 0 = 3m, so distance = index + 3
+    // Feet: index 0 = 10ft, so distance = index + 10
+    if (unit === "ft") {
+      return `${station.distanceIndex + 10}ft`;
+    }
+    return `${station.distanceIndex + 3}m`;
+  }
+  return null;
+}
+
 export function getStationLabel(station: StationDef, index: number): string {
   if (station.labelOverride) return station.labelOverride;
   if (station.customDistance) return `${station.customDistance}`;

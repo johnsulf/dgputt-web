@@ -6,6 +6,8 @@ import type { LeagueEvent } from "@/app/interfaces/league";
 import {
   getStations,
   getStationLabel,
+  getStationDistance,
+  getDistanceUnit,
   computeStationsTotals,
   computeStationsRound,
 } from "@/lib/stations-utils";
@@ -26,6 +28,7 @@ export function LiveStations({
 }: LiveStationsProps) {
   const players = useMemo(() => event.players ?? {}, [event.players]);
   const stations = useMemo(() => getStations(event), [event]);
+  const distanceUnit = useMemo(() => getDistanceUnit(event), [event]);
   const showWeight = useMemo(
     () => stations.some((s) => s.weight !== 1),
     [stations],
@@ -73,23 +76,35 @@ export function LiveStations({
               #
             </th>
             <th className={`px-3 text-left ${densityStyles.header}`}>Player</th>
-            {stations.map((s, i) => (
-              <th
-                key={s.key}
-                className={`w-18 px-2 text-center ${densityStyles.header}`}
-              >
-                <div>{getStationLabel(s, i)}</div>
-                {showWeight && s.weight !== 1 && (
-                  <div
-                    className={`text-xs font-normal ${
-                      isLight ? "text-zinc-500" : "text-zinc-500"
-                    }`}
-                  >
-                    ×{s.weight}
-                  </div>
-                )}
-              </th>
-            ))}
+            {stations.map((s, i) => {
+              const dist = getStationDistance(s, distanceUnit);
+              return (
+                <th
+                  key={s.key}
+                  className={`w-18 px-2 text-center ${densityStyles.header}`}
+                >
+                  <div>{getStationLabel(s, i)}</div>
+                  {dist && (
+                    <div
+                      className={`text-xs font-normal ${
+                        isLight ? "text-zinc-500" : "text-zinc-500"
+                      }`}
+                    >
+                      {dist}
+                    </div>
+                  )}
+                  {showWeight && s.weight !== 1 && (
+                    <div
+                      className={`text-xs font-normal ${
+                        isLight ? "text-zinc-500" : "text-zinc-500"
+                      }`}
+                    >
+                      ×{s.weight}
+                    </div>
+                  )}
+                </th>
+              );
+            })}
             <th className={`w-20 px-3 text-center ${densityStyles.header}`}>
               Hit%
             </th>

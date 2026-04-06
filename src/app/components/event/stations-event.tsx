@@ -17,6 +17,8 @@ import {
   type StationsPlayerRow,
   getStations,
   getStationLabel,
+  getStationDistance,
+  getDistanceUnit,
   computeStationsTotals,
   computeStationsRound,
 } from "@/lib/stations-utils";
@@ -25,10 +27,12 @@ function ResultsTable({
   rows,
   stations,
   showWeight,
+  distanceUnit,
 }: {
   rows: StationsPlayerRow[];
   stations: StationDef[];
   showWeight: boolean;
+  distanceUnit: string;
 }) {
   return (
     <Table>
@@ -36,16 +40,24 @@ function ResultsTable({
         <TableRow>
           <TableHead className="w-10 text-center">#</TableHead>
           <TableHead>Player</TableHead>
-          {stations.map((s, i) => (
-            <TableHead key={s.key} className="w-14 text-center">
-              <div>{getStationLabel(s, i)}</div>
-              {showWeight && s.weight !== 1 && (
-                <div className="text-[10px] font-normal text-muted-foreground">
-                  ×{s.weight}
-                </div>
-              )}
-            </TableHead>
-          ))}
+          {stations.map((s, i) => {
+            const dist = getStationDistance(s, distanceUnit);
+            return (
+              <TableHead key={s.key} className="w-14 text-center">
+                <div>{getStationLabel(s, i)}</div>
+                {dist && (
+                  <div className="text-[10px] font-normal text-muted-foreground">
+                    {dist}
+                  </div>
+                )}
+                {showWeight && s.weight !== 1 && (
+                  <div className="text-[10px] font-normal text-muted-foreground">
+                    ×{s.weight}
+                  </div>
+                )}
+              </TableHead>
+            );
+          })}
           <TableHead className="w-16 text-center">Hit%</TableHead>
           <TableHead className="w-14 text-center">Score</TableHead>
         </TableRow>
@@ -186,6 +198,7 @@ export function StationsEvent({ event }: StationsEventProps) {
   }, [players, selectedDivision]);
 
   const stations = useMemo(() => getStations(event), [event]);
+  const distanceUnit = useMemo(() => getDistanceUnit(event), [event]);
   const showWeight = useMemo(
     () => stations.some((s) => s.weight !== 1),
     [stations],
@@ -257,6 +270,7 @@ export function StationsEvent({ event }: StationsEventProps) {
           rows={totals}
           stations={stations}
           showWeight={showWeight}
+          distanceUnit={distanceUnit}
         />
       </div>
     );
@@ -283,6 +297,7 @@ export function StationsEvent({ event }: StationsEventProps) {
             rows={totals}
             stations={stations}
             showWeight={showWeight}
+            distanceUnit={distanceUnit}
           />
         </TabsContent>
 
@@ -292,6 +307,7 @@ export function StationsEvent({ event }: StationsEventProps) {
               rows={rows}
               stations={stations}
               showWeight={showWeight}
+              distanceUnit={distanceUnit}
             />
           </TabsContent>
         ))}
