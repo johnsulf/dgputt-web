@@ -114,7 +114,11 @@ export function parseSingleEvent(
       typeof v.currentRound === "number" ? v.currentRound : undefined,
     rounds: typeof v.rounds === "number" ? v.rounds : undefined,
     competitionType:
-      typeof v.competitionType === "string" ? v.competitionType : undefined,
+      typeof v.competitionType === "string"
+        ? v.competitionType
+        : typeof v.type === "string"
+          ? v.type
+          : undefined,
     format: typeof v.format === "string" ? v.format : undefined,
     playerMode: typeof v.playerMode === "string" ? v.playerMode : undefined,
     limit: typeof v.limit === "number" ? v.limit : undefined,
