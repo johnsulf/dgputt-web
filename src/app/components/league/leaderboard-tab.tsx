@@ -16,17 +16,45 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 
 interface LeaderboardTabProps {
   league: LeagueInstance;
   seasonFilter: string | null;
+}
+
+const POINTS_TABLE = [
+  { place: "1st", points: 12 },
+  { place: "2nd", points: 10 },
+  { place: "3rd", points: 8 },
+  { place: "4th", points: 6 },
+  { place: "5th", points: 5 },
+  { place: "6th", points: 4 },
+  { place: "7th", points: 3 },
+  { place: "8th+", points: 2 },
+];
+
+function formatFilterLabel(format: string | null, formats: string[]): string {
+  if (!format) return "All Formats";
+  return formatLabel(format);
 }
 
 export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
@@ -48,6 +76,11 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
 
   const validRounds = league.validRounds ?? 10;
   const hasEvents = (league.events ?? []).some((e) => e.finished);
+  const finishedCount = (league.events ?? []).filter((e) => {
+    if (!e.finished) return false;
+    if (seasonFilter && e.seasonId !== seasonFilter) return false;
+    return true;
+  }).length;
 
   if (!hasEvents) {
     return (
@@ -62,26 +95,95 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
 
   return (
     <div>
-      {formats.length > 1 && (
-        <div className="mb-4">
-          <Select
-            value={formatFilter ?? "all"}
-            onValueChange={(v) => setFormatFilter(v === "all" ? null : v)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Formats</SelectItem>
-              {formats.map((f) => (
-                <SelectItem key={f} value={f}>
-                  {formatLabel(f)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      <div className="mb-4 flex items-center gap-2">
+        {formats.length > 1 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="outline" size="sm">
+                  {formatFilterLabel(formatFilter, formats)}
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuRadioGroup
+                value={formatFilter ?? "all"}
+                onValueChange={(v) => setFormatFilter(v === "all" ? null : v)}
+              >
+                <DropdownMenuRadioItem value="all">
+                  All Formats
+                </DropdownMenuRadioItem>
+                {formats.map((f) => (
+                  <DropdownMenuRadioItem key={f} value={f}>
+                    {formatLabel(f)}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
+        <Badge variant="outline" className="text-xs">
+          {validRounds >= finishedCount
+            ? `${finishedCount} event${finishedCount !== 1 ? "s" : ""}`
+            : `Best ${validRounds} of ${finishedCount} events`}
+        </Badge>
+
+        <Dialog>
+          <DialogTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 rounded-full"
+              >
+                <HugeiconsIcon
+                  icon={InformationCircleIcon}
+                  size={16}
+                  strokeWidth={2}
+                />
+                <span className="sr-only">Point system info</span>
+              </Button>
+            }
+          />
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Point System</DialogTitle>
+              <DialogDescription>
+                Points are awarded based on placement in each event.
+                {validRounds < finishedCount && (
+                  <>
+                    {" "}
+                    Only the best {validRounds} event scores count towards the
+                    leaderboard.
+                  </>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Place</TableHead>
+                  <TableHead className="text-right">Points</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {POINTS_TABLE.map((row) => (
+                  <TableRow key={row.place}>
+                    <TableCell className="font-medium">{row.place}</TableCell>
+                    <TableCell className="text-right">{row.points}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Players who do not complete the event receive 0 points. In doubles
+              events, both team members receive the team&apos;s placement
+              points.
+            </p>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <Table>
         <TableHeader>
@@ -95,7 +197,6 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
         <TableBody>
           {entries.map((entry, i) => {
             const place = i + 1;
-            // Handle ties — same points = same place
             const prevEntry = i > 0 ? entries[i - 1] : null;
             const displayPlace =
               prevEntry &&
