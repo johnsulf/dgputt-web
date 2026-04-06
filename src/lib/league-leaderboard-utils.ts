@@ -91,13 +91,16 @@ function getEventPlacements(
     const rows = buildCornholeRows(event);
     for (const row of rows) {
       if (row.basePosition === 0) continue;
-      if (isDoubles && row.participant.members.length > 0) {
-        for (const memberUid of row.participant.members) {
-          const memberPlayer = players[memberUid];
-          result.set(memberUid, {
-            place: row.basePosition,
-            name: memberPlayer?.displayName ?? memberPlayer?.name ?? memberUid,
-          });
+      if (isDoubles) {
+        // Look up individual player UIDs sharing the team's pairId
+        const teamId = row.participant.id;
+        for (const [uid, p] of Object.entries(players)) {
+          if ((p.pairId ?? uid) === teamId) {
+            result.set(uid, {
+              place: row.basePosition,
+              name: p.displayName ?? p.name ?? "Unknown",
+            });
+          }
         }
       } else {
         result.set(row.participant.id, {

@@ -245,66 +245,68 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
           </DropdownMenu>
         )}
 
-        <Badge variant="outline" className="text-xs">
-          {validRounds >= finishedCount
-            ? `${finishedCount} event${finishedCount !== 1 ? "s" : ""}`
-            : `Best ${validRounds} of ${finishedCount} events`}
-        </Badge>
+        <div className="ml-auto flex items-center gap-2">
+          <Badge variant="outline" className="text-xs">
+            {validRounds >= finishedCount
+              ? `${finishedCount} event${finishedCount !== 1 ? "s" : ""}`
+              : `Best ${validRounds} of ${finishedCount} events`}
+          </Badge>
 
-        <Dialog>
-          <DialogTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 rounded-full"
-              >
-                <HugeiconsIcon
-                  icon={InformationCircleIcon}
-                  size={16}
-                  strokeWidth={2}
-                />
-                <span className="sr-only">Point system info</span>
-              </Button>
-            }
-          />
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Point System</DialogTitle>
-              <DialogDescription>
-                Points are awarded based on placement in each event.
-                {validRounds < finishedCount && (
-                  <>
-                    {" "}
-                    Only the best {validRounds} event scores count towards the
-                    leaderboard.
-                  </>
-                )}
-              </DialogDescription>
-            </DialogHeader>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Place</TableHead>
-                  <TableHead className="text-right">Points</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {POINTS_TABLE.map((row) => (
-                  <TableRow key={row.place}>
-                    <TableCell className="font-medium">{row.place}</TableCell>
-                    <TableCell className="text-right">{row.points}</TableCell>
+          <Dialog>
+            <DialogTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 rounded-full"
+                >
+                  <HugeiconsIcon
+                    icon={InformationCircleIcon}
+                    size={16}
+                    strokeWidth={2}
+                  />
+                  <span className="sr-only">Point system info</span>
+                </Button>
+              }
+            />
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Point System</DialogTitle>
+                <DialogDescription>
+                  Points are awarded based on placement in each event.
+                  {validRounds < finishedCount && (
+                    <>
+                      {" "}
+                      Only the best {validRounds} event scores count towards the
+                      leaderboard.
+                    </>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Place</TableHead>
+                    <TableHead className="text-right">Points</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Players who do not complete the event receive 0 points. In doubles
-              events, both team members receive the team&apos;s placement
-              points.
-            </p>
-          </DialogContent>
-        </Dialog>
+                </TableHeader>
+                <TableBody>
+                  {POINTS_TABLE.map((row) => (
+                    <TableRow key={row.place}>
+                      <TableCell className="font-medium">{row.place}</TableCell>
+                      <TableCell className="text-right">{row.points}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Players who do not complete the event receive 0 points. In
+                doubles events, both team members receive the team&apos;s
+                placement points.
+              </p>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Table>
