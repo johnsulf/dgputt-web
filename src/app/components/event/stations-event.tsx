@@ -42,9 +42,12 @@ function ResultsTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-10 text-center">#</TableHead>
-          <TableHead>Player</TableHead>
-          {showThru && <TableHead className="w-14 text-center">Thru</TableHead>}
+          <TableHead className="sticky left-0 z-10 w-10 bg-background text-center">
+            #
+          </TableHead>
+          <TableHead className="sticky left-10 z-10 bg-background">
+            Player
+          </TableHead>
           {stations.map((s, i) => {
             const dist = getStationDistance(s, distanceUnit);
             return (
@@ -61,6 +64,7 @@ function ResultsTable({
               </TableHead>
             );
           })}
+          {showThru && <TableHead className="w-14 text-center">Thru</TableHead>}
           <TableHead className="w-16 text-center">Hit%</TableHead>
           <TableHead className="w-14 text-center">Score</TableHead>
         </TableRow>
@@ -68,7 +72,7 @@ function ResultsTable({
       <TableBody>
         {rows.map((row) => (
           <TableRow key={row.uid}>
-            <TableCell className="text-center font-medium">
+            <TableCell className="sticky left-0 z-10 bg-background text-center font-medium">
               {row.dns ? (
                 <Badge variant="outline" className="text-xs">
                   DNS
@@ -81,12 +85,9 @@ function ResultsTable({
                 row.place
               )}
             </TableCell>
-            <TableCell className="font-medium">{row.name}</TableCell>
-            {showThru && (
-              <TableCell className="text-center text-muted-foreground">
-                {row.dns ? "-" : `${row.roundsPlayed}/${totalRounds}`}
-              </TableCell>
-            )}
+            <TableCell className="sticky left-10 z-10 bg-background font-medium">
+              {row.name}
+            </TableCell>
             {row.stationHits.map((h, i) => {
               const p = row.stationPutts[i] ?? 0;
               const score = row.stationScores[i] ?? 0;
@@ -107,6 +108,11 @@ function ResultsTable({
                 </TableCell>
               );
             })}
+            {showThru && (
+              <TableCell className="text-center text-muted-foreground">
+                {row.dns ? "-" : `${row.roundsPlayed}/${totalRounds}`}
+              </TableCell>
+            )}
             <TableCell className="text-center">
               {row.dns ? "-" : `${row.hitPercent.toFixed(1)}%`}
             </TableCell>
