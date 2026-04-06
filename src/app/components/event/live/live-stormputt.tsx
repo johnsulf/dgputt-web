@@ -63,11 +63,6 @@ export function LiveStormPutt({
               #
             </th>
             <th className={`px-3 text-left ${densityStyles.header}`}>Player</th>
-            {showThru && (
-              <th className={`w-16 px-2 text-center ${densityStyles.header}`}>
-                Thru
-              </th>
-            )}
             {distanceLabels.meter.map((label, i) => (
               <th
                 key={i}
@@ -83,6 +78,11 @@ export function LiveStormPutt({
                 </div>
               </th>
             ))}
+            {showThru && (
+              <th className={`w-16 px-2 text-center ${densityStyles.header}`}>
+                Thru
+              </th>
+            )}
             <th className={`w-20 px-3 text-center ${densityStyles.header}`}>
               Hit%
             </th>
@@ -117,15 +117,6 @@ export function LiveStormPutt({
                 <td className={`px-3 font-semibold ${densityStyles.cell}`}>
                   {row.name}
                 </td>
-                {showThru && (
-                  <td
-                    className={`px-2 text-center tabular-nums ${densityStyles.cell} ${
-                      isLight ? "text-zinc-500" : "text-zinc-500"
-                    }`}
-                  >
-                    {row.dns ? "-" : `${row.roundsPlayed}/${totalRounds}`}
-                  </td>
-                )}
                 {row.distances.map((d, i) => {
                   const p = row.distancePutts[i] ?? 0;
                   const pct = p > 0 ? (d / p) * 100 : 0;
@@ -155,6 +146,15 @@ export function LiveStormPutt({
                     </td>
                   );
                 })}
+                {showThru && (
+                  <td
+                    className={`px-2 text-center tabular-nums ${densityStyles.cell} ${
+                      isLight ? "text-zinc-500" : "text-zinc-500"
+                    }`}
+                  >
+                    {row.dns ? "-" : `${row.roundsPlayed}/${totalRounds}`}
+                  </td>
+                )}
                 <td
                   className={`px-3 text-center tabular-nums ${densityStyles.cell}`}
                 >

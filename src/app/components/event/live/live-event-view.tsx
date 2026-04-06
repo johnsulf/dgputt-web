@@ -170,25 +170,41 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
           </DropdownMenu>
 
           {showViewSelect && (
-            <select
-              value={viewMode === "totals" ? "totals" : String(viewMode)}
-              onChange={(e) => {
-                const v = e.target.value;
-                setViewMode(v === "totals" ? "totals" : Number(v));
-              }}
-              className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                isLight
-                  ? "bg-zinc-200 text-zinc-700"
-                  : "bg-zinc-800 text-zinc-300"
-              }`}
-            >
-              <option value="totals">Totals</option>
-              {Array.from({ length: totalRounds }, (_, i) => (
-                <option key={i} value={String(i)}>
-                  Round {i + 1}
-                </option>
-              ))}
-            </select>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <button
+                    type="button"
+                    className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      isLight
+                        ? "bg-zinc-200 text-zinc-700 hover:bg-zinc-300"
+                        : "bg-zinc-800 text-zinc-300 hover:text-zinc-100"
+                    }`}
+                  >
+                    {viewMode === "totals"
+                      ? "Totals"
+                      : `Round ${(viewMode as number) + 1}`}
+                  </button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuRadioGroup
+                  value={viewMode === "totals" ? "totals" : String(viewMode)}
+                  onValueChange={(v) =>
+                    setViewMode(v === "totals" ? "totals" : Number(v))
+                  }
+                >
+                  <DropdownMenuRadioItem value="totals">
+                    Totals
+                  </DropdownMenuRadioItem>
+                  {Array.from({ length: totalRounds }, (_, i) => (
+                    <DropdownMenuRadioItem key={i} value={String(i)}>
+                      Round {i + 1}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>
