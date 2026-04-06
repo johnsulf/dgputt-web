@@ -81,7 +81,7 @@ export function LiveStations({
               return (
                 <th
                   key={s.key}
-                  className={`w-18 px-2 text-center ${densityStyles.header}`}
+                  className={`w-18 px-2 text-center align-bottom ${densityStyles.header}`}
                 >
                   <div>{getStationLabel(s, i)}</div>
                   <div
