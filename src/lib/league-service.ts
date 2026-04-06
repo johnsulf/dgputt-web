@@ -95,6 +95,40 @@ export async function fetchLeagueDetails(
   };
 }
 
+/**
+ * Infer format for older events that don't have an explicit `format` field.
+ * Older events stored the format in `competitionType` or `type`.
+ * Falls back to structural detection if those aren't recognized formats.
+ */
+const KNOWN_FORMATS = new Set([
+  "stormputt",
+  "stormputt18",
+  "cornhole",
+  "stations",
+]);
+
+function inferFormat(
+  v: Record<string, unknown>,
+  matchesByRound: LeagueEventMatch[][] | undefined,
+): string | undefined {
+  // Check if competitionType or type holds a known format value
+  const ct =
+    typeof v.competitionType === "string" ? v.competitionType : undefined;
+  const t = typeof v.type === "string" ? v.type : undefined;
+  if (ct && KNOWN_FORMATS.has(ct)) return ct;
+  if (t && KNOWN_FORMATS.has(t)) return t;
+
+  // Structural detection
+  if (matchesByRound && matchesByRound.length > 0) return "cornhole";
+  if (
+    v.formatConfig &&
+    typeof v.formatConfig === "object" &&
+    Array.isArray((v.formatConfig as Record<string, unknown>).stations)
+  )
+    return "stations";
+  return undefined;
+}
+
 export function parseSingleEvent(
   key: string,
   value: unknown,
@@ -102,6 +136,13 @@ export function parseSingleEvent(
   if (!value || typeof value !== "object") return null;
   const v = value as Record<string, unknown>;
   const matchesByRound = parseMatchesByRound(v.matches);
+
+  const explicitFormat =
+    typeof v.format === "string" ? v.format : undefined;
+
+  // Infer format for older events that don't have the field
+  const format =
+    explicitFormat ?? inferFormat(v, matchesByRound);
 
   return {
     id: key,
@@ -119,7 +160,7 @@ export function parseSingleEvent(
         : typeof v.type === "string"
           ? v.type
           : undefined,
-    format: typeof v.format === "string" ? v.format : undefined,
+    format,
     playerMode: typeof v.playerMode === "string" ? v.playerMode : undefined,
     limit: typeof v.limit === "number" ? v.limit : undefined,
     seasonId: typeof v.seasonId === "string" ? v.seasonId : undefined,
