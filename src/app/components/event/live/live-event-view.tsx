@@ -38,7 +38,8 @@ export function LiveEventView({ event, leagueTitle }: LiveEventViewProps) {
   const [density, setDensity] = useState<TableDensity>("medium");
   const isLight = theme === "light";
 
-  const isStormPutt = event.format === "stormputt";
+  const isStormPutt =
+    event.format === "stormputt" || event.format === "stormputt18";
   const isStations = event.format === "stations";
   const totalRounds =
     event.rounds ??

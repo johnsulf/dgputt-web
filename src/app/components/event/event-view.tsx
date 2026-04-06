@@ -42,7 +42,8 @@ function eventStatusBadge(event: LeagueEvent) {
 export function EventView({ league, event }: EventViewProps) {
   const { user } = useAuth();
   const playerCount = event.players ? Object.keys(event.players).length : 0;
-  const isStormPutt = event.format === "stormputt";
+  const isStormPutt =
+    event.format === "stormputt" || event.format === "stormputt18";
   const isCornhole = event.format === "cornhole";
   const isStations = event.format === "stations";
   const isAdmin = user && league.admins?.includes(user.uid);
