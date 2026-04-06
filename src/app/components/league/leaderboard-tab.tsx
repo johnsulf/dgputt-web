@@ -10,9 +10,11 @@ import {
 import { formatLabel } from "@/lib/event-utils";
 import {
   type ColumnDef,
+  type ColumnFiltersState,
   type SortingState,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
@@ -41,6 +43,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { InformationCircleIcon } from "@hugeicons/core-free-icons";
@@ -133,7 +136,7 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
       {
         accessorKey: "name",
         header: "Player",
-        enableSorting: true,
+        enableSorting: false,
         cell: ({ row }) => (
           <span className="font-medium">{row.original.name}</span>
         ),
@@ -178,14 +181,18 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
     [validRounds],
   );
 
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: tableData,
     columns,
-    state: { sorting },
+    state: { sorting, columnFilters },
     onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     enableSortingRemoval: false,
   });
 
@@ -202,7 +209,15 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
 
   return (
     <div>
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Input
+          placeholder="Search player..."
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          onChange={(e) =>
+            table.getColumn("name")?.setFilterValue(e.target.value)
+          }
+          className="h-9 w-48"
+        />
         {formats.length > 1 && (
           <DropdownMenu>
             <DropdownMenuTrigger
