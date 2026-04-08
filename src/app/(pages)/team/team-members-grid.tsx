@@ -45,15 +45,16 @@ function sortMembers(members: TeamMember[], sort: SortOption): TeamMember[] {
   return [...members].sort((a, b) => {
     switch (sort) {
       case "name-az":
-        return a.name.localeCompare(b.name);
+        return a.name.localeCompare(b.name, "en");
       case "name-za":
-        return b.name.localeCompare(a.name);
+        return b.name.localeCompare(a.name, "en");
       case "country":
         return (COUNTRY_NAMES[a.country] ?? a.country).localeCompare(
-          COUNTRY_NAMES[b.country] ?? b.country
+          COUNTRY_NAMES[b.country] ?? b.country,
+          "en"
         );
       case "game":
-        return a.favoriteGame.localeCompare(b.favoriteGame);
+        return a.favoriteGame.localeCompare(b.favoriteGame, "en");
       case "pdga":
         return a.pdga - b.pdga;
       default:
