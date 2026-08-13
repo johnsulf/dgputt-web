@@ -20,9 +20,14 @@ export default function Footer() {
           <img src="/images/fb.png" alt="facebook" width={32} height={32} />
         </a>
       </div>
-      <Link href="/privacy-policy" className="text-primary underline">
-        Privacy Policy
-      </Link>
+      <div className="flex gap-4">
+        <Link href="/privacy-policy" className="text-primary underline">
+          Privacy Policy
+        </Link>
+        <Link href="/delete-account" className="text-primary underline">
+          Delete Account
+        </Link>
+      </div>
     </footer>
   );
 }

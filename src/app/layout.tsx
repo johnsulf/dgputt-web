@@ -77,7 +77,14 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      {/* Browser extensions commonly mutate <body> before React hydrates
+          (e.g. injecting an inline overscroll-behavior style), which trips a
+          hydration warning. Suppression is one level deep only, so real
+          mismatches inside the tree are still reported. */}
+      <body
+        className="min-h-full flex flex-col bg-background text-foreground"
+        suppressHydrationWarning
+      >
         <AuthProvider>{children}</AuthProvider>
         <Script
           src="https://static.cloudflareinsights.com/beacon.min.js"
