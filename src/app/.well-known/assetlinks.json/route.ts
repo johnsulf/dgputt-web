@@ -12,7 +12,10 @@ const FINGERPRINTS_PROD: string[] = [];
 
 // Dev: the debug certificate of every machine that builds debug builds, plus
 // the release certificate used for release dev builds.
-const FINGERPRINTS_DEV: string[] = [];
+const FINGERPRINTS_DEV: string[] = [
+  // Atle's Mac, ~/.android/debug.keystore, alias androiddebugkey
+  "F0:FD:CF:C8:2B:DB:29:71:1C:2F:1F:DC:FA:A4:31:02:4A:FC:5A:DE:3F:F4:A2:97:FA:A0:45:AC:AE:E8:18:D5",
+];
 
 const statements = [
   {
