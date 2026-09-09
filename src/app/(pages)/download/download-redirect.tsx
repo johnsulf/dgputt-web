@@ -1,17 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-
-const APP_STORE_URL = "https://apps.apple.com/us/app/dgputt/id1536711552";
-const PLAY_STORE_URL =
-  "https://play.google.com/store/apps/details?id=com.erlendjohnsen.dgputt";
+import { APP_STORE_URL, PLAY_STORE_URL, detectPlatform } from "@/lib/store-links";
 
 export default function DownloadRedirect() {
   useEffect(() => {
-    const ua = navigator.userAgent;
-    if (/android/i.test(ua)) {
+    const platform = detectPlatform();
+    if (platform === "android") {
       window.location.replace(PLAY_STORE_URL);
-    } else if (/iPad|iPhone|iPod/.test(ua)) {
+    } else if (platform === "ios") {
       window.location.replace(APP_STORE_URL);
     } else {
       window.location.replace("/");
