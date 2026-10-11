@@ -179,7 +179,7 @@ export function buildParticipants(event: LeagueEvent): {
     participants.set(teamId, {
       id: teamId,
       name: teamName,
-      division: members[0]?.division,
+      division: event.pairDivisions?.[teamId] ?? members[0]?.division,
       members: names,
     });
   }

@@ -165,6 +165,7 @@ export function parseSingleEvent(
         ? v.doublesPairingMode
         : undefined,
     pairNames: parsePairNames(v._pairs),
+    pairDivisions: parsePairDivisions(v._pairs),
     limit: typeof v.limit === "number" ? v.limit : undefined,
     seasonId: typeof v.seasonId === "string" ? v.seasonId : undefined,
     divisionsEnabled:
@@ -210,6 +211,23 @@ function parsePairNames(raw: unknown): Record<string, string> | undefined {
   }
 
   return Object.keys(names).length > 0 ? names : undefined;
+}
+
+function parsePairDivisions(
+  raw: unknown,
+): Record<string, string> | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+
+  const divisions: Record<string, string> = {};
+  for (const [pairId, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!value || typeof value !== "object") continue;
+    const division = (value as Record<string, unknown>).division;
+    if (typeof division === "string" && division.trim().length > 0) {
+      divisions[pairId] = division.trim();
+    }
+  }
+
+  return Object.keys(divisions).length > 0 ? divisions : undefined;
 }
 
 function parsePlayers(

@@ -33,6 +33,8 @@ export interface LeagueEvent {
   doublesPairingMode?: string;
   /** Team names for fixed doubles, keyed by pairId. Floating teams have none. */
   pairNames?: Record<string, string>;
+  /** Divisions of fixed doubles teams, keyed by pairId. */
+  pairDivisions?: Record<string, string>;
   limit?: number;
   seasonId?: string;
   divisionsEnabled?: boolean;

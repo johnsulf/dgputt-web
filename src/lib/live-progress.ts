@@ -30,3 +30,20 @@ export function activeIndex(done: boolean[]): number {
   const right = done.findIndex((isDone, i) => i > first && !isDone);
   return right !== -1 ? right : done.indexOf(false);
 }
+
+/**
+ * A doubles team's round status from its members' statuses. The team is
+ * finished only when every member that is playing is finished, and stays
+ * active while any of them is still putting or has yet to start. Members
+ * who are DNS are not required; `fallback` is used when all of them are.
+ */
+export function teamRoundStatus<S extends string>(
+  memberStatuses: S[],
+  fallback: S,
+): S {
+  const required = memberStatuses.filter((s) => s !== "dns");
+  if (required.length === 0) return fallback;
+  if (required.every((s) => s === "finished")) return required[0];
+  if (required.every((s) => s === "not-started")) return required[0];
+  return required.find((s) => s === "putting") ?? ("putting" as S);
+}

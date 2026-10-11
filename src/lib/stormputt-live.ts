@@ -7,7 +7,7 @@ import {
   teamMembersById,
   type TeamMember,
 } from "@/lib/stormputt-utils";
-import { activeIndex, roundGroup } from "@/lib/live-progress";
+import { activeIndex, roundGroup, teamRoundStatus } from "@/lib/live-progress";
 
 // Derived view state shared by the StormPutt event page and the TV board.
 
@@ -124,7 +124,7 @@ export function buildStormPuttLiveState(
   // Doubles are shown per team, so merge team members first.
   const players =
     event.playerMode === "doubles"
-      ? groupPlayersForDoubles(raw, event.pairNames)
+      ? groupPlayersForDoubles(raw, event.pairNames, event.pairDivisions)
       : raw;
   const participants = Object.entries(players);
   const teams =
@@ -139,8 +139,20 @@ export function buildStormPuttLiveState(
   const currentRoundIndex = roundCount - 1;
   const isLive = !event.finished && roundCount > 0;
 
+  // A team has finished only when each member has, not when one has.
   const progressById = new Map(
-    participants.map(([id, p]) => [id, roundProgress(p, currentRoundIndex)]),
+    participants.map(([id, p]) => {
+      const progress = roundProgress(p, currentRoundIndex);
+      const members = (teams.get(id) ?? []).filter(
+        (m) => !m.player.rounds?.[currentRoundIndex]?.dns,
+      );
+      if (members.length === 0) return [id, progress];
+      const status = teamRoundStatus(
+        members.map((m) => roundProgress(m.player, currentRoundIndex).status),
+        progress.status,
+      );
+      return [id, { ...progress, status }];
+    }),
   );
   const statuses = [...progressById.values()].map((r) => r.status);
   const roundStats: RoundStats = {

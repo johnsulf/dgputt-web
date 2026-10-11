@@ -38,6 +38,7 @@ export const NUM_DISTANCES = 6;
 export function groupPlayersForDoubles(
   players: Record<string, LeagueEventPlayer>,
   pairNames: Record<string, string> = {},
+  pairDivisions: Record<string, string> = {},
 ): Record<string, LeagueEventPlayer> {
   const teams = new Map<
     string,
@@ -123,7 +124,7 @@ export function groupPlayersForDoubles(
   for (const [teamId, team] of teams.entries()) {
     result[teamId] = {
       displayName: pairNames[teamId] ?? team.names.slice(0, 2).join(" / "),
-      division: team.division,
+      division: pairDivisions[teamId] ?? team.division,
       pdgaNumber: undefined,
       rounds: team.rounds,
     };
