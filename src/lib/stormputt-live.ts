@@ -149,7 +149,6 @@ export function buildStormPuttLiveState(
       if (members.length === 0) return [id, progress];
       const status = teamRoundStatus(
         members.map((m) => roundProgress(m.player, currentRoundIndex).status),
-        progress.status,
       );
       return [id, { ...progress, status }];
     }),

@@ -141,20 +141,26 @@ describe("doubles team divisions", () => {
   });
 
   it("has no pair divisions when none are set", () => {
-    const event = parseSingleEvent("e", { ...raw, _pairs: { t1: { name: "A" } } });
+    const event = parseSingleEvent("e", {
+      ...raw,
+      _pairs: { t1: { name: "A" } },
+    });
     expect(event?.pairDivisions).toBeUndefined();
   });
 
   it("uses the pair division for StormPutt and Stations standings", () => {
-    const event = { ...parseSingleEvent("e", raw)!, format: "stormputt" };
-    const withRounds = { ...event, players: team([finishedRound], [finishedRound]) };
-    withRounds.players!.u1.division = "Open";
-    withRounds.players!.u2.division = undefined;
-    expect(buildStormPuttLiveState(withRounds).standings[0].division).toBe(
-      "Mixed",
-    );
-    const st = { ...stations(withRounds.players!), pairDivisions: event.pairDivisions };
-    expect(buildStationsLiveState(st).standings[0].division).toBe("Mixed");
+    const players = team([finishedRound], [finishedRound]);
+    players.u2.division = undefined;
+    const pairDivisions = { t1: "Mixed" };
+
+    const sp = buildStormPuttLiveState({
+      ...stormputt(players),
+      pairDivisions,
+    });
+    expect(sp.standings[0].division).toBe("Mixed");
+
+    const st = buildStationsLiveState({ ...stations(players), pairDivisions });
+    expect(st.standings[0].division).toBe("Mixed");
   });
 
   it("uses the pair division for Cornhole participants", () => {

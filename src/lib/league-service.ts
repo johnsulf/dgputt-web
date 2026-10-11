@@ -164,8 +164,8 @@ export function parseSingleEvent(
       typeof v.doublesPairingMode === "string"
         ? v.doublesPairingMode
         : undefined,
-    pairNames: parsePairNames(v._pairs),
-    pairDivisions: parsePairDivisions(v._pairs),
+    pairNames: parsePairField(v._pairs, "name"),
+    pairDivisions: parsePairField(v._pairs, "division"),
     limit: typeof v.limit === "number" ? v.limit : undefined,
     seasonId: typeof v.seasonId === "string" ? v.seasonId : undefined,
     divisionsEnabled:
@@ -198,36 +198,23 @@ function parseEvents(raw: unknown): LeagueEvent[] {
   return events;
 }
 
-function parsePairNames(raw: unknown): Record<string, string> | undefined {
-  if (!raw || typeof raw !== "object") return undefined;
-
-  const names: Record<string, string> = {};
-  for (const [pairId, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (!value || typeof value !== "object") continue;
-    const name = (value as Record<string, unknown>).name;
-    if (typeof name === "string" && name.trim().length > 0) {
-      names[pairId] = name.trim();
-    }
-  }
-
-  return Object.keys(names).length > 0 ? names : undefined;
-}
-
-function parsePairDivisions(
+/** One trimmed string field per pair from `_pairs`, keyed by pairId. */
+function parsePairField(
   raw: unknown,
+  field: "name" | "division",
 ): Record<string, string> | undefined {
   if (!raw || typeof raw !== "object") return undefined;
 
-  const divisions: Record<string, string> = {};
+  const values: Record<string, string> = {};
   for (const [pairId, value] of Object.entries(raw as Record<string, unknown>)) {
     if (!value || typeof value !== "object") continue;
-    const division = (value as Record<string, unknown>).division;
-    if (typeof division === "string" && division.trim().length > 0) {
-      divisions[pairId] = division.trim();
+    const text = (value as Record<string, unknown>)[field];
+    if (typeof text === "string" && text.trim().length > 0) {
+      values[pairId] = text.trim();
     }
   }
 
-  return Object.keys(divisions).length > 0 ? divisions : undefined;
+  return Object.keys(values).length > 0 ? values : undefined;
 }
 
 function parsePlayers(

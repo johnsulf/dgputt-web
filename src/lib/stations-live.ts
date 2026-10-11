@@ -199,14 +199,12 @@ export function buildStationsLiveState(
   const progressById = new Map(
     participants.map(([id, p]) => {
       const progress = stationRoundProgress(p, currentRoundIndex, points);
-      const members = teams.get(id) ?? [];
-      if (members.length === 0) return [id, progress];
-      const status = teamRoundStatus(
-        members.map(
-          (m) => stationRoundProgress(m.player, currentRoundIndex, points).status,
-        ),
-        progress.status,
-      );
+      const statuses = (teams.get(id) ?? [])
+        .map((m) => stationRoundProgress(m.player, currentRoundIndex, points))
+        .map((r) => r.status)
+        .filter((s) => s !== "dns");
+      if (statuses.length === 0) return [id, progress];
+      const status = teamRoundStatus(statuses);
       return [id, { ...progress, status }];
     }),
   );
