@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Image from "next/image";
 import {
   Card,
@@ -78,11 +79,12 @@ function MemberCard({ member }: { member: TeamMember }) {
   );
 }
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/team",
   title: "Team dgputt - Meet the Team",
   description:
     "Meet the makers and team members behind dgputt - disc golfers building tools for disc golfers.",
-};
+});
 
 export default function TeamPage() {
   return (

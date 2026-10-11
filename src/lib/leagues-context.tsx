@@ -14,11 +14,7 @@ import { fetchLeagues, fetchFavouriteLeagueIds } from "@/lib/league-service";
 import type { LeagueInstance } from "@/app/interfaces/league";
 
 export type SortOption =
-  | "titleA"
-  | "titleZ"
-  | "location"
-  | "creationOldest"
-  | "creationNewest";
+  "titleA" | "titleZ" | "location" | "creationOldest" | "creationNewest";
 
 interface LeaguesContextType {
   leagues: LeagueInstance[];
@@ -41,7 +37,7 @@ interface LeaguesContextType {
 const LeaguesContext = createContext<LeaguesContextType | undefined>(undefined);
 
 export function LeaguesProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, dataUid } = useAuth();
 
   const [allLeagues, setAllLeagues] = useState<LeagueInstance[]>([]);
   const [favouriteLeagueIds, setFavouriteLeagueIds] = useState<string[]>([]);
@@ -69,7 +65,8 @@ export function LeaguesProvider({ children }: { children: ReactNode }) {
     try {
       const [leagues, favourites] = await Promise.all([
         fetchLeagues(),
-        fetchFavouriteLeagueIds(user.uid),
+        // Favourites belong to the account in the database being viewed.
+        dataUid ? fetchFavouriteLeagueIds(dataUid) : Promise.resolve([]),
       ]);
 
       setAllLeagues(leagues);
@@ -82,7 +79,7 @@ export function LeaguesProvider({ children }: { children: ReactNode }) {
     }
 
     setIsLoading(false);
-  }, [user]);
+  }, [user, dataUid]);
 
   useEffect(() => {
     loadLeagues();
@@ -124,7 +121,9 @@ export function LeaguesProvider({ children }: { children: ReactNode }) {
           if (!a.location && !b.location) return 0;
           if (!a.location) return 1;
           if (!b.location) return -1;
-          return a.location.toLowerCase().localeCompare(b.location.toLowerCase());
+          return a.location
+            .toLowerCase()
+            .localeCompare(b.location.toLowerCase());
         case "creationOldest":
           return a.id.localeCompare(b.id);
         case "creationNewest":

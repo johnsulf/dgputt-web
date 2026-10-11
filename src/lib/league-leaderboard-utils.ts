@@ -1,7 +1,10 @@
 import type { LeagueEvent, LeagueInstance } from "@/app/interfaces/league";
 import { computeTotals as computeStormPuttTotals } from "./stormputt-utils";
 import { computeStationsTotals, getStations } from "./stations-utils";
-import { buildLeaderboardRows as buildCornholeRows } from "./cornhole-utils";
+import {
+  buildLeaderboardRows as buildCornholeRows,
+  isFloatingTeams,
+} from "./cornhole-utils";
 
 function pointsForPlace(place: number, completed: boolean): number {
   if (!completed) return 0;
@@ -89,9 +92,11 @@ function getEventPlacements(
     }
   } else if (event.format === "cornhole") {
     const rows = buildCornholeRows(event);
+    // Floating teams are ranked per player, so their rows are already players.
+    const teamRows = isDoubles && !isFloatingTeams(event);
     for (const row of rows) {
       if (row.basePosition === 0) continue;
-      if (isDoubles) {
+      if (teamRows) {
         // Look up individual player UIDs sharing the team's pairId
         const teamId = row.participant.id;
         for (const [uid, p] of Object.entries(players)) {

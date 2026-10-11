@@ -29,6 +29,10 @@ export interface LeagueEvent {
   competitionType?: string;
   format?: string;
   playerMode?: string;
+  /** "manual" | "random" | "float". Float redraws doubles teams every round. */
+  doublesPairingMode?: string;
+  /** Team names for fixed doubles, keyed by pairId. Floating teams have none. */
+  pairNames?: Record<string, string>;
   limit?: number;
   seasonId?: string;
   divisionsEnabled?: boolean;
@@ -51,6 +55,8 @@ export interface LeagueEventPlayer {
 }
 
 export interface LeagueEventRound {
+  /** Group number the player putts in this round. 0 or missing: no groups. */
+  group?: number;
   hits?: number;
   putts?: number;
   dns?: boolean;

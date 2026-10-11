@@ -3,6 +3,8 @@ import { Bricolage_Grotesque, Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
+import { JsonLd, SITE_URL } from "@/lib/seo";
+import { organization, website } from "@/lib/structured-data";
 
 const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -16,41 +18,14 @@ const inter = Inter({
   display: "swap",
 });
 
+// Only site-wide defaults live here. Canonical, og:url, og:title and the
+// Twitter card are per page (see pageMetadata in @/lib/seo); setting them here
+// made every page claim to be the homepage.
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.dgputt.app"),
+  metadataBase: new URL(SITE_URL),
   title: "dgputt - The Ultimate Disc Golf Putting App",
   description:
     "dgputt is a disc golf putting practice app that helps you improve your game. Track your progress, view stats, and more.",
-  keywords: ["disc golf", "putting", "practice", "dgputt", "sports", "app"],
-  openGraph: {
-    title: "dgputt - The Ultimate Disc Golf Putting App",
-    description:
-      "Disc golf putting practice app with structured drills, progress tracking, and competitive leagues. Available on iOS and Android.",
-    url: "https://www.dgputt.app",
-    siteName: "dgputt",
-    images: [
-      {
-        url: "/images/og.png",
-        width: 1200,
-        height: 630,
-        alt: "dgputt - Disc Golf Putting Practice App",
-      },
-    ],
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "dgputt - The Ultimate Disc Golf Putting App",
-    description:
-      "Disc golf putting practice app with structured drills, progress tracking, and competitive leagues.",
-    images: ["/images/og.png"],
-  },
-  alternates: {
-    canonical: "/",
-    languages: {
-      "en-no": "/",
-    },
-  },
 };
 
 export default function RootLayout({
@@ -61,21 +36,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${bricolage.variable} ${inter.variable}`}>
       <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "http://schema.org",
-              "@type": "SoftwareApplication",
-              name: "dgputt",
-              operatingSystem: "iOS, Android",
-              applicationCategory: "Sports",
-              description: "A disc golf putting practice app.",
-              downloadUrl:
-                "https://play.google.com/store/apps/details?id=com.erlendjohnsen.dgputt",
-            }),
-          }}
-        />
+        <JsonLd data={organization} />
+        <JsonLd data={website} />
       </head>
       {/* Browser extensions commonly mutate <body> before React hydrates
           (e.g. injecting an inline overscroll-behavior style), which trips a

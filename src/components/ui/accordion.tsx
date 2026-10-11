@@ -58,8 +58,12 @@ function AccordionContent({
   ...props
 }: AccordionPrimitive.Panel.Props) {
   return (
+    // hiddenUntilFound keeps closed panels in the server HTML (as
+    // hidden="until-found") so crawlers and find-in-page can see them.
+    // Without it Base UI only mounts panel content after a click.
     <AccordionPrimitive.Panel
       data-slot="accordion-content"
+      hiddenUntilFound
       className="overflow-hidden px-4 text-sm data-open:animate-accordion-down data-closed:animate-accordion-up"
       {...props}
     >

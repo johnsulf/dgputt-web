@@ -2,7 +2,28 @@ import type {
   LeagueEvent,
   LeagueEventMatch,
   LeagueEventPlayer,
+  MatchSide,
 } from "@/app/interfaces/league";
+
+// The app's cornhole distance picker, indexed by the event's dstIndex. The
+// two lists line up: 4m is 13ft, 15m is 50ft.
+const CORNHOLE_DST_METER = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+const CORNHOLE_DST_FEET = [13, 16, 20, 23, 26, 30, 33, 36, 40, 43, 46, 50];
+
+/**
+ * The event's throwing distance, e.g. "7 m" or "23 ft", or undefined when
+ * none was chosen (the app writes 99 for that).
+ */
+export function cornholeDistanceLabel(
+  event: LeagueEvent,
+  unit: "m" | "ft",
+): string | undefined {
+  const i = event.dstIndex;
+  if (i == null || i < 0 || i >= CORNHOLE_DST_METER.length) return undefined;
+  return unit === "ft"
+    ? `${CORNHOLE_DST_FEET[i]} ft`
+    : `${CORNHOLE_DST_METER[i]} m`;
+}
 
 export interface Participant {
   id: string;
@@ -73,6 +94,46 @@ export function percent(hits: number, attempts: number): number {
   return hits / attempts;
 }
 
+/**
+ * Doubles whose teams are redrawn every round. A floating team lasts a single
+ * round and is never named, so it is shown as its players and scored per
+ * player. Only cornhole generates rounds to redraw teams for.
+ */
+export function isFloatingTeams(event: LeagueEvent): boolean {
+  return (
+    event.playerMode === "doubles" &&
+    event.format === "cornhole" &&
+    event.doublesPairingMode === "float"
+  );
+}
+
+export const TEAM_SEPARATOR = " / ";
+export const FLOATING_SEPARATOR = " & ";
+
+/** The name a match side shows: the team name, else its players. */
+export function sideName(event: LeagueEvent, side: MatchSide): string {
+  const uid = side.uid ?? "";
+  const fallback = side.displayName ?? (uid || "Unknown");
+  if (event.playerMode !== "doubles" || !uid || uid === "BYE") return fallback;
+
+  const memberNames = (side.members ?? [])
+    .map((m) => (m.displayName ?? "").trim())
+    .filter((name) => name.length > 0);
+
+  if (isFloatingTeams(event)) {
+    return memberNames.length > 0
+      ? memberNames.join(FLOATING_SEPARATOR)
+      : fallback;
+  }
+
+  const pairNames = event.pairNames ?? {};
+  const pairId = pairNames[uid] ? uid : event.players?.[uid]?.pairId;
+  const named = pairId ? pairNames[pairId] : undefined;
+  if (named) return named;
+
+  return memberNames.length > 0 ? memberNames.join(TEAM_SEPARATOR) : fallback;
+}
+
 export function buildParticipants(event: LeagueEvent): {
   participants: Map<string, Participant>;
   memberToTeam: Map<string, string>;
@@ -80,7 +141,8 @@ export function buildParticipants(event: LeagueEvent): {
 } {
   const players = event.players ?? {};
   const entries = Object.entries(players);
-  const isDoubles = event.playerMode === "doubles";
+  // Floating teams are scored per player, so they build like singles.
+  const isDoubles = event.playerMode === "doubles" && !isFloatingTeams(event);
   const participants = new Map<string, Participant>();
   const memberToTeam = new Map<string, string>();
 
@@ -110,7 +172,9 @@ export function buildParticipants(event: LeagueEvent): {
     const names = members
       .map((m) => m.displayName ?? m.name ?? "Unknown")
       .filter((name) => name.trim().length > 0);
-    const teamName = names.length > 0 ? names.slice(0, 2).join(" / ") : teamId;
+    const teamName =
+      event.pairNames?.[teamId] ??
+      (names.length > 0 ? names.slice(0, 2).join(TEAM_SEPARATOR) : teamId);
 
     participants.set(teamId, {
       id: teamId,
@@ -134,6 +198,43 @@ export function resolveParticipantId(
   if (!isDoubles) return uid;
   if (participants.has(uid)) return uid;
   return memberToTeam.get(uid) ?? uid;
+}
+
+/**
+ * The participants a match side counts towards. One, except with floating
+ * teams: there both members take the team's result.
+ */
+export function sideParticipantIds(
+  event: LeagueEvent,
+  side: MatchSide,
+  isDoubles: boolean,
+  participants: Map<string, Participant>,
+  memberToTeam: Map<string, string>,
+): string[] {
+  if (side.uid === "BYE") return [];
+  if (isFloatingTeams(event)) {
+    return (side.members ?? [])
+      .map((m) => m.uid ?? "")
+      .filter((uid) => uid.length > 0);
+  }
+  const id = resolveParticipantId(
+    side.uid,
+    isDoubles,
+    participants,
+    memberToTeam,
+  );
+  return id ? [id] : [];
+}
+
+/** The bags a participant landed on a side: their own when floating. */
+function sideSequences(
+  event: LeagueEvent,
+  side: MatchSide,
+  participantId: string,
+): number[] {
+  if (!isFloatingTeams(event)) return side.sequences ?? [];
+  const member = side.members?.find((m) => m.uid === participantId);
+  return member?.sequences ?? [];
 }
 
 export function ensureParticipant(
@@ -171,74 +272,69 @@ export function buildLeaderboardRows(event: LeagueEvent): LeaderboardRow[] {
     oppWinPctSum.set(participantId, 0);
   }
 
+  const add = (map: Map<string, number>, id: string, value: number) =>
+    map.set(id, (map.get(id) ?? 0) + value);
+
+  const sidesOf = (match: LeagueEventMatch): [string[], string[]] => {
+    const ids = ([match.player1, match.player2] as const).map((side) =>
+      sideParticipantIds(event, side, isDoubles, participants, memberToTeam),
+    );
+    ids.forEach((list, i) => {
+      const side = i === 0 ? match.player1 : match.player2;
+      for (const id of list) {
+        if (!participants.has(id)) {
+          const member = side.members?.find((m) => m.uid === id);
+          ensureParticipant(
+            participants,
+            id,
+            member?.displayName ?? sideName(event, side),
+          );
+        }
+      }
+    });
+    return [ids[0], ids[1]];
+  };
+
   for (const roundMatches of rounds) {
     for (const match of roundMatches) {
       if (!isFinished(match)) continue;
 
-      const p1Id = resolveParticipantId(
-        match.player1.uid,
-        isDoubles,
-        participants,
-        memberToTeam,
-      );
-      const p2Id = resolveParticipantId(
-        match.player2.uid,
-        isDoubles,
-        participants,
-        memberToTeam,
-      );
-
-      ensureParticipant(participants, p1Id, match.player1.displayName ?? p1Id);
-      ensureParticipant(participants, p2Id, match.player2.displayName ?? p2Id);
-
-      const p1Valid = p1Id.length > 0 && p1Id !== "BYE";
-      const p2Valid = p2Id.length > 0 && p2Id !== "BYE";
-
+      const [side1, side2] = sidesOf(match);
+      const bye1 = match.player1.uid === "BYE";
+      const bye2 = match.player2.uid === "BYE";
       const p1Score = parseScore(match.player1.score);
       const p2Score = parseScore(match.player2.score);
 
-      if (p1Valid) {
-        scoreDiff.set(p1Id, (scoreDiff.get(p1Id) ?? 0) + (p1Score - p2Score));
-        roundsPlayed.set(p1Id, (roundsPlayed.get(p1Id) ?? 0) + 1);
-      }
-      if (p2Valid) {
-        scoreDiff.set(p2Id, (scoreDiff.get(p2Id) ?? 0) + (p2Score - p1Score));
-        roundsPlayed.set(p2Id, (roundsPlayed.get(p2Id) ?? 0) + 1);
+      for (const id of side1) add(scoreDiff, id, p1Score - p2Score);
+      for (const id of side2) add(scoreDiff, id, p2Score - p1Score);
+      for (const id of [...side1, ...side2]) add(roundsPlayed, id, 1);
+
+      // A bye is a win. Otherwise the winner flag decides, falling back to
+      // the score where the flag was never written.
+      let winners: string[] = [];
+      if (bye2) winners = side1;
+      else if (bye1) winners = side2;
+      else if (match.player1.winner === true) winners = side1;
+      else if (match.player2.winner === true) winners = side2;
+      else if (p1Score > p2Score) winners = side1;
+      else if (p2Score > p1Score) winners = side2;
+      for (const id of winners) add(wins, id, 1);
+
+      if (side1.length > 0 && side2.length > 0) {
+        for (const id of [...side1, ...side2]) add(matchesPlayed, id, 1);
       }
 
-      if (p1Valid && p2Id === "BYE") {
-        wins.set(p1Id, (wins.get(p1Id) ?? 0) + 1);
-      } else if (p2Valid && p1Id === "BYE") {
-        wins.set(p2Id, (wins.get(p2Id) ?? 0) + 1);
-      } else if (p1Valid || p2Valid) {
-        if (match.player1.winner === true && p1Valid) {
-          wins.set(p1Id, (wins.get(p1Id) ?? 0) + 1);
-        } else if (match.player2.winner === true && p2Valid) {
-          wins.set(p2Id, (wins.get(p2Id) ?? 0) + 1);
-        } else if (p1Valid && p1Score > p2Score) {
-          wins.set(p1Id, (wins.get(p1Id) ?? 0) + 1);
-        } else if (p2Valid && p2Score > p1Score) {
-          wins.set(p2Id, (wins.get(p2Id) ?? 0) + 1);
-        }
-      }
-
-      if (p1Valid && p2Valid) {
-        matchesPlayed.set(p1Id, (matchesPlayed.get(p1Id) ?? 0) + 1);
-        matchesPlayed.set(p2Id, (matchesPlayed.get(p2Id) ?? 0) + 1);
-      }
-
-      if (p1Valid) {
-        const seq = match.player1.sequences ?? [];
-        const seqHits = seq.reduce((sum, value) => sum + parseScore(value), 0);
-        hits.set(p1Id, (hits.get(p1Id) ?? 0) + seqHits);
-        attempts.set(p1Id, (attempts.get(p1Id) ?? 0) + seq.length * 2);
-      }
-      if (p2Valid) {
-        const seq = match.player2.sequences ?? [];
-        const seqHits = seq.reduce((sum, value) => sum + parseScore(value), 0);
-        hits.set(p2Id, (hits.get(p2Id) ?? 0) + seqHits);
-        attempts.set(p2Id, (attempts.get(p2Id) ?? 0) + seq.length * 2);
-      }
+      const tally = (id: string, side: MatchSide) => {
+        const seq = sideSequences(event, side, id);
+        add(
+          hits,
+          id,
+          seq.reduce((sum, value) => sum + parseScore(value), 0),
+        );
+        add(attempts, id, seq.length * 2);
+      };
+      for (const id of side1) tally(id, match.player1);
+      for (const id of side2) tally(id, match.player2);
     }
   }
 
@@ -248,29 +344,22 @@ export function buildLeaderboardRows(event: LeagueEvent): LeaderboardRow[] {
     return (wins.get(id) ?? 0) / roundsForPlayer;
   };
 
+  // A floating opponent is a team of one or two, so its strength is the
+  // average of the players who made it up.
+  const sidePct = (ids: string[]): number =>
+    ids.reduce((sum, id) => sum + winPct(id), 0) / ids.length;
+
   for (const roundMatches of rounds) {
     for (const match of roundMatches) {
       if (!isFinished(match)) continue;
 
-      const p1Id = resolveParticipantId(
-        match.player1.uid,
-        isDoubles,
-        participants,
-        memberToTeam,
-      );
-      const p2Id = resolveParticipantId(
-        match.player2.uid,
-        isDoubles,
-        participants,
-        memberToTeam,
-      );
+      const [side1, side2] = sidesOf(match);
+      if (side1.length === 0 || side2.length === 0) continue;
 
-      const p1Valid = p1Id.length > 0 && p1Id !== "BYE";
-      const p2Valid = p2Id.length > 0 && p2Id !== "BYE";
-      if (!p1Valid || !p2Valid) continue;
-
-      oppWinPctSum.set(p1Id, (oppWinPctSum.get(p1Id) ?? 0) + winPct(p2Id));
-      oppWinPctSum.set(p2Id, (oppWinPctSum.get(p2Id) ?? 0) + winPct(p1Id));
+      const pct1 = sidePct(side1);
+      const pct2 = sidePct(side2);
+      for (const id of side1) add(oppWinPctSum, id, pct2);
+      for (const id of side2) add(oppWinPctSum, id, pct1);
     }
   }
 

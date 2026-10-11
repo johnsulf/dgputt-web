@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/delete-account",
   title: "Delete your account and data - dgputt",
   description:
     "How to delete your dgputt account and all associated data, either from inside the app or by contacting us.",
-};
+});
 
 export default function DeleteAccountPage() {
   return (

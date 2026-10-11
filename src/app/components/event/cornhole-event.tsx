@@ -1,20 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { LayoutGroup, motion } from "motion/react";
 import type {
   LeagueEvent,
   LeagueEventMatch,
-  MatchMember,
+  LeagueInstance,
 } from "@/app/interfaces/league";
 import { Badge } from "@/components/ui/badge";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -23,688 +16,352 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useAuth } from "@/lib/auth-context";
+import { cornholeDistanceLabel } from "@/lib/cornhole-utils";
+import { useViewSettings } from "@/lib/view-settings";
+import { playerModeLabel } from "@/lib/event-utils";
 import {
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type ColumnDef,
-  type SortingState,
-} from "@tanstack/react-table";
+  buildCornholeLiveState,
+  buildMatchView,
+  isBracket,
+  sortMatchesStable,
+  type StandingRow,
+} from "@/lib/cornhole-live";
+import { useLiveEvent } from "./live/use-live-event";
+import { rowLayoutTransition } from "./live/live-table";
 import {
-  type LeaderboardRow,
-  parseScore,
-  getMatchesByRound,
-  isFinished,
-  isStarted,
-  isWalkover,
-  buildLeaderboardRows,
-} from "@/lib/cornhole-utils";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
+  MatchScoreGrid,
+  MatchStatusPill,
+  Movement,
+  NowScore,
+  StageCell,
+} from "./live-parts";
+import {
+  Breadcrumb,
+  CARD_SHADOW,
+  HeaderCard,
+  RoundSwitcher,
+} from "./live-event-header";
 
 interface CornholeEventProps {
+  league: LeagueInstance;
   event: LeagueEvent;
 }
 
-interface LeaderboardTableRow {
-  id: string;
-  position: number;
-  playerName: string;
-  division?: string;
-  pdgaNumber?: string;
-  hitPctLabel: string;
-  hitPctValue: number;
-  wins: number;
-}
+export function CornholeEvent({
+  league,
+  event: initialEvent,
+}: CornholeEventProps) {
+  const { dataUid } = useAuth();
+  const isAdmin = !!dataUid && (league.admins?.includes(dataUid) ?? false);
 
-function compareByNumberThenId(
-  a: LeagueEventMatch,
-  b: LeagueEventMatch,
-): number {
-  const aNumber = a.number;
-  const bNumber = b.number;
+  // Follow the event in real time until it is finished.
+  const subscribe = !initialEvent.finished;
+  const { event: liveEvent } = useLiveEvent(
+    subscribe ? league.id : "",
+    subscribe ? initialEvent.id : "",
+  );
+  const event = liveEvent ?? initialEvent;
 
-  if (aNumber != null || bNumber != null) {
-    if (aNumber != null && bNumber != null && aNumber !== bNumber) {
-      return aNumber - bNumber;
-    }
-    if (aNumber != null) return -1;
-    if (bNumber != null) return 1;
-  }
-
-  const aId = a.shortId ?? a.id ?? "";
-  const bId = b.shortId ?? b.id ?? "";
-  return aId.localeCompare(bId);
-}
-
-function sortMatchesForRound(matches: LeagueEventMatch[]): LeagueEventMatch[] {
-  return [...matches].sort((a, b) => {
-    const statusRank = (m: LeagueEventMatch) => {
-      if (isFinished(m)) return 2;
-      if (isStarted(m)) return 0;
-      return 1;
-    };
-
-    const rankDiff = statusRank(a) - statusRank(b);
-    if (rankDiff !== 0) return rankDiff;
-
-    const numberDiff = compareByNumberThenId(a, b);
-    if (numberDiff !== 0) return numberDiff;
-
-    const aWalkover = isWalkover(a);
-    const bWalkover = isWalkover(b);
-    if (aWalkover !== bWalkover) {
-      return aWalkover ? 1 : -1;
-    }
-
-    return 0;
-  });
-}
-
-function getPointsForSet(hits: number): number {
-  if (hits <= 0) return 0;
-  if (hits === 1) return 1;
-  if (hits === 2) return 3;
-  return 0;
-}
-
-function MatchHeader({ match }: { match: LeagueEventMatch }) {
-  const leftName = match.player1.displayName ?? match.player1.uid ?? "Unknown";
-  const rightName = match.player2.displayName ?? match.player2.uid ?? "Unknown";
-  const leftScore = parseScore(match.player1.score);
-  const rightScore = parseScore(match.player2.score);
-  const finished = isFinished(match);
-  const started = isStarted(match);
-  const hasWinnerFlag =
-    match.player1.winner === true || match.player2.winner === true;
-
-  const leftWinner = finished
-    ? match.player1.winner === true ||
-      (!hasWinnerFlag && leftScore > rightScore)
-    : false;
-  const rightWinner = finished
-    ? match.player2.winner === true ||
-      (!hasWinnerFlag && rightScore > leftScore)
-    : false;
+  const state = useMemo(() => buildCornholeLiveState(event), [event]);
+  const hasStarted = state.currentRoundIndex >= 0;
+  const playerCount = Object.keys(event.players ?? {}).length;
+  const [{ units }] = useViewSettings();
+  const distance = cornholeDistanceLabel(event, units);
+  const chips = [
+    distance ? `Cornhole ${distance}` : "Cornhole",
+    isBracket(event)
+      ? "Bracket"
+      : event.rounds
+        ? `Swiss · ${event.rounds} rounds`
+        : "Swiss",
+    ...(event.playerMode && event.playerMode !== "singles"
+      ? [playerModeLabel(event.playerMode)]
+      : []),
+    ...(playerCount > 0
+      ? [`${playerCount} player${playerCount !== 1 ? "s" : ""}`]
+      : []),
+  ];
 
   return (
-    <div className="w-full">
-      <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <span className="font-medium">
-            {match.shortId
-              ? `Match ${match.shortId}`
-              : match.number != null
-                ? `Match ${match.number}`
-                : "Match"}
-          </span>
-        </div>
-        <Badge
-          variant={finished ? "secondary" : started ? "outline" : "destructive"}
-          className="text-[10px]"
-        >
-          {finished ? "Finished" : started ? "Ongoing" : "Not started"}
-        </Badge>
-      </div>
-
-      {isWalkover(match) ? (
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-sm">
-          <div className="truncate font-semibold">{leftName}</div>
-          <div className="rounded-full bg-muted px-3 py-1 text-xs">
-            Walkover
-          </div>
-          <div className="truncate text-right font-semibold">{rightName}</div>
+    <div className="flex flex-col gap-6">
+      <Breadcrumb league={league} event={event} />
+      <HeaderCard
+        league={league}
+        event={event}
+        isAdmin={isAdmin}
+        isLive={state.isLive}
+        stats={state.roundStats}
+        chips={chips}
+        hasDistances={distance != null}
+        activeLabel="playing"
+        roundLabel={state.roundLabels[state.currentRoundIndex]}
+      />
+      {hasStarted ? (
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_520px] lg:items-start">
+          <Standings
+            rows={state.standings}
+            showNow={state.isLive}
+            bracket={isBracket(event)}
+          />
+          <RoundMatches
+            event={event}
+            rounds={state.rounds}
+            currentRoundIndex={state.currentRoundIndex}
+            roundLabels={state.roundLabels}
+            roundShortLabels={state.roundShortLabels}
+            isLive={state.isLive}
+          />
         </div>
       ) : (
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-sm">
-          <div className="px-2 py-1">
-            <div className="truncate text-right">
-              <span className={leftWinner ? "font-semibold" : "font-medium"}>
-                {leftName}
-              </span>
-            </div>
-          </div>
-
-          <div className="rounded-xl bg-muted px-3 py-2 text-center">
-            <div className="text-base font-bold tabular-nums">
-              {leftScore} - {rightScore}
-            </div>
-          </div>
-
-          <div className="px-2 py-1">
-            <div className="truncate">
-              <span className={rightWinner ? "font-semibold" : "font-medium"}>
-                {rightName}
-              </span>
-            </div>
-          </div>
-        </div>
+        <RegisteredPlayers event={event} />
       )}
     </div>
   );
 }
 
-function sequenceRows(match: LeagueEventMatch) {
-  const leftSequences = match.player1.sequences ?? [];
-  const rightSequences = match.player2.sequences ?? [];
-  const max = Math.max(leftSequences.length, rightSequences.length);
-  let leftRunningTotal = 0;
-  let rightRunningTotal = 0;
+// Columns: #, movement, player, [now], hit% (hidden on phones), wins.
+// Brackets add a last column for the stage a player went out in.
+const STANDINGS_GRID = {
+  withNow:
+    "grid-cols-[32px_30px_minmax(0,1fr)_60px_44px] sm:grid-cols-[32px_30px_minmax(0,1fr)_60px_52px_44px]",
+  withoutNow:
+    "grid-cols-[32px_30px_minmax(0,1fr)_44px] sm:grid-cols-[32px_30px_minmax(0,1fr)_52px_44px]",
+  bracketWithNow:
+    "grid-cols-[32px_30px_minmax(0,1fr)_60px_44px_28px] sm:grid-cols-[32px_30px_minmax(0,1fr)_60px_52px_44px_28px]",
+  bracketWithoutNow:
+    "grid-cols-[32px_30px_minmax(0,1fr)_44px_28px] sm:grid-cols-[32px_30px_minmax(0,1fr)_52px_44px_28px]",
+};
 
-  return Array.from({ length: max }, (_, index) => {
-    const leftHits = parseScore(leftSequences[index]);
-    const rightHits = parseScore(rightSequences[index]);
-    const leftPoints = getPointsForSet(leftHits);
-    const rightPoints = getPointsForSet(rightHits);
-    leftRunningTotal += leftPoints;
-    rightRunningTotal += rightPoints;
-
-    return {
-      setNumber: index + 1,
-      leftHits,
-      rightHits,
-      leftPoints,
-      rightPoints,
-      leftRunningTotal,
-      rightRunningTotal,
-    };
-  });
-}
-
-function memberHitPercentage(member: MatchMember): string {
-  const sequences = member.sequences ?? [];
-  if (sequences.length === 0) return "-";
-
-  const hits = sequences.reduce((sum, value) => sum + parseScore(value), 0);
-  const attempts = sequences.length * 2;
-  if (attempts <= 0) return "-";
-
-  const pct = Math.round((hits / attempts) * 100);
-  return `${pct}%`;
-}
-
-function MatchDetails({ match }: { match: LeagueEventMatch }) {
-  const sets = sequenceRows(match);
-  const leftMembers = match.player1.members ?? [];
-  const rightMembers = match.player2.members ?? [];
-  const leftName = match.player1.displayName ?? match.player1.uid ?? "Unknown";
-  const rightName = match.player2.displayName ?? match.player2.uid ?? "Unknown";
-
-  return (
-    <div className="space-y-4">
-      {sets.length > 0 ? (
-        <div className="rounded-2xl border">
-          <div>
-            {sets.map((set) => {
-              const leftWinsSet = set.leftPoints > set.rightPoints;
-              const rightWinsSet = set.rightPoints > set.leftPoints;
-
-              return (
-                <div
-                  key={set.setNumber}
-                  className="grid grid-cols-[1fr_auto_1fr] items-center border-b px-3 py-2 text-sm last:border-b-0"
-                >
-                  <div className="text-right tabular-nums">
-                    <span
-                      className={
-                        leftWinsSet ? "font-semibold" : "text-muted-foreground"
-                      }
-                    >
-                      {set.leftPoints}p
-                    </span>
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      ({set.leftHits}/2)
-                    </span>
-                  </div>
-                  <div className="px-4 text-center text-xs font-semibold text-muted-foreground">
-                    <div>Set {set.setNumber}</div>
-                    <div className="text-[11px] font-medium">
-                      ({set.leftRunningTotal}-{set.rightRunningTotal})
-                    </div>
-                  </div>
-                  <div className="tabular-nums">
-                    <span
-                      className={
-                        rightWinsSet ? "font-semibold" : "text-muted-foreground"
-                      }
-                    >
-                      {set.rightPoints}p
-                    </span>
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      ({set.rightHits}/2)
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">No set details yet.</p>
-      )}
-
-      {(leftMembers.length > 0 || rightMembers.length > 0) && (
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="rounded-2xl border p-3">
-            <h4 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-              {leftName}
-            </h4>
-            {leftMembers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No member stats</p>
-            ) : (
-              <div className="space-y-1">
-                {leftMembers.map((member) => (
-                  <div
-                    key={member.uid ?? member.displayName}
-                    className="flex justify-between text-sm"
-                  >
-                    <span>{member.displayName ?? member.uid ?? "Unknown"}</span>
-                    <span className="text-muted-foreground">
-                      {memberHitPercentage(member)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-2xl border p-3">
-            <h4 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-              {rightName}
-            </h4>
-            {rightMembers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No member stats</p>
-            ) : (
-              <div className="space-y-1">
-                {rightMembers.map((member) => (
-                  <div
-                    key={member.uid ?? member.displayName}
-                    className="flex justify-between text-sm"
-                  >
-                    <span>{member.displayName ?? member.uid ?? "Unknown"}</span>
-                    <span className="text-muted-foreground">
-                      {memberHitPercentage(member)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function RoundResults({
-  roundIndex,
-  matches,
-}: {
-  roundIndex: number;
-  matches: LeagueEventMatch[];
-}) {
-  const sorted = useMemo(() => sortMatchesForRound(matches), [matches]);
-
-  return (
-    <div className="space-y-3">
-      {sorted.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">
-          No matches for round {roundIndex + 1}.
-        </p>
-      ) : (
-        <Accordion>
-          {sorted.map((match, idx) => {
-            const itemValue = `${match.id ?? match.shortId ?? roundIndex}-${idx}`;
-
-            return (
-              <AccordionItem key={itemValue} value={itemValue}>
-                <AccordionTrigger>
-                  <MatchHeader match={match} />
-                </AccordionTrigger>
-                <AccordionContent>
-                  <MatchDetails match={match} />
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
-      )}
-    </div>
-  );
-}
-
-function Leaderboard({
+function Standings({
   rows,
-  isDoubles,
+  showNow,
+  bracket,
 }: {
-  rows: LeaderboardRow[];
-  isDoubles: boolean;
+  rows: StandingRow[];
+  showNow: boolean;
+  bracket: boolean;
 }) {
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "position", desc: false },
-  ]);
-
-  const tableRows = useMemo<LeaderboardTableRow[]>(
+  const divisions = useMemo(
     () =>
-      rows.map((row) => ({
-        id: row.participant.id,
-        position: row.basePosition,
-        playerName: row.participant.name,
-        division: row.participant.division,
-        pdgaNumber: row.participant.pdgaNumber,
-        hitPctLabel:
-          row.attempts > 0 ? `${Math.round(row.hitPct * 100)}%` : "-",
-        hitPctValue: row.hitPct,
-        wins: row.wins,
-      })),
+      Array.from(
+        new Set(rows.map((r) => r.division).filter((d): d is string => !!d)),
+      ).sort(),
     [rows],
   );
-
-  const columns = useMemo<ColumnDef<LeaderboardTableRow>[]>(
-    () => [
-      {
-        accessorKey: "position",
-        header: "#",
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="font-semibold">{row.original.position}</span>
-        ),
-      },
-      {
-        accessorKey: "playerName",
-        header: isDoubles ? "Team" : "Player",
-        enableSorting: false,
-        cell: ({ row }) => (
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">{row.original.playerName}</span>
-              {row.original.pdgaNumber && (
-                <a
-                  href={`https://www.pdga.com/player/${row.original.pdgaNumber}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
-                  style={{
-                    background: "linear-gradient(to left, #008d6f, #003F6A)",
-                  }}
-                >
-                  #{row.original.pdgaNumber}
-                  <HugeiconsIcon icon={ArrowUpRight01Icon} size={12} />
-                </a>
-              )}
-            </div>
-            {isDoubles && row.original.division ? (
-              <span className="text-xs text-muted-foreground">
-                Division {row.original.division.toUpperCase()}
-              </span>
-            ) : null}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "hitPctValue",
-        header: "Hit%",
-        cell: ({ row }) => row.original.hitPctLabel,
-      },
-      {
-        accessorKey: "wins",
-        header: "Wins",
-        cell: ({ row }) => (
-          <span className="font-semibold">{row.original.wins}</span>
-        ),
-      },
-    ],
-    [isDoubles],
-  );
-
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable({
-    data: tableRows,
-    columns,
-    state: { sorting },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    enableSortingRemoval: false,
-  });
+  const [division, setDivision] = useState<string | null>(null);
+  const visible = division ? rows.filter((r) => r.division === division) : rows;
+  const grid = `grid gap-2.5 ${
+    bracket
+      ? showNow
+        ? STANDINGS_GRID.bracketWithNow
+        : STANDINGS_GRID.bracketWithoutNow
+      : showNow
+        ? STANDINGS_GRID.withNow
+        : STANDINGS_GRID.withoutNow
+  }`;
 
   return (
-    <Card className="rounded-3xl border py-4 shadow-none">
-      <CardContent className="space-y-4 px-3 sm:px-5">
-        <h3 className="text-base font-semibold">Leaderboard</h3>
+    <section
+      className={`rounded-3xl bg-white px-4 pt-5.5 pb-3 sm:px-6 ${CARD_SHADOW}`}
+    >
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="m-0 font-display text-2xl font-bold">Standings</h2>
+        <span className="text-xs text-[#8B8B8B]">
+          Wins, then hit %, then opponents&apos; strength
+        </span>
+      </div>
 
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  const canSort = header.column.getCanSort();
-                  const sortState = header.column.getIsSorted();
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className={
-                        header.id === "position"
-                          ? "w-12 text-center"
-                          : header.id === "hitPctValue"
-                            ? "w-24 text-center"
-                            : header.id === "wins"
-                              ? "w-20 text-center"
-                              : undefined
-                      }
-                    >
-                      {header.isPlaceholder ? null : canSort ? (
-                        <button
-                          type="button"
-                          className={
-                            header.id === "position" ||
-                            header.id === "hitPctValue" ||
-                            header.id === "wins"
-                              ? "mx-auto inline-flex items-center gap-1"
-                              : "inline-flex items-center gap-1"
-                          }
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                          <span className="text-xs text-muted-foreground">
-                            {sortState === "asc"
-                              ? "▲"
-                              : sortState === "desc"
-                                ? "▼"
-                                : "↕"}
-                          </span>
-                        </button>
-                      ) : (
-                        flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )
-                      )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className={
-                      cell.column.id === "position" ||
-                      cell.column.id === "hitPctValue" ||
-                      cell.column.id === "wins"
-                        ? "text-center"
-                        : undefined
-                    }
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+      {divisions.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {[null, ...divisions].map((d) => (
+            <Badge
+              key={d ?? "all"}
+              variant={division === d ? "default" : "outline"}
+              className="cursor-pointer"
+              onClick={() => setDivision(d)}
+            >
+              {d ?? "All"}
+            </Badge>
+          ))}
+        </div>
+      )}
 
-            {table.getRowModel().rows.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="py-10 text-center text-muted-foreground"
+      <div
+        className={`${grid} items-end border-b border-[#EFEFEF] py-2.5 text-xs font-semibold text-[#8B8B8B]`}
+      >
+        <span className="text-center">#</span>
+        <span />
+        <span>Player</span>
+        {showNow && <span className="text-center">Match</span>}
+        <span className="hidden text-right sm:block">Hit%</span>
+        <span className="text-right text-[#212121]">Wins</span>
+        {bracket && <span className="text-right">Out</span>}
+      </div>
+
+      <LayoutGroup>
+        {visible.map((row) => (
+          <motion.div
+            key={row.id}
+            layout
+            layoutId={row.id}
+            transition={rowLayoutTransition}
+            className={`${grid} items-center border-b border-[#F5F5F5] py-2 last:border-b-0`}
+          >
+            <span className="text-center font-display text-base font-bold">
+              {row.position}
+            </span>
+            <Movement value={row.movement} tone="light" />
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="min-w-0 text-[15px] leading-[1.2] font-semibold break-words">
+                {row.name}
+              </span>
+              {row.pdgaNumber && (
+                <a
+                  href={`https://www.pdga.com/player/${row.pdgaNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden shrink-0 rounded-full bg-linear-to-l from-[#008d6f] to-[#003F6A] px-2 py-0.5 text-[10px] font-semibold text-white sm:inline"
                 >
-                  No players yet.
-                </TableCell>
-              </TableRow>
+                  #{row.pdgaNumber}
+                </a>
+              )}
+            </span>
+            {showNow && (
+              <NowScore
+                now={row.now}
+                state={row.matchState}
+                tone="light"
+                className="text-[13px]"
+              />
             )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            <span className="hidden text-right text-sm text-[#5A5A5A] tabular-nums sm:block">
+              {row.hitLabel}
+            </span>
+            <span className="text-right font-display text-[22px] font-bold tabular-nums">
+              {row.wins}
+            </span>
+            {bracket && <StageCell out={row.out} tone="light" />}
+          </motion.div>
+        ))}
+      </LayoutGroup>
+
+      {visible.length === 0 && (
+        <p className="py-10 text-center text-sm text-[#8B8B8B]">
+          No players yet.
+        </p>
+      )}
+    </section>
   );
 }
 
-export function CornholeEvent({ event }: CornholeEventProps) {
-  const roundsFromData = useMemo(() => getMatchesByRound(event), [event]);
-  const allRows = useMemo(() => buildLeaderboardRows(event), [event]);
-  const isDoubles = event.playerMode === "doubles";
+function RoundMatches({
+  event,
+  rounds,
+  currentRoundIndex,
+  roundLabels,
+  roundShortLabels,
+  isLive,
+}: {
+  event: LeagueEvent;
+  rounds: LeagueEventMatch[][];
+  currentRoundIndex: number;
+  roundLabels: string[];
+  roundShortLabels: string[];
+  isLive: boolean;
+}) {
+  // null follows the active round, so the next round shows up once it starts.
+  const [picked, setPicked] = useState<number | null>(null);
+  const selected =
+    picked != null && picked < rounds.length ? picked : currentRoundIndex;
 
-  const divisions = useMemo(() => {
-    const divs = new Set<string>();
-    for (const row of allRows) {
-      if (row.participant.division) divs.add(row.participant.division);
-    }
-    return Array.from(divs).sort();
-  }, [allRows]);
-
-  const [selectedDivision, setSelectedDivision] = useState<string | null>(null);
-
-  const rows = useMemo(() => {
-    if (!selectedDivision) return allRows;
-    return allRows.filter(
-      (row) => row.participant.division === selectedDivision,
-    );
-  }, [allRows, selectedDivision]);
-
-  const computedRoundCount = Math.max(event.rounds ?? 0, roundsFromData.length);
-  const roundCount = computedRoundCount > 0 ? computedRoundCount : 1;
-
-  const rounds = useMemo(() => {
-    return Array.from({ length: roundCount }, (_, roundIndex) => {
-      return roundsFromData[roundIndex] ?? [];
-    });
-  }, [roundCount, roundsFromData]);
-
-  const hasAnyPlayers = Object.keys(event.players ?? {}).length > 0;
-
-  const isStarted =
-    event.finished === true ||
-    (event.currentRound ?? 0) > 0 ||
-    rounds.some((round) => round.length > 0);
-
-  if (!isStarted) {
-    return (
-      <Card className="rounded-3xl border py-4 shadow-none">
-        <CardContent className="px-4 sm:px-6">
-          <h3 className="mb-4 text-base font-semibold">Registered Players</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Player</TableHead>
-                <TableHead className="w-24 text-center">Division</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Object.entries(event.players ?? {}).map(([uid, player]) => (
-                <TableRow key={uid}>
-                  <TableCell className="font-medium">
-                    {player.displayName ?? player.name ?? "Unknown"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {player.division ?? "-"}
-                  </TableCell>
-                </TableRow>
-              ))}
-
-              {!hasAnyPlayers && (
-                <TableRow>
-                  <TableCell
-                    colSpan={2}
-                    className="py-10 text-center text-muted-foreground"
-                  >
-                    No players registered yet.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const roundOrder = Array.from(
-    { length: roundCount },
-    (_, index) => roundCount - 1 - index,
-  );
-
-  const divisionFilter = divisions.length > 0 && (
-    <div className="mb-4 flex flex-wrap gap-2">
-      <Badge
-        variant={selectedDivision === null ? "default" : "outline"}
-        className="cursor-pointer"
-        onClick={() => setSelectedDivision(null)}
-      >
-        All
-      </Badge>
-      {divisions.map((div) => (
-        <Badge
-          key={div}
-          variant={selectedDivision === div ? "default" : "outline"}
-          className="cursor-pointer"
-          onClick={() => setSelectedDivision(div)}
-        >
-          {div}
-        </Badge>
-      ))}
-    </div>
+  const matches = useMemo(
+    () =>
+      sortMatchesStable(rounds[selected] ?? []).map((match, i) =>
+        buildMatchView(event, match, i),
+      ),
+    [event, rounds, selected],
   );
 
   return (
-    <div>
-      {divisionFilter}
-      <Tabs defaultValue="leaderboard">
-        <div className="w-full overflow-x-auto pb-1">
-          <TabsList className="min-w-max">
-            <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-            {roundOrder.map((roundIndex) => (
-              <TabsTrigger key={roundIndex} value={`round-${roundIndex}`}>
-                Round {roundIndex + 1}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
+    <section className="flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <h2 className="m-0 shrink-0 font-display text-2xl font-bold">
+          {roundLabels[selected] ?? `Round ${selected + 1}`}
+        </h2>
+        <RoundSwitcher
+          count={rounds.length}
+          labels={roundShortLabels}
+          selected={selected}
+          liveIndex={isLive ? currentRoundIndex : -1}
+          onSelect={(i) => setPicked(i === currentRoundIndex ? null : i)}
+        />
+      </div>
 
-        <TabsContent value="leaderboard" className="mt-4">
-          <Leaderboard rows={rows} isDoubles={isDoubles} />
-        </TabsContent>
-
-        {roundOrder.map((roundIndex) => (
-          <TabsContent
-            key={roundIndex}
-            value={`round-${roundIndex}`}
-            className="mt-4"
+      {matches.length === 0 ? (
+        <p
+          className={`rounded-[20px] bg-white py-10 text-center text-sm text-[#8B8B8B] ${CARD_SHADOW}`}
+        >
+          No matches in this round yet.
+        </p>
+      ) : (
+        matches.map((match) => (
+          <div
+            key={match.key}
+            className={`flex flex-col gap-2.5 rounded-[20px] bg-white px-4.5 pt-3.5 pb-4 ${CARD_SHADOW}`}
           >
-            <RoundResults
-              roundIndex={roundIndex}
-              matches={rounds[roundIndex] ?? []}
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
+            <div className="flex items-center gap-2.5 text-xs text-[#8B8B8B]">
+              <span className="font-semibold">Match {match.label}</span>
+              {match.progress && <span>{match.progress}</span>}
+              <MatchStatusPill match={match} tone="light" />
+            </div>
+            <MatchScoreGrid match={match} tone="light" />
+          </div>
+        ))
+      )}
+    </section>
+  );
+}
+
+function RegisteredPlayers({ event }: { event: LeagueEvent }) {
+  const players = Object.entries(event.players ?? {});
+  return (
+    <section
+      className={`rounded-3xl bg-white px-4 py-5 sm:px-6 ${CARD_SHADOW}`}
+    >
+      <h2 className="mb-4 font-display text-2xl font-bold">
+        Registered Players
+      </h2>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Player</TableHead>
+            <TableHead className="w-24 text-center">Division</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {players.map(([uid, player]) => (
+            <TableRow key={uid}>
+              <TableCell className="font-medium">
+                {player.displayName ?? player.name ?? "Unknown"}
+              </TableCell>
+              <TableCell className="text-center">
+                {player.division ?? "-"}
+              </TableCell>
+            </TableRow>
+          ))}
+          {players.length === 0 && (
+            <TableRow>
+              <TableCell
+                colSpan={2}
+                className="py-10 text-center text-muted-foreground"
+              >
+                No players registered yet.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </section>
   );
 }

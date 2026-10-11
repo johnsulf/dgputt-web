@@ -32,10 +32,12 @@ export const NUM_DISTANCES = 6;
 
 /**
  * Group players into teams for doubles mode.
- * Players sharing a pairId are merged into a single entry with combined rounds.
+ * Players sharing a pairId are merged into a single entry with combined rounds,
+ * named by the team name where one is set, else by its players.
  */
-function groupPlayersForDoubles(
+export function groupPlayersForDoubles(
   players: Record<string, LeagueEventPlayer>,
+  pairNames: Record<string, string> = {},
 ): Record<string, LeagueEventPlayer> {
   const teams = new Map<
     string,
@@ -78,12 +80,20 @@ function groupPlayersForDoubles(
         const bHps = b.hitsPerSequence ?? [];
         const aPps = a.puttsPerSequence ?? [];
         const bPps = b.puttsPerSequence ?? [];
+        // Stations events have more (or fewer) slots than StormPutt.
+        const slots = Math.max(
+          NUM_DISTANCES,
+          aHps.length,
+          bHps.length,
+          aPps.length,
+          bPps.length,
+        );
         const hps = Array.from(
-          { length: NUM_DISTANCES },
+          { length: slots },
           (_, j) => (aHps[j] ?? 0) + (bHps[j] ?? 0),
         );
         const pps = Array.from(
-          { length: NUM_DISTANCES },
+          { length: slots },
           (_, j) => (aPps[j] ?? 0) + (bPps[j] ?? 0),
         );
         merged.push({
@@ -94,6 +104,8 @@ function groupPlayersForDoubles(
           dns: a.dns === true && b.dns === true,
           dnf: a.dnf === true || b.dnf === true,
           finished: a.finished === true || b.finished === true,
+          // Team members are grouped together, so either one's group will do.
+          group: a.group || b.group,
         });
       }
       existing.rounds = merged;
@@ -110,13 +122,43 @@ function groupPlayersForDoubles(
   const result: Record<string, LeagueEventPlayer> = {};
   for (const [teamId, team] of teams.entries()) {
     result[teamId] = {
-      displayName: team.names.slice(0, 2).join(" / "),
+      displayName: pairNames[teamId] ?? team.names.slice(0, 2).join(" / "),
       division: team.division,
       pdgaNumber: undefined,
       rounds: team.rounds,
     };
   }
   return result;
+}
+
+export interface TeamMember {
+  uid: string;
+  name: string;
+  player: LeagueEventPlayer;
+}
+
+/**
+ * The individual players of each doubles team, in registration order, keyed
+ * like the result of groupPlayersForDoubles. Teams with fewer than two
+ * players are left out; they show as a single row.
+ */
+export function teamMembersById(
+  players: Record<string, LeagueEventPlayer>,
+): Map<string, TeamMember[]> {
+  const teams = new Map<string, TeamMember[]>();
+  for (const [uid, player] of Object.entries(players)) {
+    const teamId = player.pairId ?? uid;
+    const member = {
+      uid,
+      name: player.displayName ?? player.name ?? "Unknown",
+      player,
+    };
+    teams.set(teamId, [...(teams.get(teamId) ?? []), member]);
+  }
+  for (const [teamId, members] of teams) {
+    if (members.length < 2) teams.delete(teamId);
+  }
+  return teams;
 }
 
 export function computeTotals(

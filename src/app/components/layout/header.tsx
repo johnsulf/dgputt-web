@@ -15,6 +15,10 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Menu02Icon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
+import {
+  DataSourceToggle,
+  DevDataBanner,
+} from "@/app/components/layout/data-source";
 
 const navLinks = [
   { href: "/about", label: "About" },
@@ -62,7 +66,8 @@ export default function Header() {
         </nav>
 
         {/* Desktop login/logout - right side */}
-        <div className="hidden md:flex items-center ml-auto">
+        <div className="hidden md:flex items-center gap-3 ml-auto">
+          <DataSourceToggle />
           {!loading &&
             (user ? (
               <Button variant="ghost" size="sm" onClick={() => signOut()}>
@@ -121,6 +126,7 @@ export default function Header() {
                   </SheetClose>
                 )}
                 <div className="my-2 h-px bg-border" />
+                <DataSourceToggle className="self-start" />
                 {!loading &&
                   (user ? (
                     <Button
@@ -146,6 +152,7 @@ export default function Header() {
           </Sheet>
         </div>
       </header>
+      <DevDataBanner />
     </>
   );
 }

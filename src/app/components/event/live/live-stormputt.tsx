@@ -1,194 +1,137 @@
 "use client";
 
 import { useMemo } from "react";
-import { LayoutGroup } from "motion/react";
 import type { LeagueEvent } from "@/app/interfaces/league";
+import { formatLabel } from "@/lib/event-utils";
+import { getDistanceLabels } from "@/lib/stormputt-utils";
+import { useTvSettings } from "@/lib/view-settings";
 import {
-  getDistanceLabels,
-  computeTotals,
-  computeRound,
-} from "@/lib/stormputt-utils";
-import { AnimatedRow } from "./live-table";
+  buildStormPuttLiveState,
+  distanceRangeLabel,
+} from "@/lib/stormputt-live";
+import { RoundProgressBar } from "../live-parts";
+import {
+  CountCells,
+  PlayerBoard,
+  useBoardPage,
+  type BoardPlayer,
+} from "./player-board";
+import { TvCanvas, TvFooter, TvTopBar, useTvTone } from "./tv-board";
 
-interface LiveStormPuttProps {
-  event: LeagueEvent;
-  viewMode: "totals" | number;
-  theme: "dark" | "light";
-  density: "small" | "medium" | "large";
-  totalRounds: number;
-}
+export function LiveStormPuttBoard({ event }: { event: LeagueEvent }) {
+  const tone = useTvTone();
+  const state = useMemo(() => buildStormPuttLiveState(event), [event]);
+  const { units } = useTvSettings();
+  const distances = useMemo(() => {
+    const labels = getDistanceLabels(event.dstIndex);
+    return units === "ft" ? labels.feet : labels.meter;
+  }, [event.dstIndex, units]);
+  const { roundStats, currentRoundIndex, isLive, standings } = state;
 
-export function LiveStormPutt({
-  event,
-  viewMode,
-  theme,
-  density,
-  totalRounds,
-}: LiveStormPuttProps) {
-  const players = useMemo(() => event.players ?? {}, [event.players]);
-  const distanceLabels = useMemo(
-    () => getDistanceLabels(event.dstIndex),
-    [event.dstIndex],
+  const players: BoardPlayer[] = useMemo(
+    () =>
+      standings.map((row) => ({
+        id: row.id,
+        position: row.position,
+        movement: row.movement,
+        name: row.name,
+        muted: false,
+        active: row.round.status === "putting",
+        roundScore:
+          row.round.status === "not-started"
+            ? "–"
+            : String(row.round.roundHits),
+        total: row.hits,
+        hitLabel: row.hitLabel,
+        members: row.members?.map((m) => ({
+          name: m.name,
+          hitLabel: m.hitLabel,
+        })),
+        group: row.round.group,
+      })),
+    [standings],
   );
-  const isDoubles = event.playerMode === "doubles";
-  const isLight = theme === "light";
+  const rowsById = useMemo(
+    () => new Map(standings.map((row) => [row.id, row])),
+    [standings],
+  );
 
-  const showThru = viewMode === "totals" && totalRounds > 1;
+  const boardPage = useBoardPage(players);
+  const tileOrder = useMemo(
+    () => state.participants.map(([id]) => id),
+    [state.participants],
+  );
 
-  const densityStyles =
-    density === "small"
-      ? { header: "py-1.5 text-xs", cell: "py-1.5 text-sm", score: "text-base" }
-      : density === "large"
-        ? { header: "py-4 text-base", cell: "py-4 text-lg", score: "text-xl" }
-        : { header: "py-3 text-sm", cell: "py-3", score: "text-lg" };
-
-  const rows = useMemo(() => {
-    if (typeof viewMode === "number") {
-      return computeRound(players, viewMode, isDoubles);
-    }
-    return computeTotals(players, isDoubles);
-  }, [players, viewMode, isDoubles]);
+  const subtitle = [
+    formatLabel(event.format) || "StormPutt",
+    distanceRangeLabel(distances),
+    event.location,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const round = currentRoundIndex + 1;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr
-            className={`border-b ${
-              isLight
-                ? "border-zinc-300 text-zinc-600"
-                : "border-zinc-700 text-zinc-400"
-            }`}
-          >
-            <th className={`w-14 px-3 text-center ${densityStyles.header}`}>
-              #
-            </th>
-            <th className={`px-3 text-left ${densityStyles.header}`}>
-              {isDoubles ? "Team" : "Player"}
-            </th>
-            {distanceLabels.meter.map((label, i) => (
-              <th
-                key={i}
-                className={`w-18 px-2 text-center ${densityStyles.header}`}
-              >
-                <div>{label}</div>
-                <div
-                  className={`text-xs font-normal ${
-                    isLight ? "text-zinc-500" : "text-zinc-500"
-                  }`}
-                >
-                  {distanceLabels.feet[i]}
-                </div>
-              </th>
+    <TvCanvas>
+      <TvTopBar
+        event={event}
+        subtitle={subtitle}
+        isLive={isLive}
+        roundIndex={currentRoundIndex}
+        right={
+          roundStats.total > 0 && (
+            <div className="ml-auto flex w-65 shrink-0 flex-col gap-1.5">
+              <div className="flex justify-end gap-3.5 text-xs font-semibold text-(--tv-muted)">
+                <span className="flex items-center gap-1.5">
+                  <span className="size-2 rounded-[2px] bg-[#38C757]" />
+                  {roundStats.playing} putting
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="size-2 rounded-[2px] bg-(--tv-ink)" />
+                  {roundStats.finished} of {roundStats.total} finished
+                </span>
+              </div>
+              <RoundProgressBar
+                stats={roundStats}
+                tone={tone}
+                finishedClassName="bg-(--tv-ink)"
+                className="h-1.5 rounded-[3px]"
+              />
+            </div>
+          )
+        }
+      />
+
+      <PlayerBoard
+        players={players}
+        boardPage={boardPage}
+        tileOrder={tileOrder}
+        totalLabel="Hits"
+        trackWidth={196}
+        trackHeader={
+          <span className="grid grid-cols-6 gap-0.75 text-center">
+            {distances.map((d) => (
+              <span key={d}>{d}</span>
             ))}
-            {showThru && (
-              <th className={`w-16 px-2 text-center ${densityStyles.header}`}>
-                Thru
-              </th>
-            )}
-            <th className={`w-20 px-3 text-center ${densityStyles.header}`}>
-              Hit%
-            </th>
-            <th className={`w-18 px-3 text-center ${densityStyles.header}`}>
-              Score
-            </th>
-          </tr>
-        </thead>
-        <LayoutGroup>
-          <tbody>
-            {rows.map((row) => (
-              <AnimatedRow
-                key={row.uid}
-                layoutId={row.uid}
-                className={
-                  isLight
-                    ? "border-b border-zinc-200"
-                    : "border-b border-zinc-800"
-                }
-              >
-                <td
-                  className={`px-3 text-center font-semibold ${densityStyles.cell}`}
-                >
-                  {row.dns ? (
-                    <span className="text-xs text-zinc-500">DNS</span>
-                  ) : row.dnf ? (
-                    <span className="text-xs text-red-400">DNF</span>
-                  ) : (
-                    <span>{row.place}</span>
-                  )}
-                </td>
-                <td className={`px-3 font-semibold ${densityStyles.cell}`}>
-                  {row.name}
-                </td>
-                {row.distances.map((d, i) => {
-                  const p = row.distancePutts[i] ?? 0;
-                  const pct = p > 0 ? (d / p) * 100 : 0;
-                  return (
-                    <td
-                      key={i}
-                      className={`px-2 text-center tabular-nums ${densityStyles.cell}`}
-                    >
-                      {row.dns ? (
-                        <span
-                          className={
-                            isLight ? "text-zinc-500" : "text-zinc-600"
-                          }
-                        >
-                          -
-                        </span>
-                      ) : (
-                        <div>
-                          <span>{d}</span>
-                          {p > 0 && (
-                            <div className="text-xs text-zinc-500">
-                              {pct.toFixed(0)}%
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                  );
-                })}
-                {showThru && (
-                  <td
-                    className={`px-2 text-center tabular-nums ${densityStyles.cell} ${
-                      isLight ? "text-zinc-500" : "text-zinc-500"
-                    }`}
-                  >
-                    {row.dns ? "-" : `${row.roundsPlayed}/${totalRounds}`}
-                  </td>
-                )}
-                <td
-                  className={`px-3 text-center tabular-nums ${densityStyles.cell}`}
-                >
-                  {row.dns ? (
-                    <span
-                      className={isLight ? "text-zinc-500" : "text-zinc-600"}
-                    >
-                      -
-                    </span>
-                  ) : (
-                    `${row.hitPercent.toFixed(1)}%`
-                  )}
-                </td>
-                <td
-                  className={`px-3 text-center tabular-nums font-bold ${densityStyles.cell} ${densityStyles.score}`}
-                >
-                  {row.dns ? (
-                    <span
-                      className={isLight ? "text-zinc-500" : "text-zinc-600"}
-                    >
-                      -
-                    </span>
-                  ) : (
-                    row.hits
-                  )}
-                </td>
-              </AnimatedRow>
-            ))}
-          </tbody>
-        </LayoutGroup>
-      </table>
-    </div>
+          </span>
+        }
+        renderTrack={(id, size, member) => {
+          const row = rowsById.get(id);
+          const round =
+            member != null ? row?.members?.[member]?.round : row?.round;
+          return <CountCells cells={round?.cells ?? []} size={size} />;
+        }}
+      />
+
+      <TvFooter
+        page={boardPage.page}
+        pages={boardPage.pages}
+        legend={
+          currentRoundIndex >= 0
+            ? `Round ${round} per distance: numbers = hits of 6, yellow = putting now · Rnd = round ${round} score · Hits = event total`
+            : "Hits = event total"
+        }
+      />
+    </TvCanvas>
   );
 }

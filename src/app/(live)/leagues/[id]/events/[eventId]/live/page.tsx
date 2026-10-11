@@ -14,7 +14,7 @@ export default function LivePage({
   params: Promise<{ id: string; eventId: string }>;
 }) {
   const { id, eventId } = use(params);
-  const { user, loading: authLoading } = useAuth();
+  const { user, dataUid, loading: authLoading } = useAuth();
   const [league, setLeague] = useState<LeagueInstance | null>(null);
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -30,7 +30,7 @@ export default function LivePage({
       try {
         const data = await fetchLeagueDetails(id);
         setLeague(data);
-        setIsAdmin(data?.admins?.includes(user!.uid) ?? false);
+        setIsAdmin(!!dataUid && (data?.admins?.includes(dataUid) ?? false));
       } catch (error) {
         console.error("Failed to load league:", error);
       }
@@ -38,7 +38,7 @@ export default function LivePage({
     }
 
     checkAdmin();
-  }, [id, user, authLoading]);
+  }, [id, user, dataUid, authLoading]);
 
   const { event, loading: eventLoading } = useLiveEvent(
     isAdmin ? id : "",

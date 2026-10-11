@@ -1,3 +1,13 @@
+import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = pageMetadata({
+  path: "/privacy-policy",
+  title: "Privacy Policy - dgputt",
+  description:
+    "How dgputt collects, uses and protects your data in the disc golf putting app.",
+});
+
 export default function PrivacyPolicy() {
   return (
     <article className="max-w-200 mx-auto p-4 text-left space-y-8">

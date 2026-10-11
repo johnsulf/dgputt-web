@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { JsonLd, pageMetadata } from "@/lib/seo";
+import { softwareApplication } from "@/lib/structured-data";
 import {
   Card,
   CardHeader,
@@ -23,11 +25,12 @@ import {
 } from "@/components/ui/table";
 import PhoneFrame from "@/app/components/phone-frame";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/about",
   title: "About dgputt - Games, Features & Pricing",
   description:
     "Learn about dgputt's putting drills, progress tracking, round logging, leagues, and pricing. 10 games, advanced stats, and competitive events.",
-};
+});
 
 const freeGames = [
   {
@@ -118,6 +121,7 @@ const features = [
 export default function AboutPage() {
   return (
     <div className="px-4 py-8 sm:px-16 space-y-16">
+      <JsonLd data={softwareApplication} />
       {/* Hero */}
       <section className="space-y-4 max-w-3xl">
         <h1>About dgputt</h1>
@@ -183,7 +187,7 @@ export default function AboutPage() {
         <div className="flex justify-center pt-4">
           <PhoneFrame
             src="/images/screenshots/jyly.webp"
-            alt="JYLY game screenshot"
+            alt="JYLY putting game in dgputt, entering makes from 10 m with hit rates for each distance from 5 to 10 m"
             caption="JYLY - a really popular game!"
           />
         </div>
@@ -206,7 +210,7 @@ export default function AboutPage() {
         <div className="flex justify-center pt-4">
           <PhoneFrame
             src="/images/screenshots/cornhole.webp"
-            alt="Cornhole game screenshot"
+            alt="Choosing an AI opponent with a PDGA rating and C1x average before a Cornhole putting match in dgputt"
             caption="Cornhole - head-to-head match play"
           />
         </div>
@@ -239,7 +243,7 @@ export default function AboutPage() {
         <div className="flex justify-center pt-4">
           <PhoneFrame
             src="/images/screenshots/round.webp"
-            alt="Round tracking screenshot"
+            alt="dgputt round scorecard with per-hole scores, C1x and C2 putting percentages and a basket map of hits and misses"
             caption="Tracking putts during a round of disc golf"
           />
         </div>
@@ -292,12 +296,12 @@ export default function AboutPage() {
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
           <PhoneFrame
             src="/images/screenshots/progress.webp"
-            alt="Progress overview screenshot"
+            alt="dgputt progress totals showing rounds, putts and hit percentage overall, by year, month and day"
             caption="Overall progress"
           />
           <PhoneFrame
             src="/images/screenshots/jyly_progress.webp"
-            alt="JYLY game progress screenshot"
+            alt="JYLY stats in dgputt with live rating and a chart of putts and hit percentage by distance"
             caption="JYLY game stats"
           />
         </div>
@@ -325,12 +329,12 @@ export default function AboutPage() {
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
           <PhoneFrame
             src="/images/screenshots/leagues.webp"
-            alt="Leagues overview screenshot"
+            alt="A dgputt putting league page with an ongoing online Stations event"
             caption="Browse leagues"
           />
           <PhoneFrame
             src="/images/screenshots/event_cornhole.webp"
-            alt="Cornhole event screenshot"
+            alt="Final leaderboard for a dgputt league event, ranking players by wins and hit percentage"
             caption="Live event leaderboard"
           />
         </div>
