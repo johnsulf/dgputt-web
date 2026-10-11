@@ -2,13 +2,24 @@ import Reviews from "@/app/components/home/reviews";
 import PhoneFrame from "@/app/components/phone-frame";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
+import type { Metadata } from "next";
+import { JsonLd, pageMetadata } from "@/lib/seo";
+import { softwareApplication } from "@/lib/structured-data";
+
+export const metadata: Metadata = pageMetadata({
+  path: "/",
+  title: "dgputt - The Ultimate Disc Golf Putting App",
+  description:
+    "Disc golf putting practice app with structured drills, progress tracking, and competitive leagues. Available on iOS and Android.",
+});
 
 export default function Home() {
   return (
     <>
+      <JsonLd data={softwareApplication} />
       <section className="grid gap-8 px-4 py-8 sm:grid-cols-2 sm:px-16 sm:items-center">
         <div className="space-y-4">
-          <h1>dgputt</h1>
+          <h1>dgputt: the disc golf putting practice app</h1>
           <h2>Putt in the effort and become a better putter with dgputt</h2>
           <p>
             dgputt is an app that delivers structured putting practice using
@@ -29,7 +40,7 @@ export default function Home() {
               />
             </a>
             <a
-              href="https://play.google.com/store/apps/details?id=com.erlendjohnsen.dgputt&hl=en_GB&gl=US&pli=1"
+              href="https://play.google.com/store/apps/details?id=com.erlendjohnsen.dgputt"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -44,7 +55,7 @@ export default function Home() {
         <div className="flex justify-center">
           <PhoneFrame
             src="/images/screenshots/home.webp"
-            alt="dgputt app screenshot"
+            alt="dgputt practice screen listing the ten putting games: StormPutt, Twenty, Fifty, JYLY, Frøysa, Hundred, Runsjø, Shuffle, Survival and Cornhole"
           />
         </div>
       </section>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import {
   Card,
   CardHeader,
@@ -8,11 +9,12 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/contact",
   title: "Contact - dgputt",
   description:
     "Get in touch with the dgputt team. Email us or find us on Instagram and Facebook.",
-};
+});
 
 export default function ContactPage() {
   return (

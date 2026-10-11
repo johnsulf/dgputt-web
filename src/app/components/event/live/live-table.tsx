@@ -3,6 +3,10 @@
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
 
+export const rowLayoutTransition = {
+  layout: { type: "spring", stiffness: 95, damping: 26 },
+} as const;
+
 interface AnimatedRowProps {
   layoutId: string;
   children: ReactNode;
@@ -18,7 +22,7 @@ export function AnimatedRow({
     <motion.tr
       layout
       layoutId={layoutId}
-      transition={{ layout: { type: "spring", stiffness: 95, damping: 26 } }}
+      transition={rowLayoutTransition}
       className={className}
     >
       {children}

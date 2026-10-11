@@ -160,6 +160,12 @@ export function parseSingleEvent(
           : undefined,
     format,
     playerMode: typeof v.playerMode === "string" ? v.playerMode : undefined,
+    doublesPairingMode:
+      typeof v.doublesPairingMode === "string"
+        ? v.doublesPairingMode
+        : undefined,
+    pairNames: parsePairField(v._pairs, "name"),
+    pairDivisions: parsePairField(v._pairs, "division"),
     limit: typeof v.limit === "number" ? v.limit : undefined,
     seasonId: typeof v.seasonId === "string" ? v.seasonId : undefined,
     divisionsEnabled:
@@ -190,6 +196,25 @@ function parseEvents(raw: unknown): LeagueEvent[] {
   }
 
   return events;
+}
+
+/** One trimmed string field per pair from `_pairs`, keyed by pairId. */
+function parsePairField(
+  raw: unknown,
+  field: "name" | "division",
+): Record<string, string> | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+
+  const values: Record<string, string> = {};
+  for (const [pairId, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!value || typeof value !== "object") continue;
+    const text = (value as Record<string, unknown>)[field];
+    if (typeof text === "string" && text.trim().length > 0) {
+      values[pairId] = text.trim();
+    }
+  }
+
+  return Object.keys(values).length > 0 ? values : undefined;
 }
 
 function parsePlayers(
@@ -241,6 +266,7 @@ function parseRounds(raw: unknown): LeagueEventRound[] | undefined {
     .map((r) => {
       const v = r as Record<string, unknown>;
       return {
+        group: parseNumberish(v.group),
         hits: typeof v.hits === "number" ? v.hits : undefined,
         putts: typeof v.putts === "number" ? v.putts : undefined,
         dns: typeof v.dns === "boolean" ? v.dns : false,

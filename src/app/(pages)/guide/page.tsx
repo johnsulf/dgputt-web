@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import {
   Accordion,
   AccordionItem,
@@ -14,11 +15,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/guide",
   title: "League Admin Guide - dgputt",
   description:
     "Step-by-step guide for running dgputt leagues and events. Event types, formats, pairing systems, and tournament director tools.",
-};
+});
 
 export default function GuidePage() {
   return (

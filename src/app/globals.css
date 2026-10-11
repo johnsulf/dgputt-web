@@ -167,6 +167,18 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
+  --font-display: var(--font-bricolage);
+
+  /* Live indicator dot used on cornhole live views. */
+  --animate-dgpulse: dgpulse 1.6s ease-out infinite;
+  @keyframes dgpulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(0, 158, 115, 0.55);
+    }
+    100% {
+      box-shadow: 0 0 0 10px rgba(0, 158, 115, 0);
+    }
+  }
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

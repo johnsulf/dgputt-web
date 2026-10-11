@@ -9,7 +9,6 @@ import {
   formatLabel,
   playerModeLabel,
 } from "@/lib/event-utils";
-import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { StormPuttEvent } from "./stormputt-event";
 import { CornholeEvent } from "./cornhole-event";
@@ -40,16 +39,27 @@ function eventStatusBadge(event: LeagueEvent) {
 }
 
 export function EventView({ league, event }: EventViewProps) {
-  const { user } = useAuth();
   const playerCount = event.players ? Object.keys(event.players).length : 0;
   const isStormPutt =
     event.format === "stormputt" || event.format === "stormputt18";
   const isCornhole = event.format === "cornhole";
   const isStations = event.format === "stations";
-  const isAdmin = user && league.admins?.includes(user.uid);
-  const isOngoing = (event.currentRound ?? 0) > 0 && !event.finished;
-  const supportsLive = isStormPutt || isCornhole || isStations;
-  const showLiveButton = isAdmin && isOngoing && supportsLive;
+
+  // These formats have their own header and a wide layout, so on desktop
+  // they break out of the site's max-width column.
+  if (isCornhole || isStormPutt || isStations) {
+    return (
+      <div className="px-4 pt-7 pb-14 sm:px-8 lg:relative lg:left-1/2 lg:w-[min(1280px,100vw-2rem)] lg:-translate-x-1/2 lg:px-12">
+        {isCornhole ? (
+          <CornholeEvent league={league} event={event} />
+        ) : isStormPutt ? (
+          <StormPuttEvent league={league} event={event} />
+        ) : (
+          <StationsEvent league={league} event={event} />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">
@@ -63,32 +73,6 @@ export function EventView({ league, event }: EventViewProps) {
           <h1 className="text-xl font-bold">
             {event.title || "Untitled Event"}
           </h1>
-          {showLiveButton && (
-            <Link
-              href={`/leagues/${league.id}/events/${event.id}/live`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button variant="outline" className="gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="2" y="3" width="20" height="14" rx="2" />
-                  <line x1="8" y1="21" x2="16" y2="21" />
-                  <line x1="12" y1="17" x2="12" y2="21" />
-                </svg>
-                Live View
-              </Button>
-            </Link>
-          )}
         </div>
 
         {event.date && (
@@ -130,24 +114,16 @@ export function EventView({ league, event }: EventViewProps) {
 
       {/* Content */}
       <div className="mt-6">
-        {isStormPutt ? (
-          <StormPuttEvent event={event} />
-        ) : isCornhole ? (
-          <CornholeEvent event={event} />
-        ) : isStations ? (
-          <StationsEvent event={event} />
-        ) : (
-          <Alert>
-            <AlertTitle>
-              {formatLabel(event.format)} events are under construction
-            </AlertTitle>
-            <AlertDescription>
-              Event view for {formatLabel(event.format) || "this format"} is
-              currently being implemented. We appreciate your patience and look
-              forward to sharing it with you soon!
-            </AlertDescription>
-          </Alert>
-        )}
+        <Alert>
+          <AlertTitle>
+            {formatLabel(event.format)} events are under construction
+          </AlertTitle>
+          <AlertDescription>
+            Event view for {formatLabel(event.format) || "this format"} is
+            currently being implemented. We appreciate your patience and look
+            forward to sharing it with you soon!
+          </AlertDescription>
+        </Alert>
       </div>
     </div>
   );
