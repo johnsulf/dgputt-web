@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { pageMetadata } from "@/lib/seo";
+import { JsonLd, pageMetadata } from "@/lib/seo";
 import {
   Accordion,
   AccordionItem,
@@ -17,35 +17,211 @@ import Link from "next/link";
 
 export const metadata: Metadata = pageMetadata({
   path: "/guide",
-  title: "League Admin Guide - dgputt",
+  title: "How to Run a Putting League Online - dgputt League Guide",
   description:
-    "Step-by-step guide for running dgputt leagues and events. Event types, formats, pairing systems, and tournament director tools.",
+    "Set up a disc golf putting league in minutes. Online or in-person events, automatic scoring, season standings, divisions, and a live leaderboard for TVs. Step-by-step guide for league admins.",
 });
+
+const APP_STORE_URL = "https://apps.apple.com/us/app/dgputt/id1536711552";
+const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.erlendjohnsen.dgputt";
+
+const quickStart = [
+  {
+    title: "Download dgputt and create an account",
+    body: "League hosting is done in the dgputt app on iOS or Android. League hosting requires a premium subscription.",
+  },
+  {
+    title: "Create your league",
+    body: "Go to Compete, then Create League. Add a name, location and logo. Turn on seasons and add divisions like MPO, FPO or MA40 if you want them.",
+  },
+  {
+    title: "Create your first event",
+    body: "Open your league and tap Create Event. Pick StormPutt for the classic format, and Flex if players putt on their own time, online or in person.",
+  },
+  {
+    title: "Open registration and share the league",
+    body: "Players join and register from their phones. Add players yourself or copy the roster from a previous event.",
+  },
+  {
+    title: "Run the event and publish results",
+    body: "Start the round, let scores come in, and finish the event. Results, standings and the league leaderboard update on dgputt.app automatically.",
+  },
+];
+
+const benefits = [
+  {
+    title: "No spreadsheets",
+    body: "Scores, placements and season points are calculated for you, with best-N-rounds scoring built in.",
+  },
+  {
+    title: "Online or in person",
+    body: "Run Flex events where players putt whenever they like, or Classic events with groups at one location.",
+  },
+  {
+    title: "Live leaderboard for TVs",
+    body: "A full-screen, real-time leaderboard for projectors and screens, with smoothly animating positions.",
+  },
+  {
+    title: "Seasons and divisions",
+    body: "Crown a champion each season and give every division its own standings.",
+  },
+  {
+    title: "More than one format",
+    body: "StormPutt, Cornhole with Swiss or round robin pairing, brackets, doubles, or your own custom Stations layout.",
+  },
+  {
+    title: "Public results online",
+    body: "Every event and league has a results page on dgputt.app, with PDGA profile links and PDF export for admins.",
+  },
+];
+
+const faqs = [
+  {
+    q: "How do I start a disc golf putting league?",
+    a: "Download the dgputt app, go to Compete and tap Create League. Then create your first event, open registration and start the round. Most leagues are ready in a few minutes.",
+  },
+  {
+    q: "Can I run a putting league online?",
+    a: "Yes. Flex events let players complete rounds on their own time, online or in person, with no check-in. Scores feed into the same leaderboard and season standings as in-person events.",
+  },
+  {
+    q: "Does dgputt calculate league standings automatically?",
+    a: "Yes. Players earn points by placement in each finished event, and the league leaderboard ranks them across the season. You can set how many of a player's best events count, for example the best 6 of 10.",
+  },
+  {
+    q: "What formats can I run?",
+    a: "StormPutt (18 or 36 putts), Cornhole with Swiss or round robin pairing, and fully custom Stations layouts. Event types are Classic, Flex, Team and Bracket, with singles or doubles.",
+  },
+  {
+    q: "Can I show live scores at my event?",
+    a: "Yes. The live leaderboard is a full-screen real-time view built for TVs and projectors, with dark and light themes and adjustable table density.",
+  },
+  {
+    q: "Do I need a subscription to run a league?",
+    a: "League creation and hosting is part of dgputt premium. The free version of the app includes five putting drills and basic stats.",
+  },
+  {
+    q: "Can I split players into divisions?",
+    a: "Yes. Define division codes such as MPO, FPO or MA40. Players pick a division when they register, and leaderboards can be filtered by division.",
+  },
+];
+
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to run a putting league online with dgputt",
+    step: quickStart.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.title,
+      text: s.body,
+    })),
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  },
+];
 
 export default function GuidePage() {
   return (
     <div className="px-4 py-8 sm:px-16 space-y-16">
+      {structuredData.map((d, i) => (
+        <JsonLd key={i} data={d} />
+      ))}
+
       {/* Hero */}
       <section className="space-y-4 max-w-3xl">
-        <h1>League Admin Guide</h1>
+        <h1>Run your putting league online with dgputt</h1>
         <p className="text-lg">
-          Everything you need to know about creating and running leagues and
-          events in dgputt - from the mobile app to the web.
+          Set up a disc golf putting league or event in minutes. Scoring,
+          standings, divisions and a live leaderboard are handled for you, so
+          you can spend your time putting instead of managing spreadsheets.
         </p>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2">
+          <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer">
+            <img
+              src="/images/app_store.png"
+              alt="Download dgputt on the App Store"
+              className="w-48 h-auto"
+            />
+          </a>
+          <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer">
+            <img
+              src="/images/play_store.png"
+              alt="Get dgputt on Google Play"
+              className="w-48 h-auto"
+            />
+          </a>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <a
+            href="#quick-start"
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Quick start
+          </a>
+          <span className="text-muted-foreground">·</span>
           <a
             href="#app"
             className="text-sm font-medium text-primary underline-offset-4 hover:underline"
           >
-            dgputt App
+            Full admin guide
           </a>
           <span className="text-muted-foreground">·</span>
           <a
             href="#web"
             className="text-sm font-medium text-primary underline-offset-4 hover:underline"
           >
-            dgputt Web
+            Results on the web
           </a>
+          <span className="text-muted-foreground">·</span>
+          <a
+            href="#faq"
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            FAQ
+          </a>
+        </div>
+      </section>
+
+      {/* Quick start */}
+      <section id="quick-start" className="space-y-4 max-w-3xl">
+        <h2>Set up your league in 5 steps</h2>
+        <ol className="space-y-3">
+          {quickStart.map((step, i) => (
+            <li key={step.title} className="flex gap-3">
+              <Badge variant="outline" className="mt-0.5 shrink-0">
+                {i + 1}
+              </Badge>
+              <div>
+                <h3 className="font-medium">{step.title}</h3>
+                <p className="text-muted-foreground">{step.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* Why dgputt */}
+      <section className="space-y-4 max-w-3xl">
+        <h2>Why run your league on dgputt</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {benefits.map((b) => (
+            <Card key={b.title} size="sm">
+              <CardHeader>
+                <CardTitle>{b.title}</CardTitle>
+                <CardDescription>{b.body}</CardDescription>
+              </CardHeader>
+            </Card>
+          ))}
         </div>
       </section>
 
@@ -56,9 +232,9 @@ export default function GuidePage() {
           <Badge variant="secondary">Mobile</Badge>
         </div>
         <p className="text-muted-foreground">
-          League management, event creation, scoring, and administration are all
-          handled in the dgputt mobile app. League features require a premium
-          subscription.
+          The full admin reference. League management, event creation, scoring,
+          and administration are all handled in the dgputt mobile app. League
+          hosting requires a premium subscription.
         </p>
       </section>
 
@@ -162,8 +338,8 @@ export default function GuidePage() {
             <AccordionTrigger>Seasons</AccordionTrigger>
             <AccordionContent>
               <p>
-                Enable seasons to organize events by time period (e.g. "Spring
-                2026"). Set the active season - leaderboards can be filtered by
+                Enable seasons to organize events by time period (e.g. &quot;Spring
+                2026&quot;). Set the active season - leaderboards can be filtered by
                 season so you can crown a champion at the end of each one.
               </p>
             </AccordionContent>
@@ -599,6 +775,21 @@ export default function GuidePage() {
               </p>
             </AccordionContent>
           </AccordionItem>
+        </Accordion>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="space-y-4 max-w-3xl">
+        <h2>Frequently asked questions</h2>
+        <Accordion>
+          {faqs.map((f) => (
+            <AccordionItem key={f.q}>
+              <AccordionTrigger>{f.q}</AccordionTrigger>
+              <AccordionContent>
+                <p>{f.a}</p>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
         </Accordion>
       </section>
     </div>
