@@ -1,5 +1,6 @@
 import { ref, get } from "firebase/database";
 import { getFirebaseDb } from "@/lib/firebase";
+import { parsePointsSystem, parseValidRoundsShare } from "@/lib/points-system";
 import type {
   LeagueInstance,
   LeagueEvent,
@@ -83,6 +84,8 @@ export async function fetchLeagueDetails(
         ? data.competitionType
         : undefined,
     format: typeof data.format === "string" ? data.format : undefined,
+    validRoundsShare: parseValidRoundsShare(data.validRoundsShare),
+    pointsSystem: parsePointsSystem(data.pointsSystem),
     validRounds: typeof data.validRounds === "number" ? data.validRounds : 10,
     admins: Array.isArray(data.admins) ? (data.admins as string[]) : undefined,
     divisions:
@@ -168,6 +171,10 @@ export function parseSingleEvent(
     pairDivisions: parsePairField(v._pairs, "division"),
     limit: typeof v.limit === "number" ? v.limit : undefined,
     seasonId: typeof v.seasonId === "string" ? v.seasonId : undefined,
+    countsInAllFormats:
+      typeof v.countsInAllFormats === "boolean"
+        ? v.countsInAllFormats
+        : undefined,
     divisionsEnabled:
       typeof v.divisionsEnabled === "boolean" ? v.divisionsEnabled : undefined,
     divisions: Array.isArray(v.divisions)

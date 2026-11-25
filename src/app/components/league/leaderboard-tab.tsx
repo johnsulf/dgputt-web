@@ -4,17 +4,24 @@ import { useMemo, useState } from "react";
 import type { LeagueInstance } from "@/app/interfaces/league";
 import {
   buildLeagueLeaderboard,
-  getFinishedFormats,
-  type LeaderboardEntry,
+  standingsCutoff,
 } from "@/lib/league-leaderboard-utils";
-import { formatLabel } from "@/lib/event-utils";
+import { pointsTable, STANDARD_POINTS_SYSTEM } from "@/lib/points-system";
+import {
+  getScoreFormats,
+  buildCornholeScores,
+  buildRoundScores,
+  isCornholeScore,
+  scoreFormatLabel,
+  type CornholeScoreRow,
+  type RoundScoreRow,
+  type ScoreFormat,
+} from "@/lib/league-scores-utils";
 import {
   type ColumnDef,
-  type ColumnFiltersState,
   type SortingState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
@@ -53,148 +60,520 @@ interface LeaderboardTabProps {
   seasonFilter: string | null;
 }
 
-const POINTS_TABLE = [
-  { place: "1st", points: 12 },
-  { place: "2nd", points: 10 },
-  { place: "3rd", points: 8 },
-  { place: "4th", points: 6 },
-  { place: "5th", points: 5 },
-  { place: "6th", points: 4 },
-  { place: "7th", points: 3 },
-  { place: "8th+", points: 2 },
-];
+type Mode = "standings" | "scores";
 
-interface TableRow_ {
+function matchesSearch(name: string, search: string): boolean {
+  return name.toLowerCase().includes(search.trim().toLowerCase());
+}
+
+function formatPct(fraction: number): string {
+  return fraction < 0 ? "-" : `${Math.round(fraction * 100)}%`;
+}
+
+/** Ranked table: the rows arrive best first, the # column keeps that rank. */
+function RankedTable<T extends { position: number; name: string }>({
+  data,
+  columns,
+  initialSort,
+}: {
+  data: T[];
+  columns: ColumnDef<T>[];
+  initialSort: string;
+}) {
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: initialSort, desc: true },
+  ]);
+
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable({
+    data,
+    columns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    enableSortingRemoval: false,
+  });
+
+  return (
+    <Table>
+      <TableHeader>
+        {table.getHeaderGroups().map((headerGroup) => (
+          <TableRow key={headerGroup.id}>
+            {headerGroup.headers.map((header) => {
+              const canSort = header.column.getCanSort();
+              const sortState = header.column.getIsSorted();
+              const isCentered = header.id !== "name";
+              return (
+                <TableHead
+                  key={header.id}
+                  className={
+                    header.id === "position"
+                      ? "w-10 text-center"
+                      : header.id === "name"
+                        ? undefined
+                        : "w-16 text-center"
+                  }
+                >
+                  {header.isPlaceholder ? null : canSort ? (
+                    <button
+                      type="button"
+                      className={`inline-flex items-center gap-1 ${isCentered ? "mx-auto" : ""}`}
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {sortState === "asc"
+                          ? "▲"
+                          : sortState === "desc"
+                            ? "▼"
+                            : "↕"}
+                      </span>
+                    </button>
+                  ) : (
+                    flexRender(
+                      header.column.columnDef.header,
+                      header.getContext(),
+                    )
+                  )}
+                </TableHead>
+              );
+            })}
+          </TableRow>
+        ))}
+      </TableHeader>
+      <TableBody>
+        {table.getRowModel().rows.map((row) => (
+          <TableRow key={row.id}>
+            {row.getVisibleCells().map((cell) => (
+              <TableCell
+                key={cell.id}
+                className={
+                  cell.column.id !== "name" ? "text-center" : undefined
+                }
+              >
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+
+        {table.getRowModel().rows.length === 0 && (
+          <TableRow>
+            <TableCell
+              colSpan={columns.length}
+              className="py-8 text-center text-muted-foreground"
+            >
+              No results for this filter.
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
+  );
+}
+
+const positionColumn = <T extends { position: number }>(): ColumnDef<T> => ({
+  accessorKey: "position",
+  header: "#",
+  enableSorting: false,
+  cell: ({ row }) => (
+    <span className="font-medium">{row.original.position}</span>
+  ),
+});
+
+const nameColumn = <T extends { name: string }>(): ColumnDef<T> => ({
+  accessorKey: "name",
+  header: "Player",
+  enableSorting: false,
+  cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+});
+
+function FormatDropdown({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="outline" size="sm">
+            {label}
+          </Button>
+        }
+      />
+      <DropdownMenuContent align="start" className="w-48">
+        <DropdownMenuRadioGroup value={value} onValueChange={onChange}>
+          {options.map((o) => (
+            <DropdownMenuRadioItem key={o.value} value={o.value}>
+              {o.label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function InfoDialog({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Dialog>
+      <DialogTrigger
+        render={
+          <Button variant="ghost" size="icon" className="size-7 rounded-full">
+            <HugeiconsIcon
+              icon={InformationCircleIcon}
+              size={16}
+              strokeWidth={2}
+            />
+            <span className="sr-only">{title}</span>
+          </Button>
+        }
+      />
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        {children}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface StandingsRow {
   position: number;
   name: string;
   events: number;
   wins: number;
   seconds: number;
   thirds: number;
+  hitPct: number;
   points: number;
-  totalPoints: number;
 }
 
-function formatFilterLabel(format: string | null): string {
-  if (!format) return "All Formats";
-  return formatLabel(format);
-}
+const standingsColumns: ColumnDef<StandingsRow>[] = [
+  positionColumn<StandingsRow>(),
+  nameColumn<StandingsRow>(),
+  { accessorKey: "events", header: "Events", enableSorting: true },
+  { accessorKey: "wins", header: "🥇", enableSorting: true },
+  { accessorKey: "seconds", header: "🥈", enableSorting: true },
+  { accessorKey: "thirds", header: "🥉", enableSorting: true },
+  {
+    accessorKey: "hitPct",
+    header: "Hit %",
+    enableSorting: true,
+    cell: ({ row }) => formatPct(row.original.hitPct),
+  },
+  {
+    accessorKey: "points",
+    header: "Points",
+    enableSorting: true,
+    cell: ({ row }) => (
+      <span className="font-semibold">{row.original.points}</span>
+    ),
+  },
+];
 
-export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
-  const [formatFilter, setFormatFilter] = useState<string | null>(null);
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "points", desc: true },
-  ]);
+function StandingsView({
+  league,
+  seasonFilter,
+  search,
+  modeToggle,
+}: ViewProps) {
+  const [formatFilter, setFormatFilter] = useState<ScoreFormat | null>(null);
+  const system = league.pointsSystem ?? STANDARD_POINTS_SYSTEM;
+  // Places that earn no more than the floor are shown as one "N+" row.
+  const table = pointsTable(system).filter((points) => points > system.floor);
+  const { counting, total } = useMemo(
+    () => standingsCutoff(league, { seasonFilter, formatFilter }),
+    [league, seasonFilter, formatFilter],
+  );
 
   const formats = useMemo(
-    () => getFinishedFormats(league, seasonFilter),
+    () => getScoreFormats(league, seasonFilter),
     [league, seasonFilter],
   );
 
   const entries = useMemo(
-    () =>
-      buildLeagueLeaderboard(league, {
-        seasonFilter,
-        formatFilter,
-      }),
+    () => buildLeagueLeaderboard(league, { seasonFilter, formatFilter }),
     [league, seasonFilter, formatFilter],
   );
 
-  const validRounds = league.validRounds ?? 10;
-  const hasEvents = (league.events ?? []).some((e) => e.finished);
-  const finishedCount = (league.events ?? []).filter((e) => {
-    if (!e.finished) return false;
-    if (seasonFilter && e.seasonId !== seasonFilter) return false;
-    return true;
-  }).length;
-
-  const tableData = useMemo<TableRow_[]>(
+  const data = useMemo<StandingsRow[]>(
     () =>
-      entries.map((entry, i) => ({
-        position: i + 1,
-        name: entry.name,
-        events: entry.eventCount,
-        wins: entry.wins,
-        seconds: entry.seconds,
-        thirds: entry.thirds,
-        points: entry.validPoints,
-        totalPoints: entry.totalPoints,
-      })),
-    [entries],
+      entries
+        .map((entry, i) => ({
+          position: i + 1,
+          name: entry.name,
+          events: entry.eventCount,
+          wins: entry.wins,
+          seconds: entry.seconds,
+          thirds: entry.thirds,
+          hitPct: entry.hitPct,
+          points: entry.totalPoints,
+        }))
+        .filter((r) => matchesSearch(r.name, search)),
+    [entries, search],
   );
 
-  const columns = useMemo<ColumnDef<TableRow_>[]>(
+  return (
+    <>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {modeToggle}
+        {formats.length > 1 && (
+          <FormatDropdown
+            label={
+              formatFilter ? scoreFormatLabel(formatFilter) : "All Formats"
+            }
+            value={formatFilter ?? "all"}
+            onChange={(v) =>
+              setFormatFilter(v === "all" ? null : (v as ScoreFormat))
+            }
+            options={[
+              { value: "all", label: "All Formats" },
+              ...formats.map((f) => ({ value: f, label: scoreFormatLabel(f) })),
+            ]}
+          />
+        )}
+        <div className="ml-auto flex items-center gap-2">
+          <Badge variant="outline" className="text-xs">
+            {counting == null
+              ? `All ${total} events count`
+              : `Best ${counting} of ${total} events`}
+          </Badge>
+          <InfoDialog
+            title="Point System"
+            description={`Points are awarded by placement in each event${
+              counting == null
+                ? ". Every event counts."
+                : `. Only each player's best ${counting} of ${total} events count.`
+            }`}
+          >
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Place</TableHead>
+                  <TableHead className="text-right">Points</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {table.map((points, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="font-medium">{i + 1}</TableCell>
+                    <TableCell className="text-right">{points}</TableCell>
+                  </TableRow>
+                ))}
+                {system.floor > 0 && (
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      {table.length + 1}+
+                    </TableCell>
+                    <TableCell className="text-right">{system.floor}</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Players who do not complete the event receive 0 points. In doubles
+              events, both team members receive the team&apos;s placement
+              points. When a player takes part in more than one event of the
+              same format on the same night, their best result counts in full
+              and the others at half, rounded up. The event cut-off does not
+              apply when a single format is selected.
+            </p>
+          </InfoDialog>
+        </div>
+      </div>
+      <RankedTable
+        data={data}
+        columns={standingsColumns}
+        initialSort="points"
+      />
+    </>
+  );
+}
+
+type CornholeTableRow = CornholeScoreRow & { position: number };
+type RoundTableRow = RoundScoreRow & { position: number };
+
+const cornholeColumns: ColumnDef<CornholeTableRow>[] = [
+  positionColumn<CornholeTableRow>(),
+  nameColumn<CornholeTableRow>(),
+  { accessorKey: "played", header: "Played", enableSorting: true },
+  {
+    accessorKey: "won",
+    header: "Won",
+    enableSorting: true,
+    cell: ({ row }) => (
+      <span className="font-semibold">{row.original.won}</span>
+    ),
+  },
+  { accessorKey: "lost", header: "Lost", enableSorting: true },
+  {
+    accessorKey: "hitPct",
+    header: "Hit %",
+    enableSorting: true,
+    cell: ({ row }) => formatPct(row.original.hitPct),
+  },
+];
+
+function ScoresView({ league, seasonFilter, search, modeToggle }: ViewProps) {
+  const validRounds = league.validRounds ?? 10;
+  const formats = useMemo(
+    () => getScoreFormats(league, seasonFilter),
+    [league, seasonFilter],
+  );
+  const [picked, setPicked] = useState<ScoreFormat | null>(null);
+  // Fall back to the first format when the pick has no events (season change).
+  const format = picked && formats.includes(picked) ? picked : formats[0];
+
+  const cornhole = format ? isCornholeScore(format) : false;
+
+  const cornholeData = useMemo<CornholeTableRow[]>(
+    () =>
+      format && cornhole
+        ? buildCornholeScores(league, format, seasonFilter)
+            .map((r, i) => ({ ...r, position: i + 1 }))
+            .filter((r) => matchesSearch(r.name, search))
+        : [],
+    [league, format, cornhole, seasonFilter, search],
+  );
+
+  const roundData = useMemo<RoundTableRow[]>(
+    () =>
+      format && !cornhole
+        ? buildRoundScores(league, format, seasonFilter)
+            .map((r, i) => ({ ...r, position: i + 1 }))
+            .filter((r) => matchesSearch(r.name, search))
+        : [],
+    [league, format, cornhole, seasonFilter, search],
+  );
+
+  const roundColumns = useMemo<ColumnDef<RoundTableRow>[]>(
     () => [
+      positionColumn<RoundTableRow>(),
+      nameColumn<RoundTableRow>(),
+      { accessorKey: "rounds", header: "Rounds", enableSorting: true },
+      { accessorKey: "hits", header: "Hits", enableSorting: true },
       {
-        accessorKey: "position",
-        header: "#",
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="font-medium">{row.original.position}</span>
-        ),
-      },
-      {
-        accessorKey: "name",
-        header: "Player",
-        enableSorting: false,
-        cell: ({ row }) => (
-          <span className="font-medium">{row.original.name}</span>
-        ),
-      },
-      {
-        accessorKey: "events",
-        header: "Events",
+        accessorKey: "hitPct",
+        header: "Hit %",
         enableSorting: true,
+        cell: ({ row }) => `${Math.round(row.original.hitPct)}%`,
       },
       {
-        accessorKey: "wins",
-        header: "🥇",
-        enableSorting: true,
-      },
-      {
-        accessorKey: "seconds",
-        header: "🥈",
-        enableSorting: true,
-      },
-      {
-        accessorKey: "thirds",
-        header: "🥉",
-        enableSorting: true,
-      },
-      {
-        accessorKey: "points",
-        header: "Points",
+        accessorKey: "bestHits",
+        header: `Best ${validRounds}`,
         enableSorting: true,
         cell: ({ row }) => (
-          <span className="font-semibold">
-            {row.original.points}
-            {row.original.events > validRounds &&
-              row.original.totalPoints !== row.original.points && (
-                <span className="ml-1 text-xs font-normal text-muted-foreground">
-                  ({row.original.totalPoints})
-                </span>
-              )}
-          </span>
+          <span className="font-semibold">{row.original.bestHits}</span>
         ),
       },
     ],
     [validRounds],
   );
 
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  if (!format) {
+    return (
+      <>
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          {modeToggle}
+        </div>
+        <Alert>
+          <AlertTitle>No scores yet</AlertTitle>
+          <AlertDescription>
+            Scores will appear once an event in this season is finished.
+          </AlertDescription>
+        </Alert>
+      </>
+    );
+  }
 
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable({
-    data: tableData,
-    columns,
-    state: { sorting, columnFilters },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    enableSortingRemoval: false,
-  });
+  return (
+    <>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {modeToggle}
+        {formats.length > 1 && (
+          <FormatDropdown
+            label={scoreFormatLabel(format)}
+            value={format}
+            onChange={(v) => setPicked(v as ScoreFormat)}
+            options={formats.map((f) => ({
+              value: f,
+              label: scoreFormatLabel(f),
+            }))}
+          />
+        )}
+        <div className="ml-auto flex items-center gap-2">
+          {!cornhole && (
+            <Badge variant="outline" className="text-xs">
+              Best {validRounds} rounds
+            </Badge>
+          )}
+          <InfoDialog
+            title="Scores"
+            description={
+              cornhole
+                ? "Ranked by matches won, then hit percentage. Byes are not counted as played matches."
+                : `Ranked by hits in the best ${validRounds} rounds across all events. Hits and Hit % cover every round played.`
+            }
+          >
+            <p className="text-xs text-muted-foreground">
+              {cornhole
+                ? "Hit % is bags landed in the hole as a share of bags thrown."
+                : "The number of rounds that count is set in the league settings."}
+            </p>
+          </InfoDialog>
+        </div>
+      </div>
+      {cornhole ? (
+        <RankedTable
+          data={cornholeData}
+          columns={cornholeColumns}
+          initialSort="won"
+        />
+      ) : (
+        <RankedTable
+          data={roundData}
+          columns={roundColumns}
+          initialSort="bestHits"
+        />
+      )}
+    </>
+  );
+}
+
+interface ViewProps {
+  league: LeagueInstance;
+  seasonFilter: string | null;
+  search: string;
+  modeToggle: React.ReactNode;
+}
+
+export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
+  const [mode, setMode] = useState<Mode>("standings");
+  const [search, setSearch] = useState("");
+
+  const hasEvents = (league.events ?? []).some((e) => e.finished);
 
   if (!hasEvents) {
     return (
@@ -207,185 +586,40 @@ export function LeaderboardTab({ league, seasonFilter }: LeaderboardTabProps) {
     );
   }
 
+  const modeToggle = (
+    <>
+      <Input
+        placeholder="Search player..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="h-9 w-48"
+      />
+      <div className="inline-flex rounded-full border p-0.5">
+        {(["standings", "scores"] as const).map((m) => (
+          <Button
+            key={m}
+            type="button"
+            size="sm"
+            variant={mode === m ? "default" : "ghost"}
+            className="h-7 rounded-full"
+            onClick={() => setMode(m)}
+          >
+            {m === "standings" ? "Standings" : "Scores"}
+          </Button>
+        ))}
+      </div>
+    </>
+  );
+
+  const View = mode === "standings" ? StandingsView : ScoresView;
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Input
-          placeholder="Search player..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(e) =>
-            table.getColumn("name")?.setFilterValue(e.target.value)
-          }
-          className="h-9 w-48"
-        />
-        {formats.length > 1 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="outline" size="sm">
-                  {formatFilterLabel(formatFilter)}
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="start" className="w-48">
-              <DropdownMenuRadioGroup
-                value={formatFilter ?? "all"}
-                onValueChange={(v) => setFormatFilter(v === "all" ? null : v)}
-              >
-                <DropdownMenuRadioItem value="all">
-                  All Formats
-                </DropdownMenuRadioItem>
-                {formats.map((f) => (
-                  <DropdownMenuRadioItem key={f} value={f}>
-                    {formatLabel(f)}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-
-        <div className="ml-auto flex items-center gap-2">
-          <Badge variant="outline" className="text-xs">
-            {validRounds >= finishedCount
-              ? `${finishedCount} event${finishedCount !== 1 ? "s" : ""}`
-              : `Best ${validRounds} of ${finishedCount} events`}
-          </Badge>
-
-          <Dialog>
-            <DialogTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 rounded-full"
-                >
-                  <HugeiconsIcon
-                    icon={InformationCircleIcon}
-                    size={16}
-                    strokeWidth={2}
-                  />
-                  <span className="sr-only">Point system info</span>
-                </Button>
-              }
-            />
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Point System</DialogTitle>
-                <DialogDescription>
-                  Points are awarded based on placement in each event.
-                  {validRounds < finishedCount && (
-                    <>
-                      {" "}
-                      Only the best {validRounds} event scores count towards the
-                      leaderboard.
-                    </>
-                  )}
-                </DialogDescription>
-              </DialogHeader>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Place</TableHead>
-                    <TableHead className="text-right">Points</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {POINTS_TABLE.map((row) => (
-                    <TableRow key={row.place}>
-                      <TableCell className="font-medium">{row.place}</TableCell>
-                      <TableCell className="text-right">{row.points}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Players who do not complete the event receive 0 points. In
-                doubles events, both team members receive the team&apos;s
-                placement points.
-              </p>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                const canSort = header.column.getCanSort();
-                const sortState = header.column.getIsSorted();
-                const isCentered = header.id !== "name";
-                return (
-                  <TableHead
-                    key={header.id}
-                    className={
-                      header.id === "position"
-                        ? "w-10 text-center"
-                        : header.id === "name"
-                          ? undefined
-                          : "w-16 text-center"
-                    }
-                  >
-                    {header.isPlaceholder ? null : canSort ? (
-                      <button
-                        type="button"
-                        className={`inline-flex items-center gap-1 ${isCentered ? "mx-auto" : ""}`}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          {sortState === "asc"
-                            ? "▲"
-                            : sortState === "desc"
-                              ? "▼"
-                              : "↕"}
-                        </span>
-                      </button>
-                    ) : (
-                      flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )
-                    )}
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <TableCell
-                  key={cell.id}
-                  className={
-                    cell.column.id !== "name" ? "text-center" : undefined
-                  }
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-
-          {table.getRowModel().rows.length === 0 && (
-            <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className="py-8 text-center text-muted-foreground"
-              >
-                No results for this filter.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <View
+        league={league}
+        seasonFilter={seasonFilter}
+        search={search}
+        modeToggle={modeToggle}
+      />
     </div>
   );
 }

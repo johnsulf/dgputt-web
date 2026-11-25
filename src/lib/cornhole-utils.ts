@@ -42,6 +42,9 @@ export interface LeaderboardRow {
   hitPct: number;
   sos: number;
   matchesPlayed: number;
+  /** Played matches won and lost; byes count as neither. */
+  matchesWon: number;
+  matchesLost: number;
   roundsPlayed: number;
   basePosition: number;
 }
@@ -259,6 +262,8 @@ export function buildLeaderboardRows(event: LeagueEvent): LeaderboardRow[] {
   const hits = new Map<string, number>();
   const attempts = new Map<string, number>();
   const matchesPlayed = new Map<string, number>();
+  const matchesWon = new Map<string, number>();
+  const matchesLost = new Map<string, number>();
   const roundsPlayed = new Map<string, number>();
   const oppWinPctSum = new Map<string, number>();
 
@@ -268,6 +273,8 @@ export function buildLeaderboardRows(event: LeagueEvent): LeaderboardRow[] {
     hits.set(participantId, 0);
     attempts.set(participantId, 0);
     matchesPlayed.set(participantId, 0);
+    matchesWon.set(participantId, 0);
+    matchesLost.set(participantId, 0);
     roundsPlayed.set(participantId, 0);
     oppWinPctSum.set(participantId, 0);
   }
@@ -322,6 +329,11 @@ export function buildLeaderboardRows(event: LeagueEvent): LeaderboardRow[] {
 
       if (side1.length > 0 && side2.length > 0) {
         for (const id of [...side1, ...side2]) add(matchesPlayed, id, 1);
+        if (winners.length > 0) {
+          for (const id of [...side1, ...side2]) {
+            add(winners.includes(id) ? matchesWon : matchesLost, id, 1);
+          }
+        }
       }
 
       const tally = (id: string, side: MatchSide) => {
@@ -406,6 +418,8 @@ export function buildLeaderboardRows(event: LeagueEvent): LeaderboardRow[] {
       ),
       sos,
       matchesPlayed: played,
+      matchesWon: matchesWon.get(participant.id) ?? 0,
+      matchesLost: matchesLost.get(participant.id) ?? 0,
       roundsPlayed: roundsPlayed.get(participant.id) ?? 0,
       basePosition: basePosition.get(participant.id) ?? 0,
     };

@@ -22,6 +22,10 @@ function LeaguesContent() {
       <FeaturedLeagues />
       <FavouriteLeagues />
       <LeagueSearch />
+      <p className="text-sm text-muted-foreground">
+        In the dgputt mobile app, allow location access to see active leagues
+        and events nearest to you first.
+      </p>
       <LeagueFilters />
       <AllLeagues />
       <ArchivedLeagues />

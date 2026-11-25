@@ -21,15 +21,17 @@ import {
 } from "@/app/components/layout/data-source";
 
 const navLinks = [
-  { href: "/about", label: "About" },
-  { href: "/guide", label: "Guide" },
+  { href: "/about", label: "App Features" },
+  { href: "/guide", label: "League guide" },
   { href: "/team", label: "Team" },
   { href: "/contact", label: "Contact" },
 ];
+const liveScoresLink = { href: "/leagues", label: "Live scores" };
 
 export default function Header() {
   const { user, loading, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const visibleNavLinks = !loading && user ? [...navLinks, liveScoresLink] : navLinks;
 
   return (
     <>
@@ -46,7 +48,7 @@ export default function Header() {
 
         {/* Desktop nav - left side */}
         <nav className="hidden md:flex items-center gap-6 ml-8">
-          {navLinks.map((link) => (
+          {visibleNavLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -55,14 +57,6 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
-          {!loading && user && (
-            <Link
-              href="/leagues"
-              className="text-sm font-medium hover:text-primary transition-colors"
-            >
-              Leagues
-            </Link>
-          )}
         </nav>
 
         {/* Desktop login/logout - right side */}
@@ -98,7 +92,7 @@ export default function Header() {
                 </SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-2 px-6">
-                {navLinks.map((link) => (
+                {visibleNavLinks.map((link) => (
                   <SheetClose
                     key={link.href}
                     nativeButton={false}
@@ -112,19 +106,6 @@ export default function Header() {
                     {link.label}
                   </SheetClose>
                 ))}
-                {!loading && user && (
-                  <SheetClose
-                    nativeButton={false}
-                    render={
-                      <Link
-                        href="/leagues"
-                        className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted transition-colors"
-                      />
-                    }
-                  >
-                    Leagues
-                  </SheetClose>
-                )}
                 <div className="my-2 h-px bg-border" />
                 <DataSourceToggle className="self-start" />
                 {!loading &&
