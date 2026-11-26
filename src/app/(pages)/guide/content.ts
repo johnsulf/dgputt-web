@@ -40,16 +40,16 @@ export const quickStart = [
 
 export const benefits = [
   {
-    title: "Build the putting event you want",
-    body: "Run a Classic club night, give players a Flex window, or draw an elimination bracket. Pick StormPutt, Cornhole or Stations. With Stations, choose your own distances, putt counts, scoring weights and bonuses, then decide how to win: points, a target score, HORSE, Survival or time. Save a setup as a template for your next event.",
-  },
-  {
     title: "No spreadsheets",
     body: "Placements, season points and best-rounds scoring are calculated for you.",
   },
   {
+    title: "Build the putting event you want",
+    body: "With Stations, choose the distance, number of putts and points per make at every station. Add bonus points for making the first putt, the last putt or every putt. Set a target score, play HORSE, race the clock or run a Survival game where every miss costs a life. Save your setup as a template for the next event.",
+  },
+  {
     title: "Online or in person",
-    body: "Let players putt whenever they like, or run a classic event at one venue with groups.",
+    body: "Bring players together for a Classic club night or an elimination bracket. With Flex, give players a window to putt on their own schedule, at the venue or online.",
   },
   {
     title: "Live leaderboard for TVs",

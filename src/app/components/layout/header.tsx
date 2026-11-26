@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { HashRedirect } from "@/app/utils/hash-redirect";
 import { useAuth } from "@/lib/auth-context";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Sheet,
   SheetTrigger,
@@ -27,6 +28,7 @@ const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 const liveScoresLink = { href: "/leagues", label: "Live scores" };
+const loginLabel = "Log in for live league scores";
 
 export default function Header() {
   const { user, loading, signOut } = useAuth();
@@ -68,8 +70,8 @@ export default function Header() {
                 Log out
               </Button>
             ) : (
-              <Link href="/auth">
-                <Button size="sm">Login</Button>
+              <Link href="/auth" className={buttonVariants({ size: "sm" })}>
+                {loginLabel}
               </Link>
             ))}
         </div>
@@ -123,9 +125,17 @@ export default function Header() {
                   ) : (
                     <SheetClose
                       nativeButton={false}
-                      render={<Link href="/auth" className="w-full" />}
+                      render={
+                        <Link
+                          href="/auth"
+                          className={cn(
+                            buttonVariants(),
+                            "h-auto min-h-11 w-full whitespace-normal py-2 text-center",
+                          )}
+                        />
+                      }
                     >
-                      <Button className="w-full">Login</Button>
+                      {loginLabel}
                     </SheetClose>
                   ))}
               </nav>

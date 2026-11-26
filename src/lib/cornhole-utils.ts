@@ -31,6 +31,7 @@ export interface Participant {
   division?: string;
   pdgaNumber?: string;
   members: string[];
+  memberUids: string[];
 }
 
 export interface LeaderboardRow {
@@ -157,23 +158,24 @@ export function buildParticipants(event: LeagueEvent): {
         division: player.division,
         pdgaNumber: player.pdgaNumber || undefined,
         members: [player.displayName ?? player.name ?? "Unknown"],
+        memberUids: [uid],
       });
     }
     return { participants, memberToTeam, isDoubles };
   }
 
-  const teamMembers = new Map<string, LeagueEventPlayer[]>();
+  const teamMembers = new Map<string, { uid: string; player: LeagueEventPlayer }[]>();
 
   for (const [uid, player] of entries) {
     const teamId = player.pairId ?? uid;
     if (!teamMembers.has(teamId)) teamMembers.set(teamId, []);
-    teamMembers.get(teamId)?.push(player);
+    teamMembers.get(teamId)?.push({ uid, player });
     memberToTeam.set(uid, teamId);
   }
 
   for (const [teamId, members] of teamMembers.entries()) {
     const names = members
-      .map((m) => m.displayName ?? m.name ?? "Unknown")
+      .map(({ player }) => player.displayName ?? player.name ?? "Unknown")
       .filter((name) => name.trim().length > 0);
     const teamName =
       event.pairNames?.[teamId] ??
@@ -182,8 +184,9 @@ export function buildParticipants(event: LeagueEvent): {
     participants.set(teamId, {
       id: teamId,
       name: teamName,
-      division: event.pairDivisions?.[teamId] ?? members[0]?.division,
+      division: event.pairDivisions?.[teamId] ?? members[0]?.player.division,
       members: names,
+      memberUids: members.map(({ uid }) => uid),
     });
   }
 
@@ -244,12 +247,21 @@ export function ensureParticipant(
   participants: Map<string, Participant>,
   id: string,
   fallbackName: string,
+  memberUids: string[] = [id],
 ): void {
-  if (!id || id === "BYE" || participants.has(id)) return;
+  if (!id || id === "BYE") return;
+  const existing = participants.get(id);
+  if (existing) {
+    if (memberUids.length > existing.memberUids.length) {
+      existing.memberUids = memberUids;
+    }
+    return;
+  }
   participants.set(id, {
     id,
     name: fallbackName || "Unknown",
     members: fallbackName ? [fallbackName] : ["Unknown"],
+    memberUids,
   });
 }
 
@@ -289,14 +301,19 @@ export function buildLeaderboardRows(event: LeagueEvent): LeaderboardRow[] {
     ids.forEach((list, i) => {
       const side = i === 0 ? match.player1 : match.player2;
       for (const id of list) {
-        if (!participants.has(id)) {
-          const member = side.members?.find((m) => m.uid === id);
-          ensureParticipant(
-            participants,
-            id,
-            member?.displayName ?? sideName(event, side),
-          );
-        }
+        const participant = participants.get(id);
+        if (participant && (!isDoubles || participant.memberUids.length >= 2))
+          continue;
+        const member = side.members?.find((m) => m.uid === id);
+        const memberUids = isDoubles
+          ? [...new Set(side.members?.flatMap(({ uid }) => (uid ? [uid] : [])))]
+          : [id];
+        ensureParticipant(
+          participants,
+          id,
+          member?.displayName ?? sideName(event, side),
+          memberUids,
+        );
       }
     });
     return [ids[0], ids[1]];

@@ -8,6 +8,7 @@ import {
 } from "@/lib/league-leaderboard-utils";
 import { pointsTable, STANDARD_POINTS_SYSTEM } from "@/lib/points-system";
 import {
+  getAvailableScoreFormat,
   getScoreFormats,
   buildCornholeScores,
   buildRoundScores,
@@ -299,18 +300,18 @@ function StandingsView({
   search,
   modeToggle,
 }: ViewProps) {
-  const [formatFilter, setFormatFilter] = useState<ScoreFormat | null>(null);
+  const [pickedFormat, setPickedFormat] = useState<ScoreFormat | null>(null);
+  const formats = useMemo(
+    () => getScoreFormats(league, seasonFilter),
+    [league, seasonFilter],
+  );
+  const formatFilter = getAvailableScoreFormat(formats, pickedFormat) ?? null;
   const system = league.pointsSystem ?? STANDARD_POINTS_SYSTEM;
   // Places that earn no more than the floor are shown as one "N+" row.
   const table = pointsTable(system).filter((points) => points > system.floor);
   const { counting, total } = useMemo(
     () => standingsCutoff(league, { seasonFilter, formatFilter }),
     [league, seasonFilter, formatFilter],
-  );
-
-  const formats = useMemo(
-    () => getScoreFormats(league, seasonFilter),
-    [league, seasonFilter],
   );
 
   const entries = useMemo(
@@ -339,14 +340,14 @@ function StandingsView({
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {modeToggle}
-        {formats.length > 1 && (
+        {formats.length > 0 && (
           <FormatDropdown
             label={
               formatFilter ? scoreFormatLabel(formatFilter) : "All Formats"
             }
             value={formatFilter ?? "all"}
             onChange={(v) =>
-              setFormatFilter(v === "all" ? null : (v as ScoreFormat))
+              setPickedFormat(v === "all" ? null : (v as ScoreFormat))
             }
             options={[
               { value: "all", label: "All Formats" },
@@ -395,10 +396,8 @@ function StandingsView({
             <p className="mt-2 text-xs text-muted-foreground">
               Players who do not complete the event receive 0 points. In doubles
               events, both team members receive the team&apos;s placement
-              points. When a player takes part in more than one event of the
-              same format on the same night, their best result counts in full
-              and the others at half, rounded up. The event cut-off does not
-              apply when a single format is selected.
+              points. Selecting a format counts every finished event in that
+              format.
             </p>
           </InfoDialog>
         </div>
@@ -444,7 +443,7 @@ function ScoresView({ league, seasonFilter, search, modeToggle }: ViewProps) {
   );
   const [picked, setPicked] = useState<ScoreFormat | null>(null);
   // Fall back to the first format when the pick has no events (season change).
-  const format = picked && formats.includes(picked) ? picked : formats[0];
+  const format = getAvailableScoreFormat(formats, picked) ?? formats[0];
 
   const cornhole = format ? isCornholeScore(format) : false;
 

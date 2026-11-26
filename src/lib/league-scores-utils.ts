@@ -1,5 +1,5 @@
 import type { LeagueEvent, LeagueInstance } from "@/app/interfaces/league";
-import { groupPlayersForDoubles } from "./stormputt-utils";
+import { groupPlayersForDoubles, teamMembersById } from "./stormputt-utils";
 import { getStations } from "./stations-utils";
 import { buildLeaderboardRows, isFloatingTeams } from "./cornhole-utils";
 
@@ -70,12 +70,25 @@ export function getScoreFormats(
   ].filter((f) => present.has(f));
 }
 
+export function getAvailableScoreFormat(
+  formats: ScoreFormat[],
+  picked: ScoreFormat | null,
+): ScoreFormat | undefined {
+  return picked && formats.includes(picked) ? picked : undefined;
+}
+
 /**
- * Teams are named, and the same pair meets again in later events under new
- * ids, so they are matched by name. Individuals are matched by uid.
+ * Pair IDs are specific to an event. Only a known roster can identify a team
+ * across events.
  */
-function participantKey(id: string, name: string, isTeam: boolean): string {
-  return isTeam ? `team:${name}` : id;
+function teamScoreKey(
+  eventId: string,
+  teamId: string,
+  memberUids: string[],
+): string {
+  return memberUids.length >= 2
+    ? `team:${JSON.stringify([...memberUids].sort())}`
+    : `event-team:${JSON.stringify([eventId, teamId])}`;
 }
 
 export interface CornholeScoreRow {
@@ -103,8 +116,8 @@ export function buildCornholeScores(
     const isTeam = event.playerMode === "doubles" && !isFloatingTeams(event);
 
     for (const row of buildLeaderboardRows(event)) {
-      const { id, name } = row.participant;
-      const key = participantKey(id, name, isTeam);
+      const { id, name, memberUids } = row.participant;
+      const key = isTeam ? teamScoreKey(event.id, id, memberUids) : id;
       let entry = map.get(key);
       if (!entry) {
         entry = {
@@ -175,10 +188,17 @@ export function buildRoundScores(
     const players = isDoubles
       ? groupPlayersForDoubles(raw, event.pairNames, event.pairDivisions)
       : raw;
+    const membersByTeam = isDoubles ? teamMembersById(raw) : undefined;
 
     for (const [uid, player] of Object.entries(players)) {
       const name = player.displayName ?? player.name ?? "Unknown";
-      const key = participantKey(uid, name, isDoubles);
+      const key = isDoubles
+        ? teamScoreKey(
+            event.id,
+            uid,
+            membersByTeam?.get(uid)?.map((member) => member.uid) ?? [],
+          )
+        : uid;
       for (const round of player.rounds ?? []) {
         if (round.dns === true || round.dnf === true) continue;
         if (round.finished !== true) continue;

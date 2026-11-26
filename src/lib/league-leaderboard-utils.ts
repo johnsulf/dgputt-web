@@ -24,30 +24,15 @@ export interface EventPlacement {
   eventTitle: string;
   format: string;
   place: number;
-  /** After the same-night reduction. */
   points: number;
-}
-
-/** Share of points an extra event on the same night pays. */
-const SAME_NIGHT_FACTOR = 0.5;
-
-/**
- * Events of one format on one date are one night. A player's best result that
- * night pays in full and their other results at half, rounded up.
- */
-function nightKey(event: LeagueEvent): string {
-  const day = event.date?.slice(0, 10);
-  return day
-    ? `${day}|${scoreFormatOf(event) ?? event.format ?? ""}`
-    : event.id;
 }
 
 export interface LeaderboardEntry {
   uid: string;
   name: string;
-  /** Points that count: the best N adjusted event results. */
+  /** Points from the best N event results. */
   totalPoints: number;
-  /** Adjusted points over every event, the tiebreak behind totalPoints. */
+  /** Points over every event, the tiebreak behind totalPoints. */
   allPoints: number;
   eventCount: number;
   wins: number;
@@ -193,10 +178,6 @@ type StandingsOpts = {
   formatFilter?: ScoreFormat | null;
 };
 
-/**
- * The finished events standings add up, by season and format. An event that
- * opts out of Overall gives no standings points anywhere.
- */
 function standingsEvents(
   league: LeagueInstance,
   opts?: StandingsOpts,
@@ -204,10 +185,9 @@ function standingsEvents(
   return (league.events ?? []).filter((e) => {
     if (!e.finished) return false;
     if (opts?.seasonFilter && e.seasonId !== opts.seasonFilter) return false;
-    if (e.countsInAllFormats === false) return false;
-    if (opts?.formatFilter && scoreFormatOf(e) !== opts.formatFilter)
-      return false;
-    return true;
+    return opts?.formatFilter
+      ? scoreFormatOf(e) === opts.formatFilter
+      : e.countsInAllFormats !== false;
   });
 }
 
@@ -227,9 +207,8 @@ export function standingsCutoff(
 }
 
 /**
- * Build the league leaderboard from all finished events.
- * Optionally filters events by season and format. Each player's best `validRounds` results count, with a reduction
- * for extra events on the same night.
+ * Build the league leaderboard from finished events, optionally filtered by season and format.
+ * The league's counting share determines how many results count in the combined standings.
  */
 export function buildLeagueLeaderboard(
   league: LeagueInstance,
@@ -244,7 +223,7 @@ export function buildLeagueLeaderboard(
     string,
     {
       name: string;
-      placements: (EventPlacement & { night: string })[];
+      placements: EventPlacement[];
       hits: number;
       putts: number;
     }
@@ -268,7 +247,6 @@ export function buildLeagueLeaderboard(
         format: event.format ?? "",
         place,
         points: pointsForPlace(system, place),
-        night: nightKey(event),
       });
     }
   }
@@ -276,25 +254,15 @@ export function buildLeagueLeaderboard(
   // Build leaderboard entries
   const entries: LeaderboardEntry[] = [];
   for (const [uid, { name, placements, hits, putts }] of playerMap) {
-    // Within a night the best result pays in full, the rest at half.
-    const byNight = new Map<string, EventPlacement[]>();
-    for (const p of placements) {
-      byNight.set(p.night, [...(byNight.get(p.night) ?? []), p]);
-    }
-    for (const group of byNight.values()) {
-      group.sort((a, b) => b.points - a.points);
-      group.slice(1).forEach((p) => {
-        p.points = Math.ceil(p.points * SAME_NIGHT_FACTOR);
-      });
-    }
-
-    // Only the best N adjusted results count.
-    const totalPoints = placements
-      .map((p) => p.points)
-      .sort((a, b) => b - a)
-      .slice(0, counting ?? undefined)
-      .reduce((sum, p) => sum + p, 0);
     const allPoints = placements.reduce((sum, p) => sum + p.points, 0);
+    const totalPoints =
+      counting == null
+        ? allPoints
+        : placements
+            .map((p) => p.points)
+            .sort((a, b) => b - a)
+            .slice(0, counting)
+            .reduce((sum, points) => sum + points, 0);
 
     const wins = placements.filter((p) => p.place === 1).length;
     const seconds = placements.filter((p) => p.place === 2).length;

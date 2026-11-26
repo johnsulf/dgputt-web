@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { AppStoreLinks } from "@/app/components/app-store-links";
+import { ScreenshotPreview } from "@/app/components/screenshot-preview";
 import { JsonLd, pageMetadata } from "@/lib/seo";
 import { softwareApplication } from "@/lib/structured-data";
 import {
   Card,
+  CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { RulerIcon, Watch01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Accordion,
   AccordionItem,
@@ -30,8 +35,13 @@ export const metadata: Metadata = pageMetadata({
   path: "/about",
   title: "About dgputt - Games, Features & Pricing",
   description:
-    "Explore dgputt’s putting games, including Streak and Aim, plus progress tracking, course rounds, competitive leagues and pricing.",
+    "Explore dgputt’s putting games, Apple Watch and Wear OS scoring, AR Measure, progress tracking, competitive leagues and pricing.",
 });
+
+const watchScreenshot = {
+  src: "/images/screenshots/watch-stormputt.png",
+  alt: "StormPutt on Wear OS showing score buttons for the first station at 5 metres",
+};
 
 const freeGames = [
   {
@@ -238,14 +248,69 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Distances */}
-      <section className="space-y-4 max-w-3xl">
-        <h2>Distances</h2>
-        <p>
-          Distances can be configured in meters or feet. Games support a normal
-          range (5–10 m / 16–33 ft), a long range (10–15 m / 33–50 ft), and a
-          full range (4–15 m).
-        </p>
+      <section aria-labelledby="practice-tools" className="max-w-3xl space-y-4">
+        <h2 id="practice-tools">Practice tools</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card id="watch-app" className="scroll-mt-8 gap-4">
+            <CardHeader className="gap-2">
+              <div className="flex items-center gap-3">
+                <HugeiconsIcon icon={Watch01Icon} size={24} aria-hidden="true" />
+                <h3>Watch app</h3>
+              </div>
+              <CardDescription className="text-base">
+                On Apple Watch and Wear OS, start a practice round and record
+                makes from your wrist. Finished rounds sync to your dgputt
+                profile.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p>
+                Play StormPutt, Twenty, Fifty, JYLY, Frøysa or Hundred.
+                Hundred requires Premium.
+              </p>
+              <figure className="space-y-2 text-center">
+                <ScreenshotPreview {...watchScreenshot} className="mx-auto w-36">
+                  <Image
+                    src={watchScreenshot.src}
+                    alt={watchScreenshot.alt}
+                    width={432}
+                    height={432}
+                    className="size-full rounded-full"
+                  />
+                </ScreenshotPreview>
+                <figcaption className="text-xs text-muted-foreground">
+                  Scoring StormPutt on Wear OS
+                </figcaption>
+              </figure>
+            </CardContent>
+          </Card>
+          <Card id="ar-measure" className="scroll-mt-8 gap-4">
+            <CardHeader className="gap-2">
+              <div className="flex items-center gap-3">
+                <HugeiconsIcon icon={RulerIcon} size={24} aria-hidden="true" />
+                <h3>AR Measure</h3>
+              </div>
+              <CardDescription className="text-base">
+                Set up your practice stations with your phone camera. Measure
+                overlays distance rings from 4 to 15 metres around the basket
+                and shows your distance as you walk.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <ol className="list-decimal space-y-2 pl-5">
+                <li>Open the Putt tab and tap the ruler icon.</li>
+                <li>
+                  Aim at the base of the basket pole, set the origin, then
+                  confirm the alignment.
+                </li>
+                <li>Walk the green and place your markers at the rings you need.</li>
+              </ol>
+              <p className="text-muted-foreground">
+                Works on iPhones with ARKit and Android phones with ARCore.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </section>
 
       {/* Round Tracking */}

@@ -480,9 +480,9 @@ export default function GuidePage() {
             </a>
           </section>
 
-          <section className="space-y-4">
+          <section id="why-dgputt" className="scroll-mt-8 space-y-4">
             <h2>Why run your putting league on dgputt</h2>
-            <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2 [&>div:first-child]:rounded-2xl [&>div:first-child]:border [&>div:first-child]:border-l-4 [&>div:first-child]:border-l-secondary [&>div:first-child]:bg-card [&>div:first-child]:p-4 sm:[&>div:first-child]:col-span-2">
+            <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
               {benefits.map((benefit) => (
                 <div key={benefit.title}>
                   <dt className="font-semibold">{benefit.title}</dt>
