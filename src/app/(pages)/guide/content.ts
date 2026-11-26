@@ -45,7 +45,7 @@ export const benefits = [
   },
   {
     title: "Build the putting event you want",
-    body: "With Stations, choose the distance, number of putts and points per make at every station. Add bonus points for making the first putt, the last putt or every putt. Set a target score, play HORSE, race the clock or run a Survival game where every miss costs a life. Save your setup as a template for the next event.",
+    body: "Set your own distances, putt counts, scoring and bonuses with Stations. Play HORSE, chase a target score, race the clock or see who can hang on in Survival. Save your favorite setup as a template.",
   },
   {
     title: "Online or in person",
