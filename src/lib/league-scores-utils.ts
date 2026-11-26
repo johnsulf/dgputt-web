@@ -2,6 +2,7 @@ import type { LeagueEvent, LeagueInstance } from "@/app/interfaces/league";
 import { groupPlayersForDoubles, teamMembersById } from "./stormputt-utils";
 import { getStations } from "./stations-utils";
 import { buildLeaderboardRows, isFloatingTeams } from "./cornhole-utils";
+import { DEFAULT_SHARE, shareCount } from "./points-system";
 
 export type ScoreBase = "cornhole" | "stormputt" | "stations";
 
@@ -164,27 +165,43 @@ export interface RoundScoreRow {
   bestHits: number;
 }
 
-/**
- * StormPutt and Stations: hits per round, ranked on the sum of a player's
- * best `validRounds` rounds across all events.
- */
+interface RoundScores {
+  rows: RoundScoreRow[];
+  counting: number | null;
+  total: number;
+}
+
+/** Rank StormPutt and Stations by hits in the rounds that count. */
 export function buildRoundScores(
   league: LeagueInstance,
   format: ScoreFormat,
-  seasonFilter?: string | null,
-): RoundScoreRow[] {
-  const validRounds = league.validRounds ?? 10;
+  {
+    seasonFilter,
+    formatSelected = false,
+  }: {
+    seasonFilter?: string | null;
+    formatSelected?: boolean;
+  } = {},
+): RoundScores {
+  let total = 0;
   const map = new Map<
     string,
     { name: string; hits: number[]; putts: number }
   >();
 
   for (const event of finishedEvents(league, seasonFilter)) {
-    if (scoreFormatOf(event) !== format) continue;
+    if (scoreFormatOf(event) !== format || !event.players) continue;
     const isDoubles = event.playerMode === "doubles";
     const isStations = event.format === "stations";
     const numStations = isStations ? getStations(event).length : 0;
-    const raw = event.players ?? {};
+    const raw = event.players;
+    total +=
+      event.rounds && event.rounds > 0
+        ? event.rounds
+        : Object.values(raw).reduce(
+            (rounds, player) => Math.max(rounds, player.rounds?.length ?? 0),
+            0,
+          );
     const players = isDoubles
       ? groupPlayersForDoubles(raw, event.pairNames, event.pairDivisions)
       : raw;
@@ -225,27 +242,33 @@ export function buildRoundScores(
     }
   }
 
+  const share = shareCount(league.validRoundsShare ?? DEFAULT_SHARE, total);
+  const counting = formatSelected || share >= total ? null : share;
   const rows: RoundScoreRow[] = [];
   for (const [key, { name, hits, putts }] of map) {
-    const total = hits.reduce((a, b) => a + b, 0);
-    const bestHits = [...hits]
-      .sort((a, b) => b - a)
-      .slice(0, validRounds)
-      .reduce((a, b) => a + b, 0);
+    const totalHits = hits.reduce((a, b) => a + b, 0);
+    const bestHits =
+      counting == null
+        ? totalHits
+        : hits
+            .sort((a, b) => b - a)
+            .slice(0, counting)
+            .reduce((sum, roundHits) => sum + roundHits, 0);
     rows.push({
       key,
       name,
       rounds: hits.length,
-      hits: total,
+      hits: totalHits,
       putts,
-      hitPct: putts > 0 ? (total / putts) * 100 : 0,
+      hitPct: putts > 0 ? (totalHits / putts) * 100 : 0,
       bestHits,
     });
   }
-  return rows.sort(
+  rows.sort(
     (a, b) =>
       b.bestHits - a.bestHits ||
       b.hitPct - a.hitPct ||
       a.name.localeCompare(b.name),
   );
+  return { rows, counting, total };
 }

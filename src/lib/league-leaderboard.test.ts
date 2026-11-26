@@ -85,6 +85,93 @@ describe("league standings", () => {
       buildLeagueLeaderboard(data, { seasonFilter, formatFilter })[0].totalPoints,
     ).toBe(25);
   });
+
+  it("breaks points ties on hit percentage before all-event points or name", () => {
+    const alice = { displayName: "Alice", rounds: [{ ...round, hits: 2 }] };
+    const zoe = { displayName: "Zoe", rounds: [{ ...round, hits: 9 }] };
+    const data: LeagueInstance = {
+      ...league([
+        stormPutt("one", { players: { alice } }),
+        stormPutt("two", { players: { alice } }),
+        stormPutt("three", { players: { zoe } }),
+        stormPutt("four", { players: { alice, zoe } }),
+      ]),
+      validRoundsShare: "half",
+    };
+
+    expect(buildLeagueLeaderboard(data)).toMatchObject([
+      { name: "Zoe", position: 1, totalPoints: 50, allPoints: 50 },
+      { name: "Alice", position: 2, totalPoints: 50, allPoints: 68 },
+    ]);
+  });
+
+  it("shares the rank when points and hit percentage both tie", () => {
+    const data: LeagueInstance = {
+      ...league([
+        stormPutt("one", {
+          players: {
+            cam: { displayName: "Cam", rounds: [round] },
+            ada: { displayName: "Ada", rounds: [round] },
+            bee: { displayName: "Bee", rounds: [{ ...round, hits: 8 }] },
+          },
+        }),
+      ]),
+      pointsSystem: { kind: "custom", places: [1], floor: 1 },
+    };
+
+    expect(buildLeagueLeaderboard(data)).toMatchObject([
+      { name: "Ada", position: 1 },
+      { name: "Cam", position: 1 },
+      { name: "Bee", position: 3 },
+    ]);
+  });
+});
+
+describe("round Scores", () => {
+  const event = stormPutt("long-event", {
+    players: { ada: { rounds: Array.from({ length: 11 }, () => round) } },
+  });
+
+  it.each([
+    { share: "half", counting: 6, bestHits: 60 },
+    { share: "twoThirds", counting: 8, bestHits: 80 },
+    { share: "all", counting: null, bestHits: 110 },
+  ] as const)(
+    "ranks rounds using the $share share",
+    ({ share, counting, bestHits }) => {
+      const data = { ...league([event]), validRoundsShare: share };
+
+      expect(buildRoundScores(data, "stormputt")).toMatchObject({
+        total: 11,
+        counting,
+        rows: [{ rounds: 11, hits: 110, bestHits }],
+      });
+    },
+  );
+
+  it("counts every round when the format is selected", () => {
+    const data: LeagueInstance = { ...league([event]), validRoundsShare: "half" };
+
+    expect(
+      buildRoundScores(data, "stormputt", { formatSelected: true }),
+    ).toMatchObject({ total: 11, counting: null, rows: [{ bestHits: 110 }] });
+  });
+
+  it("calculates the share from the selected season's finished event rounds", () => {
+    const data: LeagueInstance = {
+      ...league([
+        stormPutt("configured", { seasonId: "winter", rounds: 5 }),
+        stormPutt("legacy", { seasonId: "winter" }),
+        stormPutt("in-progress", { seasonId: "winter", finished: false }),
+        stormPutt("summer", { seasonId: "summer", rounds: 5 }),
+      ]),
+      validRoundsShare: "half",
+    };
+
+    expect(
+      buildRoundScores(data, "stormputt", { seasonFilter: "winter" }),
+    ).toMatchObject({ total: 6, counting: 3, rows: [{ bestHits: 20 }] });
+  });
 });
 
 function doublesEvent(
@@ -130,10 +217,9 @@ describe.each(["stormputt", "cornhole"] as const)("%s doubles Scores", (format) 
         ? buildCornholeScores(data, "cornhole:doubles")
             .filter(({ name }) => name !== "Opponent")
             .map(({ name, played }) => ({ name, events: played }))
-        : buildRoundScores(data, "stormputt:doubles").map(({ name, rounds }) => ({
-            name,
-            events: rounds,
-          }));
+        : buildRoundScores(data, "stormputt:doubles").rows.map(
+            ({ name, rounds }) => ({ name, events: rounds }),
+          );
 
     expect(teams).toEqual([
       { name: "The Aces", events: 2 },

@@ -98,8 +98,7 @@ const SHARE_FRACTION: Record<ValidRoundsShare, [number, number]> = {
 };
 
 /**
- * How many of `total` events count: the share, rounded up so a share never
- * drops an event the league has played, and never below one.
+ * How many events or rounds count toward rank, rounded up and at least one.
  */
 export function shareCount(share: ValidRoundsShare, total: number): number {
   if (total <= 0) return 1;

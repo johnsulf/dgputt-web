@@ -249,12 +249,19 @@ function InfoDialog({
           </Button>
         }
       />
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+      <DialogContent className="flex max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] flex-col gap-3">
+        <DialogHeader className="shrink-0">
+          <DialogTitle className="pr-7">{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        {children}
+        <div
+          role="region"
+          aria-label={`${title} details`}
+          tabIndex={0}
+          className="min-h-0 overflow-y-auto overscroll-contain"
+        >
+          {children}
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -322,8 +329,8 @@ function StandingsView({
   const data = useMemo<StandingsRow[]>(
     () =>
       entries
-        .map((entry, i) => ({
-          position: i + 1,
+        .map((entry) => ({
+          position: entry.position,
           name: entry.name,
           events: entry.eventCount,
           wins: entry.wins,
@@ -436,14 +443,14 @@ const cornholeColumns: ColumnDef<CornholeTableRow>[] = [
 ];
 
 function ScoresView({ league, seasonFilter, search, modeToggle }: ViewProps) {
-  const validRounds = league.validRounds ?? 10;
   const formats = useMemo(
     () => getScoreFormats(league, seasonFilter),
     [league, seasonFilter],
   );
   const [picked, setPicked] = useState<ScoreFormat | null>(null);
-  // Fall back to the first format when the pick has no events (season change).
-  const format = getAvailableScoreFormat(formats, picked) ?? formats[0];
+  const selectedFormat =
+    formats.length > 1 ? getAvailableScoreFormat(formats, picked) : undefined;
+  const format = selectedFormat ?? formats[0];
 
   const cornhole = format ? isCornholeScore(format) : false;
 
@@ -457,18 +464,29 @@ function ScoresView({ league, seasonFilter, search, modeToggle }: ViewProps) {
     [league, format, cornhole, seasonFilter, search],
   );
 
-  const roundData = useMemo<RoundTableRow[]>(
+  const roundScores = useMemo(
     () =>
       format && !cornhole
-        ? buildRoundScores(league, format, seasonFilter)
-            .map((r, i) => ({ ...r, position: i + 1 }))
-            .filter((r) => matchesSearch(r.name, search))
-        : [],
-    [league, format, cornhole, seasonFilter, search],
+        ? buildRoundScores(league, format, {
+            seasonFilter,
+            formatSelected: selectedFormat !== undefined,
+          })
+        : null,
+    [league, format, cornhole, seasonFilter, selectedFormat],
+  );
+  const counting = roundScores?.counting ?? null;
+  const totalRounds = roundScores?.total ?? 0;
+
+  const roundData = useMemo<RoundTableRow[]>(
+    () =>
+      (roundScores?.rows ?? [])
+        .map((r, i) => ({ ...r, position: i + 1 }))
+        .filter((r) => matchesSearch(r.name, search)),
+    [roundScores, search],
   );
 
-  const roundColumns = useMemo<ColumnDef<RoundTableRow>[]>(
-    () => [
+  const roundColumns = useMemo(() => {
+    const columns: ColumnDef<RoundTableRow>[] = [
       positionColumn<RoundTableRow>(),
       nameColumn<RoundTableRow>(),
       { accessorKey: "rounds", header: "Rounds", enableSorting: true },
@@ -479,17 +497,19 @@ function ScoresView({ league, seasonFilter, search, modeToggle }: ViewProps) {
         enableSorting: true,
         cell: ({ row }) => `${Math.round(row.original.hitPct)}%`,
       },
-      {
+    ];
+    if (counting != null) {
+      columns.push({
         accessorKey: "bestHits",
-        header: `Best ${validRounds}`,
+        header: `Best ${counting}`,
         enableSorting: true,
         cell: ({ row }) => (
           <span className="font-semibold">{row.original.bestHits}</span>
         ),
-      },
-    ],
-    [validRounds],
-  );
+      });
+    }
+    return columns;
+  }, [counting]);
 
   if (!format) {
     return (
@@ -514,18 +534,22 @@ function ScoresView({ league, seasonFilter, search, modeToggle }: ViewProps) {
         {formats.length > 1 && (
           <FormatDropdown
             label={scoreFormatLabel(format)}
-            value={format}
-            onChange={(v) => setPicked(v as ScoreFormat)}
-            options={formats.map((f) => ({
-              value: f,
-              label: scoreFormatLabel(f),
-            }))}
+            value={selectedFormat ?? "default"}
+            onChange={(v) =>
+              setPicked(v === "default" ? null : (v as ScoreFormat))
+            }
+            options={[
+              { value: "default", label: "League default" },
+              ...formats.map((f) => ({ value: f, label: scoreFormatLabel(f) })),
+            ]}
           />
         )}
         <div className="ml-auto flex items-center gap-2">
           {!cornhole && (
             <Badge variant="outline" className="text-xs">
-              Best {validRounds} rounds
+              {counting == null
+                ? `All ${totalRounds} rounds count`
+                : `Best ${counting} of ${totalRounds} rounds`}
             </Badge>
           )}
           <InfoDialog
@@ -533,28 +557,34 @@ function ScoresView({ league, seasonFilter, search, modeToggle }: ViewProps) {
             description={
               cornhole
                 ? "Ranked by matches won, then hit percentage. Byes are not counted as played matches."
-                : `Ranked by hits in the best ${validRounds} rounds across all events. Hits and Hit % cover every round played.`
+                : counting == null
+                  ? "Ranked by total hits across all finished rounds."
+                  : `Ranked by hits in the best ${counting} rounds. Hits and Hit % cover every finished round.`
             }
           >
             <p className="text-xs text-muted-foreground">
               {cornhole
                 ? "Hit % is bags landed in the hole as a share of bags thrown."
-                : "The number of rounds that count is set in the league settings."}
+                : selectedFormat
+                  ? "Selecting a format counts every finished round in that format."
+                  : "The league settings determine how many rounds count."}
             </p>
           </InfoDialog>
         </div>
       </div>
       {cornhole ? (
         <RankedTable
+          key="cornhole"
           data={cornholeData}
           columns={cornholeColumns}
           initialSort="won"
         />
       ) : (
         <RankedTable
+          key={counting == null ? "all-rounds" : "best-rounds"}
           data={roundData}
           columns={roundColumns}
-          initialSort="bestHits"
+          initialSort={counting == null ? "hits" : "bestHits"}
         />
       )}
     </>

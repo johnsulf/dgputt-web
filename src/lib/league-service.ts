@@ -86,7 +86,6 @@ export async function fetchLeagueDetails(
     format: typeof data.format === "string" ? data.format : undefined,
     validRoundsShare: parseValidRoundsShare(data.validRoundsShare),
     pointsSystem: parsePointsSystem(data.pointsSystem),
-    validRounds: typeof data.validRounds === "number" ? data.validRounds : 10,
     admins: Array.isArray(data.admins) ? (data.admins as string[]) : undefined,
     divisions:
       Array.isArray(data.divisions) &&

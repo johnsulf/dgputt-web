@@ -15,8 +15,7 @@ export interface LeagueInstance {
   divisions?: string[];
   competitionType?: string;
   format?: string;
-  validRounds?: number;
-  /** Share of events that count in standings. */
+  /** Share of events in standings or rounds in Scores that count toward rank. */
   validRoundsShare?: ValidRoundsShare;
   /** How event placings turn into standings points. */
   pointsSystem?: PointsSystem;

@@ -30,15 +30,16 @@ export interface EventPlacement {
 export interface LeaderboardEntry {
   uid: string;
   name: string;
+  position: number;
   /** Points from the best N event results. */
   totalPoints: number;
-  /** Points over every event, the tiebreak behind totalPoints. */
+  /** Points over every event before the league's cutoff. */
   allPoints: number;
   eventCount: number;
   wins: number;
   seconds: number;
   thirds: number;
-  /** Share of putts made over the counted events, 0-1, or -1 with no putts. */
+  /** Share of putts made across all qualifying events, 0–1, or -1 with no putts. */
   hitPct: number;
   placements: EventPlacement[];
 }
@@ -252,7 +253,8 @@ export function buildLeagueLeaderboard(
   }
 
   // Build leaderboard entries
-  const entries: LeaderboardEntry[] = [];
+  type UnrankedEntry = Omit<LeaderboardEntry, "position">;
+  const entries: UnrankedEntry[] = [];
   for (const [uid, { name, placements, hits, putts }] of playerMap) {
     const allPoints = placements.reduce((sum, p) => sum + p.points, 0);
     const totalPoints =
@@ -282,13 +284,17 @@ export function buildLeagueLeaderboard(
     });
   }
 
-  // Sort by total points descending, then name
+  const compareRank = (a: UnrankedEntry, b: UnrankedEntry) =>
+    b.totalPoints - a.totalPoints || b.hitPct - a.hitPct;
   entries.sort(
-    (a, b) =>
-      b.totalPoints - a.totalPoints ||
-      b.allPoints - a.allPoints ||
-      a.name.localeCompare(b.name),
+    (a, b) => compareRank(a, b) || a.name.localeCompare(b.name),
   );
 
-  return entries;
+  let position = 0;
+  return entries.map((entry, index) => {
+    if (index === 0 || compareRank(entries[index - 1], entry) !== 0) {
+      position = index + 1;
+    }
+    return { ...entry, position };
+  });
 }
