@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import { AppStoreLinks } from "@/app/components/app-store-links";
+import { ScreenshotPreview } from "@/app/components/screenshot-preview";
 import { JsonLd, pageMetadata } from "@/lib/seo";
 import { softwareApplication } from "@/lib/structured-data";
 import {
   Card,
+  CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { RulerIcon, Watch01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Accordion,
   AccordionItem,
@@ -29,8 +35,13 @@ export const metadata: Metadata = pageMetadata({
   path: "/about",
   title: "About dgputt - Games, Features & Pricing",
   description:
-    "Learn about dgputt's putting drills, progress tracking, round logging, leagues, and pricing. 10 games, advanced stats, and competitive events.",
+    "Explore dgputt’s putting games, Apple Watch and Wear OS scoring, AR Measure, progress tracking, competitive leagues and pricing.",
 });
+
+const watchScreenshot = {
+  src: "/images/screenshots/watch-stormputt.png",
+  alt: "StormPutt on Wear OS showing score buttons for the first station at 5 metres",
+};
 
 const freeGames = [
   {
@@ -96,10 +107,22 @@ const premiumGames = [
       "Match play against AI opponents with varying skill levels. Head-to-head to 11 points. A fun competitive twist on putting practice.",
     putts: "Varies",
   },
+  {
+    title: "Streak",
+    summary:
+      "Pick a distance and see how many putts you can make in a row. The first miss ends the streak. Come back to beat your personal best at that distance.",
+    putts: "Varies",
+  },
+  {
+    title: "Aim",
+    summary:
+      "Take 18 putts from a fixed distance or vary the distance each time. Mark where each putt lands on the basket to see how close you are to your aim point and how tightly your putts group.",
+    putts: "18",
+  },
 ];
 
 const features = [
-  { feature: "StormPutt, Twenty, Fifty, JYLY, Frøysa", free: true, paid: true },
+  { feature: freeGames.map((game) => game.title).join(", "), free: true, paid: true },
   { feature: "Basic stats", free: true, paid: true },
   { feature: "PDGA linking", free: true, paid: true },
   { feature: "Putting routine", free: true, paid: true },
@@ -108,7 +131,7 @@ const features = [
   { feature: "Tag practice rounds with custom tags", free: false, paid: true },
   { feature: "Goals & streaks", free: false, paid: true },
   {
-    feature: "Hundred, Runsjø, Shuffle, Survival, Cornhole",
+    feature: premiumGames.map((game) => game.title).join(", "),
     free: false,
     paid: true,
   },
@@ -124,7 +147,7 @@ export default function AboutPage() {
       <JsonLd data={softwareApplication} />
       {/* Hero */}
       <section className="space-y-4 max-w-3xl">
-        <h1>About dgputt</h1>
+        <h1>About the dgputt app</h1>
         <p className="text-lg">
           dgputt is a disc golf putting app designed to help players improve
           through structured drills, progress tracking, course round logging,
@@ -141,9 +164,9 @@ export default function AboutPage() {
             <CardHeader>
               <CardTitle>Practice</CardTitle>
               <CardDescription>
-                Choose from 10 different putting drills. Each one targets a
-                different skill - accuracy, endurance, adaptability, or
-                competitive pressure. Every putt is recorded.
+                Choose from {freeGames.length + premiumGames.length} putting
+                games to train accuracy, endurance, adaptability or putting
+                under pressure. Every putt is recorded.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -161,10 +184,12 @@ export default function AboutPage() {
             <CardHeader>
               <CardTitle>Compete</CardTitle>
               <CardDescription>
-                Create or join putting leagues. Host events with live
-                leaderboards, track season standings, and bring your putting
-                community together.
+                Join a putting league, enter a standalone event, or challenge
+                a friend to a match.
               </CardDescription>
+              <a href="#compete" className="inline-flex min-h-11 w-fit items-center font-semibold underline underline-offset-4">
+                Explore the three ways to compete
+              </a>
             </CardHeader>
           </Card>
         </div>
@@ -194,9 +219,9 @@ export default function AboutPage() {
       </section>
 
       {/* Premium Games */}
-      <section className="space-y-4 max-w-3xl">
+      <section id="premium-games" className="scroll-mt-8 space-y-4 max-w-3xl">
         <h2>Premium Games</h2>
-        <p>Five additional drills unlocked with a subscription.</p>
+        <p>Unlock {premiumGames.length} more putting games with a subscription.</p>
         <Accordion>
           {premiumGames.map((game) => (
             <AccordionItem key={game.title}>
@@ -207,23 +232,85 @@ export default function AboutPage() {
             </AccordionItem>
           ))}
         </Accordion>
-        <div className="flex justify-center pt-4">
+        <div className="mx-auto grid max-w-lg grid-cols-2 items-start gap-3 pt-4 text-center sm:gap-6">
           <PhoneFrame
-            src="/images/screenshots/cornhole.webp"
-            alt="Choosing an AI opponent with a PDGA rating and C1x average before a Cornhole putting match in dgputt"
-            caption="Cornhole - head-to-head match play"
+            src="/images/screenshots/streak.webp"
+            alt="Streak in dgputt showing ten consecutive makes at 7 metres"
+            caption="Streak at 7 m"
+            className="h-auto w-[min(39vw,12rem)]"
+          />
+          <PhoneFrame
+            src="/images/screenshots/aim.webp"
+            alt="Aim in dgputt showing a marked putt on the basket with accuracy and precision scores"
+            caption="Aim hit-point tracking"
+            className="h-auto w-[min(39vw,12rem)]"
           />
         </div>
       </section>
 
-      {/* Distances */}
-      <section className="space-y-4 max-w-3xl">
-        <h2>Distances</h2>
-        <p>
-          Distances can be configured in meters or feet. Games support a normal
-          range (5–10 m / 16–33 ft), a long range (10–15 m / 33–50 ft), and a
-          full range (4–15 m).
-        </p>
+      <section aria-labelledby="practice-tools" className="max-w-3xl space-y-4">
+        <h2 id="practice-tools">Practice tools</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card id="watch-app" className="scroll-mt-8 gap-4">
+            <CardHeader className="gap-2">
+              <div className="flex items-center gap-3">
+                <HugeiconsIcon icon={Watch01Icon} size={24} aria-hidden="true" />
+                <h3>Watch app</h3>
+              </div>
+              <CardDescription className="text-base">
+                On Apple Watch and Wear OS, start a practice round and record
+                makes from your wrist. Finished rounds sync to your dgputt
+                profile.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p>
+                Play StormPutt, Twenty, Fifty, JYLY, Frøysa or Hundred.
+                Hundred requires Premium.
+              </p>
+              <figure className="space-y-2 text-center">
+                <ScreenshotPreview {...watchScreenshot} className="mx-auto w-36">
+                  <Image
+                    src={watchScreenshot.src}
+                    alt={watchScreenshot.alt}
+                    width={432}
+                    height={432}
+                    className="size-full rounded-full"
+                  />
+                </ScreenshotPreview>
+                <figcaption className="text-xs text-muted-foreground">
+                  Scoring StormPutt on Wear OS
+                </figcaption>
+              </figure>
+            </CardContent>
+          </Card>
+          <Card id="ar-measure" className="scroll-mt-8 gap-4">
+            <CardHeader className="gap-2">
+              <div className="flex items-center gap-3">
+                <HugeiconsIcon icon={RulerIcon} size={24} aria-hidden="true" />
+                <h3>AR Measure</h3>
+              </div>
+              <CardDescription className="text-base">
+                Set up your practice stations with your phone camera. Measure
+                overlays distance rings from 4 to 15 metres around the basket
+                and shows your distance as you walk.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <ol className="list-decimal space-y-2 pl-5">
+                <li>Open the Putt tab and tap the ruler icon.</li>
+                <li>
+                  Aim at the base of the basket pole, set the origin, then
+                  confirm the alignment.
+                </li>
+                <li>Walk the green and place your markers at the rings you need.</li>
+              </ol>
+              <p className="text-muted-foreground">
+                Works on iPhones with ARKit and Android phones with ARCore.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </section>
 
       {/* Round Tracking */}
@@ -307,23 +394,56 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Leagues & Events */}
-      <section className="space-y-4 max-w-3xl">
-        <h2 className="flex items-center gap-3">
-          Leagues &amp; Events
-          <Badge variant="secondary">Premium</Badge>
-        </h2>
-        <p>
-          Leagues bring competitive multiplayer to dgputt. Create or join
-          leagues, register for events, submit scores, and climb leaderboards.
-          Events support multiple formats - StormPutt, Cornhole, and Stations -
-          with Classic, Flex, Team, and Bracket event types. Admins get a full
-          suite of tournament director tools including group management, score
-          editing, bracket generation, and PDF leaderboard export.
+      <section id="compete" className="scroll-mt-8 space-y-4">
+        <h2>Three ways to compete</h2>
+        <p className="max-w-3xl">
+          Joining leagues and events or accepting a match is free. Creating
+          any of the three requires a dgputt subscription. With location access
+          enabled on your phone, the app shows active leagues and events nearest
+          to you first.
         </p>
-        <p>
-          <Link href="/guide" className="text-primary underline">
-            Read the League Admin Guide →
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="border-t-4 border-t-secondary">
+            <CardHeader>
+              <CardTitle>Leagues</CardTitle>
+              <CardDescription className="text-base text-foreground/80">
+                Run regular putting nights and earn points toward season
+                standings. Play StormPutt, Stations or Cornhole.
+              </CardDescription>
+              <Link href="/guide" className="inline-flex min-h-11 w-fit items-center font-semibold underline underline-offset-4">
+                Read the league guide
+              </Link>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Single events</CardTitle>
+              <CardDescription className="text-base text-foreground/80">
+                Challenge a group of friends to a putting night or a weekend
+                Flex event. Everyone competes on one leaderboard.
+              </CardDescription>
+              <Link href="/about/compete#host-an-event" className="inline-flex min-h-11 w-fit items-center font-semibold underline underline-offset-4">
+                Try a single event
+              </Link>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Matches</CardTitle>
+              <CardDescription className="text-base text-foreground/80">
+                Challenge one friend to Cornhole, Sevens or JYLY. Play Casual
+                to warm up or Rated to play for your putting rating.
+              </CardDescription>
+              <Link href="/about/compete#try-a-match" className="inline-flex min-h-11 w-fit items-center font-semibold underline underline-offset-4">
+                Try a match
+              </Link>
+            </CardHeader>
+          </Card>
+        </div>
+        <p className="max-w-3xl">
+          Eligible rated events and rated matches feed the same putting rating. {" "}
+          <Link href="/about/compete#ratings" className="font-semibold underline underline-offset-4">
+            How the putting rating works
           </Link>
         </p>
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
@@ -335,21 +455,26 @@ export default function AboutPage() {
           <PhoneFrame
             src="/images/screenshots/event_cornhole.webp"
             alt="Final leaderboard for a dgputt league event, ranking players by wins and hit percentage"
-            caption="Live event leaderboard"
+            caption="Event leaderboard"
           />
         </div>
       </section>
 
       {/* Profile */}
-      <section className="space-y-4 max-w-3xl">
+      <section id="profile-settings" className="scroll-mt-8 space-y-4 max-w-3xl">
         <h2>Profile &amp; Settings</h2>
         <p>
           Link your PDGA number, build a custom putting routine with
-          step-by-step instructions, and unlock achievements for milestones like
-          500 putts, 1000 putts, league participation, and more. Configure units
+          step-by-step instructions, and earn badges as you reach milestones
+          for total putts and rounds played in each game. Configure units
           (meters/feet), theme (light/dark), haptic feedback, and notification
           preferences.
         </p>
+        <PhoneFrame
+          src="/images/screenshots/achievements.webp"
+          alt="The dgputt Badges screen with a Total putts career badge and a grid of game badges at different levels"
+          caption="Open Badges from your profile."
+        />
       </section>
 
       {/* Pricing */}
@@ -417,30 +542,7 @@ export default function AboutPage() {
       <section className="space-y-4 max-w-3xl">
         <h2>Get the app</h2>
         <p>dgputt is available on iOS and Android.</p>
-        <div className="flex flex-wrap gap-2">
-          <a
-            href="https://apps.apple.com/us/app/dgputt/id1536711552"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <img
-              src="/images/app_store.png"
-              alt="Download on the App Store"
-              className="w-48 h-auto"
-            />
-          </a>
-          <a
-            href="https://play.google.com/store/apps/details?id=com.erlendjohnsen.dgputt"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <img
-              src="/images/play_store.png"
-              alt="Get it on Google Play"
-              className="w-48 h-auto"
-            />
-          </a>
-        </div>
+        <AppStoreLinks className="[&_img]:w-48" />
       </section>
     </div>
   );

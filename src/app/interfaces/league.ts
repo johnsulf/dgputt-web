@@ -1,3 +1,8 @@
+import type {
+  PointsSystem,
+  ValidRoundsShare,
+} from "@/lib/points-system";
+
 export interface LeagueInstance {
   id: string;
   title: string;
@@ -10,7 +15,10 @@ export interface LeagueInstance {
   divisions?: string[];
   competitionType?: string;
   format?: string;
-  validRounds?: number;
+  /** Share of events in standings or rounds in Scores that count toward rank. */
+  validRoundsShare?: ValidRoundsShare;
+  /** How event placings turn into standings points. */
+  pointsSystem?: PointsSystem;
   admins?: string[];
   events?: LeagueEvent[];
   seasons?: LeagueSeason[];
@@ -37,6 +45,8 @@ export interface LeagueEvent {
   pairDivisions?: Record<string, string>;
   limit?: number;
   seasonId?: string;
+  /** False keeps the event out of the all-formats standings. Default true. */
+  countsInAllFormats?: boolean;
   divisionsEnabled?: boolean;
   divisions?: string[];
   players?: Record<string, LeagueEventPlayer>;

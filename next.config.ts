@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
         destination: "https://dgputt.app/:path",
         statusCode: 301,
       },
+      {
+        source: "/guide/compete",
+        destination: "/about/compete",
+        permanent: true,
+      },
     ];
   },
 };
