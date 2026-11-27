@@ -1,6 +1,6 @@
 import { AppStoreLinks } from "@/app/components/app-store-links";
-import Reviews, { StoreRatings } from "@/app/components/home/reviews";
-import PhoneFrame from "@/app/components/phone-frame";
+import Reviews from "@/app/components/home/reviews";
+import { ScreenshotPreview } from "@/app/components/screenshot-preview";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,41 +14,42 @@ export const metadata: Metadata = pageMetadata({
     "Disc golf putting practice app with structured drills, progress tracking, and competitive leagues. Available on iOS and Android.",
 });
 
+const screenshot = {
+  src: "/images/screenshots/home.webp",
+  alt: "The dgputt Practice screen showing all 12 putting games unlocked, including Streak and Aim",
+};
+
 export default function Home() {
   return (
     <div className="space-y-10 px-4 py-6 sm:space-y-12 sm:px-8 sm:py-9 lg:px-10">
       <JsonLd data={softwareApplication} />
-      <div className="space-y-4">
-        <section
-          aria-labelledby="home-heading"
-          className="grid overflow-hidden rounded-[2rem] bg-[#092b46] text-white md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]"
-        >
-          <div className="flex flex-col justify-center px-6 pt-8 sm:px-10 sm:pt-10 md:py-12 lg:px-14">
-            <h1 id="home-heading" className="max-w-lg text-4xl/tight! tracking-tight sm:text-5xl/tight! lg:text-6xl/none!">
-              Get better at <span className="text-secondary">disc golf putting</span>
-            </h1>
-            <p className="mt-5 max-w-md text-lg leading-relaxed text-slate-100">
-              Build confidence at the distances that cost you strokes with
-              structured putting drills. Start free with five drills and basic
-              stats. Premium unlocks every game, more detailed progress tracking
-              and the tools to run your own putting league.
-            </p>
-            <AppStoreLinks className="mt-6 inline-grid max-w-full grid-cols-2 self-start [&>a]:grid [&>a]:min-h-11 [&>a]:min-w-0 [&>a]:items-center" />
-          </div>
-          <div className="relative isolate flex items-center justify-center overflow-hidden bg-[radial-gradient(ellipse_at_center,#207180,transparent_72%)] px-6 py-8 md:py-10">
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 -z-10 bg-[repeating-radial-gradient(circle_at_center,transparent_0_3rem,#ffffff24_3.05rem,transparent_3.1rem)] mask-[radial-gradient(ellipse_at_center,#000_28%,transparent_80%)]"
-            />
-            <PhoneFrame
-              src="/images/screenshots/home.webp"
-              alt="The dgputt Practice screen showing all 12 putting games unlocked, including Streak and Aim"
-              className="h-88 sm:h-100 lg:h-112"
-            />
-          </div>
-        </section>
-        <StoreRatings />
-      </div>
+      <section
+        aria-labelledby="home-heading"
+        className="grid items-center gap-6 border-b pb-6 sm:pb-8 md:grid-cols-[minmax(0,1fr)_minmax(14rem,18rem)] md:gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-16"
+      >
+        <div className="min-w-0">
+          <h1 id="home-heading" className="max-w-[16ch] text-[clamp(1.9rem,9.5vw,2.25rem)]/[1.08]! tracking-tight text-balance sm:text-[2.75rem]/[1.08]! lg:text-[3.25rem]/[1.05]!">
+            Get better at disc golf putting
+          </h1>
+          <p className="mt-4 max-w-[44ch] text-base leading-relaxed text-pretty text-foreground/80 sm:text-lg">
+            Build confidence at the distances that cost you strokes with
+            structured putting drills. Start free with five drills and basic
+            stats. Premium unlocks every game, more detailed progress tracking
+            and the tools to run your own putting league.
+          </p>
+          <AppStoreLinks showRatings className="mt-6 grid w-fit max-w-full grid-cols-2 gap-3" />
+        </div>
+        <ScreenshotPreview {...screenshot} className="justify-self-center rounded-2xl">
+          <Image
+            src={screenshot.src}
+            alt={screenshot.alt}
+            width={960}
+            height={2087}
+            loading="eager"
+            className="h-auto w-32 rounded-2xl border-2 border-[#172b39] sm:w-36 md:w-40"
+          />
+        </ScreenshotPreview>
+      </section>
 
       <div className="grid overflow-hidden rounded-3xl border bg-card md:grid-cols-[0.9fr_1.1fr]">
         <section className="space-y-3 p-6 sm:p-8">

@@ -400,57 +400,49 @@ export default function GuidePage() {
         <JsonLd key={i} data={d} />
       ))}
 
-      <header className="space-y-4">
-        <nav aria-label="Breadcrumb" className="text-sm">
-          <Link href="/" className="hover:underline">
+      <header className="border-b pb-8 sm:pb-10">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-foreground/70">
+          <Link href="/" className="underline-offset-4 hover:underline">
             dgputt
-          </Link>{" "}
-          <span aria-hidden="true">/</span>{" "}
-          <span aria-current="page">League guide</span>
+          </Link>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page" className="text-foreground">League guide</span>
         </nav>
-        <div className="grid overflow-hidden rounded-3xl bg-[#092b46] text-white md:grid-cols-[minmax(0,1fr)_minmax(0,0.58fr)]">
-          <div className="flex flex-col justify-center px-6 py-8 sm:p-10 lg:p-12">
-            <h1 className="max-w-xl text-4xl/tight! tracking-tight sm:text-5xl/tight!">
+        <div className="mt-6 grid items-center gap-6 md:mt-8 md:grid-cols-[minmax(0,1fr)_minmax(14rem,18rem)] md:gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-16">
+          <div className="min-w-0">
+            <h1 className="max-w-[16ch] text-4xl/[1.08]! tracking-tight text-balance sm:text-[2.75rem]/[1.08]!">
               How to run a putting league
             </h1>
-            <p className="mt-4 max-w-lg text-lg leading-relaxed text-slate-100">
+            <p className="mt-4 max-w-[44ch] text-base leading-relaxed text-foreground/80 sm:text-lg">
               Bring your putting crew back week after week. Run events in the
               dgputt app, follow the season standings and see how your putting
               rating changes as you play.
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-6">
               <a
                 href="#quick-start"
-                className="inline-flex min-h-11 items-center rounded-xl bg-secondary px-4 py-2 font-semibold text-secondary-foreground hover:bg-[#ffe16a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                className="inline-flex min-h-11 items-center rounded-md bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground hover:bg-secondary/80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
               >
                 Set up your league
               </a>
-              <a
-                href="#ratings"
-                className="inline-flex min-h-11 items-center rounded-xl border border-white/50 px-4 py-2 font-semibold hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-              >
-                How ratings work
-              </a>
-              <Link
-                href="/guide/players"
-                className="inline-flex min-h-11 items-center rounded-xl border border-white/50 px-4 py-2 font-semibold hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-              >
-                Join as a player
-              </Link>
+              <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm font-medium underline-offset-4 [&>a]:inline-flex [&>a]:min-h-11 [&>a]:items-center [&>a]:underline [&>a]:decoration-foreground/35 [&>a:hover]:decoration-current [&>a:focus-visible]:outline-2 [&>a:focus-visible]:outline-offset-2 [&>a:focus-visible]:outline-ring">
+                <a href="#ratings">How ratings work</a>
+                <Link href="/guide/players">Join as a player</Link>
+              </div>
             </div>
           </div>
-          <figure className="flex flex-col items-center justify-center gap-3 bg-[radial-gradient(ellipse_at_center,#1a6880,transparent_75%)] px-6 pb-8 md:p-8">
-            <ScreenshotPreview {...screenshot} className="rounded-[1.5rem] sm:rounded-[1.75rem]">
+          <figure className="flex flex-col items-center gap-2.5">
+            <ScreenshotPreview {...screenshot} className="rounded-2xl">
               <Image
                 src={screenshot.src}
                 alt={screenshot.alt}
                 width={1320}
                 height={2868}
                 loading="eager"
-                className="h-auto w-28 rounded-[1.5rem] border-4 border-[#061b2c] sm:w-40 sm:rounded-[1.75rem]"
+                className="h-auto w-28 rounded-2xl border-2 border-[#172b39] md:w-32"
               />
             </ScreenshotPreview>
-            <figcaption className="text-center text-sm text-slate-100">
+            <figcaption className="text-center text-sm text-foreground/70">
               Browse leagues and their events in the app.
             </figcaption>
           </figure>
